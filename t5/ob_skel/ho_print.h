@@ -11,8 +11,8 @@
 
 /* RCM Aug 1992 */
 
-#ifndef __ho_print_h
-#define __ho_print_h
+#ifndef HO_PRINT_H
+#define HO_PRINT_H
 
 extern void
 host_read_default_paper_details(
@@ -42,6 +42,6 @@ host_printer_set(
 
 #endif /* OS */
 
-#endif /* ho_print_h */
+#endif /* HO_PRINT_H */
 
 /* end of ho_print.h */

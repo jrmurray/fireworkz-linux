@@ -2,7 +2,7 @@
 @rem License, v. 2.0. If a copy of the MPL was not distributed with this
 @rem file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-@rem Copyright © 2013-2022 Stuart Swales
+@rem Copyright © 2013-2025 Stuart Swales
 
 pushd %~dp0
 IF NOT EXIST BLDCD.BAT EXIT

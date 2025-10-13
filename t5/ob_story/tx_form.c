@@ -15,7 +15,7 @@
 
 #include "ob_story/ob_story.h"
 
-#ifndef          __typepack_h
+#ifndef            TYPEPACK_H
 #include "cmodules/typepack.h"
 #endif
 

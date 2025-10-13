@@ -11,8 +11,8 @@
 
 /* MRJC November 1989 */
 
-#ifndef __typepack_h
-#define __typepack_h
+#ifndef TYPEPACK_H
+#define TYPEPACK_H
 
 /*#define TYPEPACK_EXPORT_ONLY_FUNCTIONS 1*/
 /*#define TYPEPACK_EXPORT_ONLY_MACROS 1*/
@@ -383,6 +383,6 @@ __inline_writeval_S32_BE(
 
 #endif /* TYPEPACK_EXPORT_ONLY_FUNCTIONS */
 
-#endif /* __typepack_h */
+#endif /* TYPEPACK_H */
 
 /* end of typepack.h */

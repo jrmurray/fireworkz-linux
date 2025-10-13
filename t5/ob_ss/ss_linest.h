@@ -11,14 +11,14 @@
 
 /* SKS February 2014 split out of xp_ss.h for charts */
 
-#ifndef __ss_linest_h
-#define __ss_linest_h
+#ifndef SS_LINEST_H
+#define SS_LINEST_H
 
-#ifndef          __ev_eval_h
+#ifndef            EV_EVAL_H
 #include "cmodules/ev_eval.h"
 #endif
 
-#ifndef          __mathxtr2_h
+#ifndef            MATHXTR2_H
 #include "cmodules/mathxtr2.h"
 #endif
 
@@ -32,6 +32,6 @@ typedef struct SS_LINEST
 }
 SS_LINEST, * P_SS_LINEST;
 
-#endif /* __ss_linest_h */
+#endif /* SS_LINEST_H */
 
 /* end of ss_linest.h */

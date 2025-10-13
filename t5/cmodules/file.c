@@ -13,7 +13,7 @@
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -227,6 +227,30 @@ file_buffer(
     return(status);
 }
 
+_Check_return_
+extern U32
+file_nice_buffer_size(void)
+{
+#if RISCOS
+    uint32_t page_size, n_pages;
+    if(0 == _swix(OS_ReadMemMapInfo, _OUTR(0,1), &page_size, &n_pages))
+    {
+        uint64_t total_size = n_pages * (uint64_t) page_size;
+        // reportf("OS_ReadMemMapInfo: %u pages of %u bytes = %" PRIu64 "MB", n_pages, page_size, total_size >> 20);
+
+        if(total_size > 16*1024*1024) /* 'modern' enough */
+            return(64*1024);
+
+        if(total_size >= 4*1024*1024) /* [4..16] is A440..A540 territory */
+            return(16*1024);
+    }
+    
+    return(4*1024);
+#else
+    return(16*1024);
+#endif
+}
+
 /******************************************************************************
 *
 * clear error indicator on stream
@@ -416,7 +440,7 @@ file_date(
     rs.r[1] = (int) result_buffer;
     rs.r[2] = sizeof32(result_buffer);
     rs.r[3] = (int) "%CE%YR.%MN.%DY %24:%MI:%SE.%CS"; /* returns local time representation of the given UTC */
-    if(NULL != WrapOsErrorChecking(_kernel_swi(OS_ConvertDateAndTime, &rs, &rs)))
+    if(NULL != WrapOsErrorChecking(cs_kernel_swi(OS_ConvertDateAndTime, &rs)))
     {
         ss_date_init(p_ss_date);
         return(create_error(FILE_ERR_BADTIMESTAMP));
@@ -666,7 +690,7 @@ t5_file_flush(
         rs.r[0] = OSArgs_Flush;
         rs.r[1] = file_handle->handle;
 
-        if(status_fail(status = file__obtain_error_string(_kernel_swi(OS_Args, &rs, &rs))))
+        if(status_fail(status = file__obtain_error_string(cs_kernel_swi(OS_Args, &rs))))
             file__set_error(file_handle, status);
 #elif WINDOWS
         /* no flushing to be done */
@@ -845,7 +869,7 @@ file_length(
     rs.r[0] = OSArgs_ReadEXT;
     rs.r[1] = file_handle->handle;
 
-    if(status_fail(status = file__obtain_error_string(_kernel_swi(OS_Args, &rs, &rs))))
+    if(status_fail(status = file__obtain_error_string(cs_kernel_swi(OS_Args, &rs))))
         file__set_error(file_handle, status);
     else
         p_file_length->u.words.lo = rs.r[2];
@@ -1042,7 +1066,7 @@ t5_file_open(
         rs.r[0] = openatts[openmode];
         rs.r[1] = (int) filename;
 
-        if(status_ok(status = file__obtain_error_string(_kernel_swi(OS_Find, &rs, &rs))))
+        if(status_ok(status = file__obtain_error_string(cs_kernel_swi(OS_Find, &rs))))
         {
             file_handle->handle = rs.r[0];
             status = (_FILE_HANDLE_NULL != file_handle->handle);
@@ -1278,7 +1302,7 @@ file_rename(
     rs.r[0] = OSFSControl_Rename;
     rs.r[1] = (int) filename_from;
     rs.r[2] = (int) filename_to;
-    return(file__obtain_error_string(_kernel_swi(OS_FSControl, &rs, &rs)));
+    return(file__obtain_error_string(cs_kernel_swi(OS_FSControl, &rs)));
 #elif WINDOWS
     if(!WrapOsBoolChecking(MoveFile(filename_from, filename_to)))
     {
@@ -1637,7 +1661,7 @@ file__closefile(
     rs.r[0] = 0;
     rs.r[1] = file_handle->handle;
 
-    if(status_ok(status1 = file__obtain_error_string(_kernel_swi(OS_Find, &rs, &rs))))
+    if(status_ok(status1 = file__obtain_error_string(cs_kernel_swi(OS_Find, &rs))))
     {
         if(file_handle->written_to)
         {
@@ -1646,10 +1670,15 @@ file__closefile(
 
             { /* read current time UTC (really does work!) */
             int buffer[2];
+#if defined(NORCROFT_INLINE_SWIX)
+            buffer[0] = 3;
+            void_WrapOsErrorChecking(_swix(OS_Word, _INR(0,1), 14, buffer));
+#else
             rs.r[0] = 14;
             rs.r[1] = (int) buffer;
             buffer[0] = 3;
-            void_WrapOsErrorChecking(_kernel_swi(OS_Word, &rs, &rs));
+            void_WrapOsErrorChecking(cs_kernel_swi(OS_Word, &rs));
+#endif
             file_handle->riscos.file_date_loword = buffer[0];
             file_handle->riscos.file_date_hiword = buffer[1] & 0xFF;
             } /*block*/
@@ -1858,7 +1887,7 @@ file__getpos(
     rs.r[0] = OSArgs_ReadPTR;
     rs.r[1] = file_handle->handle;
 
-    if(status_fail(file__obtain_error_string(_kernel_swi(OS_Args, &rs, &rs))))
+    if(status_fail(file__obtain_error_string(cs_kernel_swi(OS_Args, &rs))))
         return(file__set_error(file_handle, create_error(FILE_ERR_CANTREAD)));
 
     cur_pos.u.words.lo = rs.r[2];
@@ -2087,7 +2116,7 @@ file__seek(
     rs.r[1] = file_handle->handle;
     rs.r[2] = (int) new_pos.u.words.lo;
 
-    if(status_fail(status = file__obtain_error_string(_kernel_swi(OS_Args, &rs, &rs))))
+    if(status_fail(status = file__obtain_error_string(cs_kernel_swi(OS_Args, &rs))))
         file__set_error(file_handle, status);
 #elif WINDOWS
     LARGE_INTEGER liDistanceToMove;
@@ -2361,7 +2390,7 @@ file__eof(
     rs.r[0] = OSArgs_EOFCheck;
     rs.r[1] = file_handle->handle;
 
-    if(status_fail(status = file__obtain_error_string(_kernel_swi(OS_Args, &rs, &rs))))
+    if(status_fail(status = file__obtain_error_string(cs_kernel_swi(OS_Args, &rs))))
         (void) file__set_error(file_handle, create_error(FILE_ERR_CANTWRITE));
     else
         status = (rs.r[2] != 0) ? EOF : STATUS_OK; /* non-zero -> EOF */

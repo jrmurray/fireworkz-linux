@@ -11,8 +11,8 @@
 
 /* Split off from ev_mcpx.c December 2019 */
 
-#ifndef __mathxcpx_h
-#define __mathxcpx_h
+#ifndef MATHXCPX_H
+#define MATHXCPX_H
 
 /*
 declare complex number type for internal usage
@@ -375,6 +375,6 @@ complex_inverse_hyperbolic_cotangent( /* inverse hyperbolic cotangent : acoth(z)
     _InRef_     PC_COMPLEX z,
     _OutRef_    P_COMPLEX z_out);
 
-#endif /* __mathxcpx_h */
+#endif /* MATHXCPX_H */
 
 /* end of mathxcpx.h  */

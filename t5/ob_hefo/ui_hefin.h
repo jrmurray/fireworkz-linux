@@ -7,8 +7,8 @@
 /* Copyright (C) 1993-1998 Colton Software Limited
  * Copyright (C) 1998-2015 R W Colton */
 
-#ifndef __ui_hefin_h
-#define __ui_hefin_h
+#ifndef UI_HEFIN_H
+#define UI_HEFIN_H
 
 /*
 internally exported routines from ui_hefo.c
@@ -16,6 +16,6 @@ internally exported routines from ui_hefo.c
 
 T5_CMD_PROTO(extern, t5_cmd_page_hefo_break_values_interactive);
 
-#endif /* __ui_hefin_h */
+#endif /* UI_HEFIN_H */
 
 /* end of ui_hefin.h */

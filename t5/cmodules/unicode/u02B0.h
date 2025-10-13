@@ -4,10 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2006-2022 Stuart Swales */
+/* Copyright (C) 2006-2025 Stuart Swales */
 
-#ifndef __u02B0_h
-#define __u02B0_h
+#ifndef UNICODE_U02B0_H
+#define UNICODE_U02B0_H
 
 /*
 02B0..02FF Spacing Modifier Letters
@@ -98,6 +98,6 @@
 #define UCH_MODIFIER_LETTER_OPEN_SHELF 0x02FEU
 #define UCH_MODIFIER_LETTER_LOW_LEFT_ARROW 0x02FFU
 
-#endif /* __u02B0_h */
+#endif /* UNICODE_U02B0_H */
 
 /* end of u02B0.h */

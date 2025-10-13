@@ -90,7 +90,8 @@ REM that this application requires to be in the WimpSlot on startup
 REM The second parameter is how much extra memory this application
 REM will need to claim on startup on top of the initial WimpSlot
 root_stack_size% =  16*1024: REM Now added in FNanalyse_image
-imageslotparm_1% =   2*1024: REM A trivial amount of memory for RTL to use
+imageslotparm_1% =   0*1024: REM A trivial amount of memory for RTL to use (now added earlier)
+wee_space_for_RTL% = 2*1024: REM See use of this
 imageslotparm_2% = 208*1024: REM Reflect the true horror!
 REM Compose arguments to ImageSlot utility in case we use it as fallback
 REM In which case it needs to know about ImageSlot 8KB stack assumption
@@ -125,7 +126,7 @@ SYS "OS_GetEnv" TO env%
 buflen% = 511
 DIM buffer% buflen%
 :
-SYS "XOS_ReadArgs","BASIC,quit/K,load/K,output/A,product/A,version/A,runimage/K,r32/S,c32/S,d32/S,p32/S,r32m/S,boot/S,alternate/S",env%,buffer%,buflen% TO ;PSR%
+SYS "XOS_ReadArgs","BASIC,quit/K,load/K,output/A,product/A,version/A,runimage/K,r32/S,r32sf/S,c32/S,d32/S,p32/S,r32m/S,boot/S,alternate/S",env%,buffer%,buflen% TO ;PSR%
 IF PSR% AND 1 THEN ERROR 0,"Bad parameters to BootRunGen"
 :
 ptr% = buffer%: ptr% += 3*4: REM Skip BASIC, optional -quit, -load filename
@@ -139,6 +140,10 @@ ptr% += 4
 :
 release32% = FALSE: IF !ptr% THEN release32% = TRUE
 ptr% += 4
+:
+release32sf% = FALSE: IF !ptr% THEN release32sf% = TRUE
+ptr% += 4
+IF release32sf% THEN release32% = TRUE
 :
 check_release32% = FALSE: IF !ptr% THEN check_release32% = TRUE
 ptr% += 4
@@ -193,7 +198,7 @@ ENDIF
 PROCo(f%,"|")
 PROCs(f%,FNvar_product("Help"),var_product_dir$+".!Help",boot%)
 PROCs(f%,FNvar_product("Version"),version$,boot%)
-PROCs(f%,FNvar_product("Web"),"https://croftnuisk.co.uk/coltsoft/fireworkz/",boot%)
+PROCs(f%,FNvar_product("Web"),"https://croftnuisk.co.uk/coltsoft/fireworkz",boot%)
 PROCs(f%,FNvar_product("Title"),true_product$,boot%)
 IF is_y% THEN
 PROCs(f%,FNvar_product("Description"),"Integrated spreadsheet, word processor and database",boot%)
@@ -285,6 +290,11 @@ PROCo(f%,"RMEnsure "+FPEVersion$+" Error 0 "+true_product$+" needs "+FPEVersion$
 IF loadable_release32% THEN
   PROCo(f%,"|")
   PROCo(f%,"RMEnsure Squash 0.00 RMLoad System:Modules.Squash")
+ENDIF
+:
+IF release32sf% THEN
+PROCo(f%,"|")
+PROCo(f%,"RMEnsure VFPSupport 0.00 Error 0 "+true_product$+" needs VFPSupport. Is it unplugged?")
 ENDIF
 :
 PROCo(f%,"|")
@@ -403,17 +413,27 @@ IF release% THEN
     PROCo(f%,"Run "+product$+":RISC_OS.ImageSlot "+var_product_dir$+".!RunImage "+imageslotparm$)
   ELSE
     REM Use our determined slot size to generate arguments to WimpSlot command
+    REM NB min/max are usually crossed here
+    wimpslot_min% = FNround_up(slot_size% + imageslotparm_1% + imageslotparm_2%, 32768)
+    wimpslot_max% = FNround_up(slot_size% + imageslotparm_1%,                    32768)
+    wimpslotparm_min$ = "-min "+STR$(wimpslot_min%/1024)+"K"
+    wimpslotparm_max$ = "-max "+STR$(wimpslot_max%/1024)+"K"
+    PRINT "WimpSlot "+wimpslotparm_min$+" "+wimpslotparm_max$+" "+FNhex8(wimpslot_max%)+" (effective on old 4MB systems)"
     REM Round up to 16KB (not 32KB) here to maximise free memory for 2MB systems
     REM Note that may end up with some trivial wastage on modern 4KB page systems
-    REM NB min/max are usually crossed here
-    wimpslotparm_min$ = "-min "+STR$(FNround_up(slot_size% + imageslotparm_1% + imageslotparm_2%, 16384)/1024)+"K"
-    wimpslotparm_max$ = "-max "+STR$(FNround_up(slot_size% + imageslotparm_1%, 16384)/1024)+"K"
+    wimpslot_min% = FNround_up(slot_size% + imageslotparm_1% + imageslotparm_2%, 16384)
+    wimpslot_max% = FNround_up(slot_size% + imageslotparm_1%,                    16384)
+    wimpslotparm_min$ = "-min "+STR$(wimpslot_min%/1024)+"K"
+    wimpslotparm_max$ = "-max "+STR$(wimpslot_max%/1024)+"K"
+    PRINT "WimpSlot "+wimpslotparm_min$+" "+wimpslotparm_max$+" "+FNhex8(wimpslot_max%)+" (effective on old 2MB systems)"
     IF TRUE THEN
     REM Hell, if it works on a 4KB page system, it will do on a larger page one!
-    wimpslotparm_min$ = "-min "+STR$(FNround_up(slot_size% + imageslotparm_1% + imageslotparm_2%, 4096)/1024)+"K"
-    wimpslotparm_max$ = "-max "+STR$(FNround_up(slot_size% + imageslotparm_1%, 4096)/1024)+"K"
+    wimpslot_min% = FNround_up(slot_size% + imageslotparm_1% + imageslotparm_2%, 4096)
+    wimpslot_max% = FNround_up(slot_size% + imageslotparm_1%,                    4096)
+    wimpslotparm_min$ = "-min "+STR$(wimpslot_min%/1024)+"K"
+    wimpslotparm_max$ = "-max "+STR$(wimpslot_max%/1024)+"K"
+    PRINT "WimpSlot "+wimpslotparm_min$+" "+wimpslotparm_max$+" "+FNhex8(wimpslot_max%)+" (effective on modern systems)"
     ENDIF
-    PRINT "WimpSlot "+wimpslotparm_min$+" "+wimpslotparm_max$
     REM Clearer to user if we split into two commands
     PROCo(f%,"|")
     PROCo(f%,"| The higher value is specified as the minimum first so that there is sufficient memory to get "+true_product$+" fully running")
@@ -674,7 +694,7 @@ IF FNAIF_valid_code_entry(aif_header%,0) AND FNAIF_valid_code_entry(aif_header%,
     rw_end% = ro_end% + rw_area_size%
     zi_end% = rw_end% + zi_area_size%
      PRINT "End addr"," "+FNhex8(zi_end%)
-    max_addr% = zi_end% + (root_stack_size% + &027C): REM Add room for the stack + &27C extra for RTL
+    max_addr% = zi_end% + (root_stack_size% + &027C + wee_space_for_RTL%): REM Add room for the stack + &27C extra for RTL + some extra for RTL
     REM Consider DBG area - same start address as ZI area and likely to be larger if present
     IF max_addr% < rw_end% + dbg_area_size% THEN
       REM Plenty of room once debug info has been stripped
@@ -687,12 +707,14 @@ IF FNAIF_valid_code_entry(aif_header%,0) AND FNAIF_valid_code_entry(aif_header%,
 ENDIF
 :
 CLOSE#h%
-slot_size% = FNround_up(slot_size%,1024): REM Round up to 1KB here - caller will round out for WimpSlot
-PRINT "Slot size"," "+FNhex8(slot_size%),STR$(slot_size%/1024)+"KB (after rounding to 1KB)"
+REM slot_size% = FNround_up(slot_size%,1024): REM Round up to 1KB here - caller will round out for WimpSlot
+REM  PRINT "Slot size"," "+FNhex8(slot_size%),STR$(slot_size%/1024)+"KB (after rounding to 1KB)"
 =slot_size%
 :
 :
 DEF FNround_up(size%,page_size%)
+REM PRINT"round_up "+FNhex8(size%)+" to gran "+FNhex8(page_size%);
+REM PRINT" = "+FNhex8((size% + (page_size%-1)) AND NOT (page_size%-1))
 =(size% + (page_size%-1)) AND NOT (page_size%-1)
 :
 :

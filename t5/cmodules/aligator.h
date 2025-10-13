@@ -11,10 +11,10 @@
 
 /* MRJC December 1991 */
 
-#ifndef __aligator_h
-#define __aligator_h
+#ifndef ALIGATOR_H
+#define ALIGATOR_H
 
-#if defined(ALIGATOR_USE_ALLOC) && !defined(__alloc_h)
+#if defined(ALIGATOR_USE_ALLOC) && !defined(ALLOC_H)
 #include "cmodules/alloc.h"
 #endif
 
@@ -908,6 +908,6 @@ simply-typed variants of ARRAY_HANDLE
 #define array_wstr(pc_array_handle_wstr) \
     wstr_from_h_wstr(pc_array_handle_wstr)
 
-#endif /* __aligator_h */
+#endif /* ALIGATOR_H */
 
 /* end of aligator.h */

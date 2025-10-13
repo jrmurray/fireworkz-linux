@@ -13,7 +13,7 @@
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -21,7 +21,7 @@
 
 #include "ob_file/xp_file.h"
 
-#ifndef         __xp_skeld_h
+#ifndef           XP_SKELD_H
 #include "ob_skel/xp_skeld.h"
 #endif
 

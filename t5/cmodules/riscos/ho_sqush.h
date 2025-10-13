@@ -7,7 +7,7 @@
 /* Copyright (C) 1993-1998 Colton Software Limited
  * Copyright (C) 1998-2015 R W Colton */
 
-#ifndef          __file_h
+#ifndef            FILE_H
 #include "cmodules/file.h"
 #endif
 

@@ -16,11 +16,11 @@
 
 #include "ob_skel/ff_io.h"
 
-#ifndef          __collect_h
+#ifndef            COLLECT_H
 #include "cmodules/collect.h"
 #endif
 
-#ifndef          __typepack_h
+#ifndef            TYPEPACK_H
 #include "cmodules/typepack.h"
 #endif
 

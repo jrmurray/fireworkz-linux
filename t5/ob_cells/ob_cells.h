@@ -9,14 +9,14 @@
 
 /* MRJC February 1994 */
 
-#ifndef __cells_ob_cells_h
-#define __cells_ob_cells_h
+#ifndef CELLS_OB_CELLS_H
+#define CELLS_OB_CELLS_H
 
-#ifndef          __sk_slot_h
+#ifndef            SK_SLOT_H
 #include "ob_cells/sk_slot.h"
 #endif
 
-#ifndef          __ce_edit_h
+#ifndef            CE_EDIT_H
 #include "ob_cells/ce_edit.h"
 #endif
 
@@ -26,6 +26,6 @@
 
 #include "ob_cells/sk_form.h"
 
-#endif /* __cells_ob_cells_h */
+#endif /* CELLS_OB_CELLS_H */
 
 /* end of ob_cells.h */

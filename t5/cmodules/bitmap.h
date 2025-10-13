@@ -7,8 +7,8 @@
 /* Copyright (C) 1992-1998 Colton Software Limited
  * Copyright (C) 1998-2015 R W Colton */
 
-#ifndef __bitmap_h
-#define __bitmap_h
+#ifndef BITMAP_H
+#define BITMAP_H
 
 /* bitmap bits per word */
 #if !defined(BITMAP_BPW)
@@ -264,6 +264,6 @@ bitmap_xor(
     _In_reads_(n_words_for_n_bits) PC_BITMAP p_bitmap_2,
     N_BITS_ARG_DECL(n_bits));
 
-#endif /* __bitmap.h */
+#endif /* BITMAP_H */
 
 /* end of bitmap.h */

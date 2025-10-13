@@ -4,13 +4,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2013-2022 Stuart Swales */
+/* Copyright (C) 2013-2025 Stuart Swales */
 
 /* SKS February 2013 */
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 

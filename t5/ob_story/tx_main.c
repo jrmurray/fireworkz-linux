@@ -15,11 +15,11 @@
 
 #include "ob_story/ob_story.h"
 
-#ifndef          __sk_slot_h
+#ifndef            SK_SLOT_H
 #include "ob_cells/sk_slot.h"
 #endif
 
-#ifndef          __typepack_h
+#ifndef            TYPEPACK_H
 #include "cmodules/typepack.h"
 #endif
 

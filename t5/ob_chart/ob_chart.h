@@ -9,7 +9,7 @@
 
 #include "ob_chart/resource/resource.h"
 
-#ifndef __gr_chart_h
+#ifndef            GR_CHART_H
 #include "cmodules/gr_chart.h"
 #endif
 
@@ -17,11 +17,11 @@
 #include "cmodules/gr_chari.h"
 #endif
 
-#ifndef         __xp_note_h
+#ifndef           XP_NOTE_H
 #include "ob_note/xp_note.h"
 #endif
 
-#ifndef         __xp_skeld_h
+#ifndef           XP_SKELD_H
 #include "ob_skel/xp_skeld.h"
 #endif
 

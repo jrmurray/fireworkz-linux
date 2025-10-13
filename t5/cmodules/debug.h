@@ -15,7 +15,7 @@
 designed for multiple inclusion with different TRACE_ALLOWED
 */
 
-#ifndef          __report_h
+#ifndef            REPORT_H
 #include "cmodules/report.h" /* debug goes via report module */
 #endif
 

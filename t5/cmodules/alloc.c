@@ -13,7 +13,7 @@
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -520,7 +520,7 @@ alloc_initialise_heap(
     rs.r[1] = (int) heap;
     /* no r2 */
     rs.r[3] = new_size;
-    res = (NULL == alloc_winge(_kernel_swi(OS_Heap, &rs, &rs), "initialise_heap"));
+    res = (NULL == alloc_winge(cs_kernel_swi(OS_Heap, &rs), "initialise_heap"));
 #else
     /* do the job by hand */
     heap->magic = 0x70616548; /* ID word ("Heap") */
@@ -812,6 +812,8 @@ alloc_init(void)
     for(;;) /* loop for structure */
     {
         /*reportf(TEXT("g_dynamic_area_limit: %d"), g_dynamic_area_limit);*/
+        (void) flex_granularity_read();
+
         if((alloc_dynamic_area_handle = flex_init(de_const_cast(char *, g_product_riscos_app_dynamic_area), 0, g_dynamic_area_limit)) < 0)
             break;
 
@@ -819,9 +821,7 @@ alloc_init(void)
         {
             alloc_main_heap_desc.minsize = alloc_main_heap_minsize;
 
-            /* SKS 27sep94 attempt to get memory back for 2MB owners. Made sensible for other systems 10nov96 */
-            if(0x4000 == flex_granularity)
-                alloc_main_heap_desc.increment = 0x2000;
+            alloc_main_heap_desc.increment = flex_granularity;
 
             if(!alloc_initialise_heap(&alloc_main_heap_desc))
                 break;
@@ -1736,7 +1736,7 @@ riscos_ptr_alloc(
     rs.r[1] = (int) heap;
     /* no r2 */
     rs.r[3] =       size;
-    p_any   = _kernel_swi(OS_Heap, &rs, &rs) ? NULL : (P_ANY) rs.r[2];
+    p_any   = cs_kernel_swi(OS_Heap, &rs) ? NULL : (P_ANY) rs.r[2];
 
     if(NULL == p_any)
     {
@@ -1750,7 +1750,7 @@ riscos_ptr_alloc(
         rs.r[1] = (int) heap;
         /* no r2 */
         rs.r[3] =       size;
-        p_any   = alloc_winge(_kernel_swi(OS_Heap, &rs, &rs), "malloc 2") ? NULL : (P_ANY) rs.r[2];
+        p_any   = alloc_winge(cs_kernel_swi(OS_Heap, &rs), "malloc 2") ? NULL : (P_ANY) rs.r[2];
 
         myassert1x(p_any, TEXT("alloc__malloc(%u) failed unexpectedly after heap extension"), size);
     }
@@ -1769,7 +1769,7 @@ riscos_ptr_free(
     rs.r[0] = HeapReason_Free;
     rs.r[1] = (int) heap;
     rs.r[2] = (int) (p_used + 1);
-    (void) alloc_winge(_kernel_swi(OS_Heap, &rs, &rs), "free");
+    (void) alloc_winge(cs_kernel_swi(OS_Heap, &rs), "free");
 }
 
 static P_ANY
@@ -1788,7 +1788,7 @@ riscos_ptr_realloc_grow(
     rs.r[1] = (int) heap;
     rs.r[2] = (int) p_used;
     rs.r[3] =       size_diff;
-    p_any   = _kernel_swi(OS_Heap, &rs, &rs) ? NULL : (P_ANY) rs.r[2];
+    p_any   = cs_kernel_swi(OS_Heap, &rs) ? NULL : (P_ANY) rs.r[2];
 
     if(NULL == p_any)
     {
@@ -1802,7 +1802,7 @@ riscos_ptr_realloc_grow(
         rs.r[1] = (int) heap;
         rs.r[2] = (int) p_used;
         rs.r[3] =       size_diff;
-        p_any   = alloc_winge(_kernel_swi(OS_Heap, &rs, &rs), "realloc(growth) 2") ? NULL : (P_ANY) rs.r[2];
+        p_any   = alloc_winge(cs_kernel_swi(OS_Heap, &rs), "realloc(growth) 2") ? NULL : (P_ANY) rs.r[2];
 
         myassert1x(p_any, TEXT("alloc__realloc(%u) failed unexpectedly after heap extension"), new_blksize - cur_blksize);
     }
@@ -1827,7 +1827,7 @@ riscos_ptr_realloc_shrink(
     rs.r[1] = (int) heap;
     rs.r[2] = (int) p_any;
     rs.r[3] =       size_diff;
-    p_any   = alloc_winge(_kernel_swi(OS_Heap, &rs, &rs), "realloc(shrink)") ? NULL : (P_ANY) rs.r[2];
+    p_any   = alloc_winge(cs_kernel_swi(OS_Heap, &rs), "realloc(shrink)") ? NULL : (P_ANY) rs.r[2];
 
     return(p_any);
 }

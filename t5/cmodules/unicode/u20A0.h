@@ -4,10 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2006-2022 Stuart Swales */
+/* Copyright (C) 2006-2025 Stuart Swales */
 
-#ifndef __u20A0_h
-#define __u20A0_h
+#ifndef UNICODE_U20A0_H
+#define UNICODE_U20A0_H
 
 /*
 20A0..20CF Currency Symbols
@@ -46,6 +46,6 @@
 #define UCH_RUBLE_SIGN 0x20BDU
 #define UCH_LARI_SIGN 0x20BEU
 
-#endif /* __u20A0_h */
+#endif /* UNICODE_U20A0_H */
 
 /* end of u20A0.h */

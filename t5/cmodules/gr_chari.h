@@ -16,16 +16,16 @@ required includes
 */
 
 #if RISCOS
-#ifndef         __xp_skelr_h
+#ifndef           XP_SKELR_H
 #include "ob_skel/xp_skelr.h"
 #endif
 #endif
 
-#ifndef          __gr_coord_h
+#ifndef            GR_COORD_H
 #include "cmodules/gr_coord.h"
 #endif
 
-#ifndef          __mathxtr2_h
+#ifndef            MATHXTR2_H
 #include "cmodules/mathxtr2.h"
 #endif
 

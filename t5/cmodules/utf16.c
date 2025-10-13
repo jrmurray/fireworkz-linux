@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2006-2022 Stuart Swales */
+/* Copyright (C) 2006-2025 Stuart Swales */
 
 /* Library module for UTF-16 character handling */
 
@@ -12,15 +12,15 @@
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
-#ifndef          __typepack_h
+#ifndef            TYPEPACK_H
 #include "cmodules/typepack.h"
 #endif
 
-#ifndef          __utf16_h
+#ifndef            UTF16_H
 #include "cmodules/utf16.h"
 #endif
 

@@ -11,8 +11,8 @@
 
 /* SKS May 1990 */
 
-#ifndef __xstring_h
-#define __xstring_h
+#ifndef XSTRING_H
+#define XSTRING_H
 
 #define strlen_with_NULLCH      ((U32) (-1))
 #define strlen_without_NULLCH   ((U32) (-2))
@@ -242,6 +242,6 @@ strlen32_n(
     return(n);
 }
 
-#endif /* __xstring_h */
+#endif /* XSTRING_H */
 
 /* end of xstring.h */

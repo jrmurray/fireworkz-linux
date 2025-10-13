@@ -4,12 +4,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2006-2022 Stuart Swales */
+/* Copyright (C) 2006-2025 Stuart Swales */
 
-#ifndef __utf8str_h
-#define __utf8str_h
+#ifndef UTF8STR_H
+#define UTF8STR_H
 
-#ifndef          __utf8_h
+#ifndef            UTF8_H
 #include "cmodules/utf8.h"
 #endif
 
@@ -519,6 +519,6 @@ ustr_char_next(
 
 #endif /* USTR_IS_SBSTR */
 
-#endif /* __utf8str_h */
+#endif /* UTF8STR_H */
 
 /* end of utf8str.h */

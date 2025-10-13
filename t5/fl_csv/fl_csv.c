@@ -19,7 +19,7 @@
 
 #include "cmodules/unicode/u2000.h" /* 2000..206F General Punctuation */
 
-#ifndef         __xp_skeld_h
+#ifndef           XP_SKELD_H
 #include "ob_skel/xp_skeld.h"
 #endif
 

@@ -15,9 +15,9 @@
 
 #include "cmodules/mathxcpx.h"
 
-#include "cmodules/mathxtra.h" /* for mx_fsquare() */
+#include "cmodules/mathxtra.h" /* for mathxtra_square() */
 
-#ifndef                   __mathnums_h
+#ifndef                     MATHNUMS_H
 #include "cmodules/coltsoft/mathnums.h" /* for _log10_e */
 #endif
 
@@ -197,7 +197,7 @@ complex_divide( /* z1 / z2 */
     _OutRef_    P_COMPLEX z_out)
 {
     /* c*c + d*d */
-    const double divisor = mx_fsquare(complex_real(z2)) + mx_fsquare(complex_imag(z2));
+    const double divisor = mathxtra_square(complex_real(z2)) + mathxtra_square(complex_imag(z2));
 
     /* check for divide by zero about to trap */
     if(fabs(divisor) < DBL_MIN)
@@ -277,7 +277,7 @@ complex_log_e( /* log_e(z) */
 {
     STATUS status = STATUS_OK;
 #if defined(USE_OWN_COMPLEX_IMPL)
-    const double r_squared = mx_fsquare(complex_real(z)) + mx_fsquare(complex_imag(z));
+    const double r_squared = mathxtra_square(complex_real(z)) + mathxtra_square(complex_imag(z));
     double lnz_real_part;
 
     errno = 0;
@@ -313,7 +313,7 @@ complex_log_2( /* log_2(z) */
     _InRef_     PC_COMPLEX z,
     _OutRef_    P_COMPLEX z_out)
 {
-    const double r_squared = mx_fsquare(complex_real(z)) + mx_fsquare(complex_imag(z));
+    const double r_squared = mathxtra_square(complex_real(z)) + mathxtra_square(complex_imag(z));
     double log2_real_part;
     STATUS status = STATUS_OK;
 
@@ -347,7 +347,7 @@ complex_log_10( /* log_10(z) */
     _InRef_     PC_COMPLEX z,
     _OutRef_    P_COMPLEX z_out)
 {
-    const double r_squared = mx_fsquare(complex_real(z)) + mx_fsquare(complex_imag(z));
+    const double r_squared = mathxtra_square(complex_real(z)) + mathxtra_square(complex_imag(z));
     double log10_real_part;
     STATUS status = STATUS_OK;
 
@@ -1064,7 +1064,7 @@ do_inverse_hyperbolic(
 
         /* furtle = z*z + add_in_middle */
         complex_set_ri(&furtle,
-                       /*r*/ mx_fsquare(complex_real(&z)) - mx_fsquare(complex_imag(&z))  +  add_in_middle,
+                       /*r*/ mathxtra_square(complex_real(&z)) - mathxtra_square(complex_imag(&z))  +  add_in_middle,
                        /*i*/ complex_real(&z) * complex_imag(&z) * 2.0);
 
         /* sqrt(furtle) into temp */

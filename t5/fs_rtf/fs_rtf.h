@@ -11,10 +11,7 @@
 
 /* JAD Jul 1993 */
 
-#ifndef __fs_rtf_h
-#define __fs_rtf_h
-
-#ifndef          __sk_slot_h
+#ifndef            SK_SLOT_H
 #include "ob_cells/sk_slot.h"
 #endif
 
@@ -28,7 +25,5 @@ typedef struct RTF_STYLESHEET
     TCHARZ name[36];
 }
 RTF_STYLESHEET, * P_RTF_STYLESHEET;
-
-#endif /* __fs_rtf_h */
 
 /* end of fs_rtf.h */

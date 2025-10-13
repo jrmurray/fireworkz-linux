@@ -13,7 +13,7 @@
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -1585,7 +1585,7 @@ file_tempname_null(
     rs.r[2] = sizeof32(buffer);
     rs.r[3] = 0;
     rs.r[4] = 3;
-    void_WrapOsErrorChecking(_kernel_swi(OS_ReadVarVal, &rs, &rs));
+    void_WrapOsErrorChecking(cs_kernel_swi(OS_ReadVarVal, &rs));
 
     if(rs.r[2] == 0)
         status = create_error(ERR_RISCOS_NO_SCRAP);

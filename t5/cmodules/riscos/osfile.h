@@ -11,8 +11,8 @@
 
 /* SKS 24-May-1991 */
 
-#ifndef __riscos_osfile_h
-#define __riscos_osfile_h
+#ifndef RISCOS_OSFILE_H
+#define RISCOS_OSFILE_H
 
 /*
 OS_File reason codes
@@ -128,6 +128,6 @@ OS_FSControl reason codes
 
 #define OSFSControl_Rename 25
 
-#endif /* __riscos_osfile_h */
+#endif /* RISCOS_OSFILE_H */
 
 /* end of riscos/osfile.h */

@@ -15,7 +15,7 @@
 
 #include "fl_xls/fl_xls.h"
 
-#ifndef          __ev_eval_h
+#ifndef            EV_EVAL_H
 #include "cmodules/ev_eval.h"
 #endif
 

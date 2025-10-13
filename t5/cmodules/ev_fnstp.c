@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2014-2022 Stuart Swales */
+/* Copyright (C) 2014-2025 Stuart Swales */
 
 /* Statistical function routines for evaluator */
 
@@ -12,7 +12,7 @@
 
 #include "ob_ss/ob_ss.h"
 
-#include "cmodules/mathxtra.h" /* for mx_fsquare() */
+#include "cmodules/mathxtra.h" /* for mathxtra_square() */
 
 /******************************************************************************
 *
@@ -168,11 +168,11 @@ statistics_paired_calc(
 
         delta_x = ss_data_get_real(&ss_data_x) - p_statistics_paired->x.mean; /* difference of value from array_x from its mean */
         p_statistics_paired->x.sum_of_delta += delta_x;
-        p_statistics_paired->x.sum_of_delta2 += mx_fsquare(delta_x);
+        p_statistics_paired->x.sum_of_delta2 += mathxtra_square(delta_x);
 
         delta_y = ss_data_get_real(&ss_data_y) - p_statistics_paired->y.mean; /* difference of value from array_y from its mean */
         p_statistics_paired->y.sum_of_delta += delta_y;
-        p_statistics_paired->y.sum_of_delta2 += mx_fsquare(delta_y);
+        p_statistics_paired->y.sum_of_delta2 += mathxtra_square(delta_y);
 
         p_statistics_paired->sum_of_product_of_deltas += (delta_x * delta_y);
     }
@@ -470,7 +470,7 @@ PROC_EXEC_PROTO(c_rsq)
 
     if(!ss_data_is_error(p_ss_data_res))
     {
-        const F64 r_squared = mx_fsquare(ss_data_get_real(p_ss_data_res));
+        const F64 r_squared = mathxtra_square(ss_data_get_real(p_ss_data_res));
         ss_data_set_real(p_ss_data_res, r_squared);
     }
 }

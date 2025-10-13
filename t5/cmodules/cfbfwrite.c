@@ -6,17 +6,17 @@
 
 /* Compound File Binary Format (COM / OLE 2 Structured Storage) access functions */
 
-/* Copyright (C) 2014-2022 Stuart Swales */
+/* Copyright (C) 2014-2025 Stuart Swales */
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
 #include "cmodules/cfbf.h"
 
-#ifndef          __typepack_h
+#ifndef            TYPEPACK_H
 #include "cmodules/typepack.h"
 #endif
 

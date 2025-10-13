@@ -11,19 +11,19 @@
 
 /* RCM June 1992 */
 
-#ifndef __ob_draw_h
-#define __ob_draw_h
+#ifndef OB_DRAW_H
+#define OB_DRAW_H
 
-#ifndef         __xp_note_h
+#ifndef           XP_NOTE_H
 #include "ob_note/xp_note.h"
 #endif
 
-#ifndef          __im_cache_h
+#ifndef            IM_CACHE_H
 #include "cmodules/im_cache.h"
 #endif
 
 #define DRAW_MSG_DRAWFILEDESCRIPT   4001
 
-#endif /* __ob_draw_h */
+#endif /* OB_DRAW_H */
 
 /* end of ob_draw.h */

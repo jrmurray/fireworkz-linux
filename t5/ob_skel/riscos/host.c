@@ -15,7 +15,9 @@
 
 #if RISCOS
 
-#ifndef    __skel_flags_h
+#define EXPOSE_RISCOS_SWIS 1
+
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -3759,9 +3761,7 @@ ho_help_url(
     if( (NULL == _kernel_getenv("Alias$Open_URI_http", tempstr, elemof32(tempstr)-1)) &&
         (CH_NULL != tempstr[0]) )
     {
-       _kernel_swi_regs rs;
-        rs.r[0] = 0;
-        if( (NULL == _kernel_swi(/*URI_Version*/ 0x4E380, &rs, &rs)) )
+        if( (NULL == _swix(/*URI_Version*/ 0x4E380, _IN(0), 0)) )
         {
             consume_int(snprintf(tempstr, elemof32(tempstr), "URIdispatch %s", url));
             reportf("StartTask %s", tempstr);

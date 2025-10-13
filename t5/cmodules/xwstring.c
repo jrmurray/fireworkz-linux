@@ -13,11 +13,11 @@
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
-#ifndef          __xwstring_h
+#ifndef            XWSTRING_H
 #include "cmodules/xwstring.h"
 #endif
 
@@ -656,7 +656,7 @@ wstr_xvsnprintf(
 #if RISCOS || 1
 
 #if 1
-#ifndef          __typepack_h
+#ifndef            TYPEPACK_H
 #include "cmodules/typepack.h"
 #endif
 #define GetWchar(pwch) readval_U16(pwch) /* paranoia about unaligned data */

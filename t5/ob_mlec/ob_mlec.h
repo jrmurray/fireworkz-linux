@@ -11,9 +11,9 @@
 
 /* SKS April 1992 */
 
-#ifndef __ob_mlec_h
-#define __ob_mlec_h
+#ifndef OB_MLEC_H
+#define OB_MLEC_H
 
-#endif /* __ob_mlec_h */
+#endif /* OB_MLEC_H */
 
 /* end of ob_mlec.h */

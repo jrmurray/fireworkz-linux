@@ -11,10 +11,10 @@
 
 /* MRJC April 1992 */
 
-#ifndef __ob_ss_h
-#define __ob_ss_h
+#ifndef OB_SS_H
+#define OB_SS_H
 
-#ifndef       __xp_ss_h
+#ifndef         XP_SS_H
 #include "ob_ss/xp_ss.h"
 #endif
 
@@ -189,6 +189,6 @@ extern STATUS
 ss_formula_reflect_contents(
     _DocuRef_   P_DOCU p_docu);
 
-#endif /* __ob_ss_h */
+#endif /* OB_SS_H */
 
 /* end of ob_ss.h */

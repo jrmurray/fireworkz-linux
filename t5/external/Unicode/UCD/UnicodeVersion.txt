@@ -1,0 +1,5 @@
+Unicode 14.0.0
+
+2021-09-14
+
+https://unicode.org/versions/Unicode14.0.0/

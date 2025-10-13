@@ -15,7 +15,7 @@
 
 #include "ob_ss/ob_ss.h"
 
-#include "cmodules/mathxtra.h" /* for mx_fsquare() */
+#include "cmodules/mathxtra.h" /* for mathxtra_square() */
 #include "cmodules/mathxtri.h"
 
 /*
@@ -605,7 +605,7 @@ array_range_proc_number_GCD(
     if(0 == p_stat_block->count)
         ss_data_set_real(&p_stat_block->running_data, x);
     else
-        ss_data_set_real(&p_stat_block->running_data, mx_gcd(x, ss_data_get_real(&p_stat_block->running_data)));
+        ss_data_set_real(&p_stat_block->running_data, mathxtra_gcd(x, ss_data_get_real(&p_stat_block->running_data)));
 }
 
 static void
@@ -636,7 +636,7 @@ array_range_proc_number_LCM(
     if(0 == p_stat_block->count)
         ss_data_set_real(&p_stat_block->running_data, x);
     else
-        ss_data_set_real(&p_stat_block->running_data, mx_lcm(x, ss_data_get_real(&p_stat_block->running_data)));
+        ss_data_set_real(&p_stat_block->running_data, mathxtra_lcm(x, ss_data_get_real(&p_stat_block->running_data)));
 }
 
 static void
@@ -697,7 +697,7 @@ array_range_proc_number_simple_statistics(
     else
     {
         F64 x = ss_data_get_real(p_ss_data) - p_stat_block->shift_value;
-        F64 x_squared = mx_fsquare(x);
+        F64 x_squared = mathxtra_square(x);
         p_stat_block->sum_of_x_squared += x_squared;
         stat_block_running_data_add_real(p_stat_block, x);
     }
@@ -725,9 +725,9 @@ array_range_proc_number_KURT_or_SKEW(
 
     if(ARRAY_RANGE_KURT == p_stat_block->exec_array_range_id)
     {
-        F64 delta_n_squared = mx_fsquare(delta_n);
+        F64 delta_n_squared = mathxtra_square(delta_n);
         p_stat_block->M4 = p_stat_block->M4
-                         + common_term * delta_n_squared * (mx_fsquare(n) - 3*n + 3) /* avoid integer overflow with millions of data values */
+                         + common_term * delta_n_squared * (mathxtra_square(n) - 3*n + 3) /* avoid integer overflow with millions of data values */
                          + 6.0 * delta_n_squared * p_stat_block->M2
                          - 4.0 * delta_n * p_stat_block->M3;
     }
@@ -751,7 +751,7 @@ array_range_proc_number_KURT_or_SKEW(
         else
         {
             F64 x = ss_data_get_real(p_ss_data) - p_stat_block->shift_value;
-            F64 x_squared = mx_fsquare(x);
+            F64 x_squared = mathxtra_square(x);
             p_stat_block->sum_of_x_squared += x_squared;
             stat_block_running_data_add_real(p_stat_block, x);
         }
@@ -760,11 +760,11 @@ array_range_proc_number_KURT_or_SKEW(
     {   /* second pass adds up all |(values - mean)|^n */
         F64 x = ss_data_get_real(p_ss_data);
         F64 delta = (x - p_stat_block->mean);
-        F64 delta_squared = mx_fsquare(delta);
+        F64 delta_squared = mathxtra_square(delta);
 
         if(ARRAY_RANGE_KURT == p_stat_block->exec_array_range_id)
         {
-            F64 delta4 = mx_fsquare(delta_squared);
+            F64 delta4 = mathxtra_square(delta_squared);
 
             p_stat_block->M4 += delta4;
         }
@@ -783,7 +783,7 @@ array_range_proc_number_SUMSQ(
     _InoutRef_  P_STAT_BLOCK p_stat_block,
     _InoutRef_  P_SS_DATA p_ss_data)
 {
-    const F64 x_squared = mx_fsquare(ss_data_get_real(p_ss_data));
+    const F64 x_squared = mathxtra_square(ss_data_get_real(p_ss_data));
     stat_block_running_data_add_real(p_stat_block, x_squared); /* uniform processing for sum of values */
 }
 
@@ -1411,7 +1411,7 @@ calc_devsq(
     _InRef_     P_STAT_BLOCK p_stat_block)
 {
     F64 sum_of_x_squared = p_stat_block->sum_of_x_squared;
-    F64 sum_squared = mx_fsquare(ss_data_get_real(&p_stat_block->running_data));
+    F64 sum_squared = mathxtra_square(ss_data_get_real(&p_stat_block->running_data));
     S32 n = p_stat_block->count;
     F64 sum_squared_div_n = sum_squared / n;
     F64 devsq = sum_of_x_squared - sum_squared_div_n;
@@ -1449,7 +1449,7 @@ calc_variance(
 {
     S32 n = p_stat_block->count;
     F64 n_sum_of_x_squared = n * p_stat_block->sum_of_x_squared;
-    F64 sum_squared = mx_fsquare(ss_data_get_real(&p_stat_block->running_data));
+    F64 sum_squared = mathxtra_square(ss_data_get_real(&p_stat_block->running_data));
     F64 delta = n_sum_of_x_squared - sum_squared;
     F64 variance;
 

@@ -11,8 +11,8 @@
 
 /* SKS July 1991 */
 
-#ifndef __gr_coord_h
-#define __gr_coord_h
+#ifndef GR_COORD_H
+#define GR_COORD_H
 
 /*
 structure
@@ -414,6 +414,6 @@ draw_point_xform(
     gr_point_xform((const P_GR_POINT) xpoint, (const PC_GR_POINT) apoint, xform);
 }
 
-#endif /* __gr_coord_h */
+#endif /* GR_COORD_H */
 
 /* end of gr_coord.h */

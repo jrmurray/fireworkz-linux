@@ -7,8 +7,8 @@
 /* Copyright (C) 1991-1998 Colton Software Limited
  * Copyright (C) 1998-2015 R W Colton */
 
-#ifndef __xp_skel_h
-#define __xp_skel_h
+#ifndef XP_SKEL_H
+#define XP_SKEL_H
 
 typedef struct DOCU DOCU, * P_DOCU, ** P_P_DOCU; typedef const DOCU * PC_DOCU; /* rare use */
 
@@ -60,12 +60,16 @@ typedef U8 PACKED_VIEWNO; /* packed version for critical structures */
 typedef struct PANE PANE, * P_PANE, * P_P_PANE; typedef const PANE * PC_PANE; /* rare use */
 
 typedef S32 COL; typedef COL * P_COL; typedef const COL * PC_COL;
+#define     col_max(a,b) s32_max(a,b)
+#define     col_min(a,b) s32_min(a,b)
 #define     COL_BITS     32
 #define     COL_TFMT    S32_TFMT
 #define MAX_COL         ((COL) 0x7FFFFFFF)
 #define BAD_COL         ((COL) 0x80000000)
 
 typedef S32 ROW; typedef ROW * P_ROW; typedef const ROW * PC_ROW;
+#define     row_max(a,b) s32_max(a,b)
+#define     row_min(a,b) s32_min(a,b)
 #define     ROW_BITS     32
 #define     ROW_FMT     S32_FMT
 #define     ROW_TFMT    S32_TFMT
@@ -95,7 +99,7 @@ typedef const _UCHARS_INLINE * PC_USTR_INLINE; /*_Null_terminated_*/
 
 typedef        UCHARB             UCHARB_INLINE; /* this is needed to make arrays of them on the stack */
 
-#ifndef                   __filetype_h
+#ifndef                     FILETYPE_H
 #include "cmodules/coltsoft/filetype.h"
 #endif
 
@@ -184,6 +188,10 @@ typedef S32 PAGE;
 /* other universal types */
 
 typedef S32 PIXIT; typedef PIXIT * P_PIXIT; typedef const PIXIT * PC_PIXIT;
+/* maximum of a pair of PIXIT values (not macro) */
+_Check_return_ static inline PIXIT pixit_max(PIXIT a, PIXIT b) { return((a >= b) ? a : b); }
+/* minimum of a pair of PIXIT values (not macro) */
+_Check_return_ static inline PIXIT pixit_min(PIXIT a, PIXIT b) { return((a <= b) ? a : b); }
 
 #define PIXIT_TFMT S32_TFMT
 
@@ -12535,12 +12543,12 @@ extern void
 print_page_range_edit_validation_setup(void);
 
 /* >>>>>>>>>>>>this wants removing soon 18.2.94 */
-#ifndef          __sk_col_h
+#ifndef            SK_COL_H
 #include "ob_cells/sk_col.h"
 #endif
 
 /* >>>>>>>>>>>>this wants removing soon 18.2.94 */
-#ifndef          __sk_form_h
+#ifndef            SK_FORM_H
 #include "ob_cells/sk_form.h"
 #endif
 
@@ -12790,6 +12798,6 @@ style_name_from_marked_area(
     _DocuRef_   P_DOCU p_docu,
     _OutRef_    P_UI_TEXT p_ui_text);
 
-#endif /* __xp_skel_h */
+#endif /* XP_SKEL_H */
 
 /* end of xp_skel.h */

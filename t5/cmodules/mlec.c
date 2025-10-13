@@ -15,7 +15,7 @@
 
 #if RISCOS
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -550,7 +550,7 @@ mlec_host_font_find(
     rs.r[4] = 0;
     rs.r[5] = 0;
 
-    if(NULL == (p_kernel_oserror = (_kernel_swi(Font_FindFont, &rs, &rs))))
+    if(NULL == (p_kernel_oserror = (cs_kernel_swi(Font_FindFont, &rs))))
         host_font = (HOST_FONT) rs.r[0];
 
     return(host_font);
@@ -589,6 +589,11 @@ mlec_get_host_font(void)
             return(host_font);
     }
 
+    host_font = mlec_host_font_find("\\F" "VerityMono" /*current alphabet*/, x16_size_y, x16_size_y);
+
+    if(HOST_FONT_NONE != host_font)
+        return(host_font);
+
     host_font = mlec_host_font_find("\\F" "Corpus.Medium" /*current alphabet*/, x16_size_y, x16_size_y);
 
     if(HOST_FONT_NONE != host_font)
@@ -623,7 +628,7 @@ mlec_get_host_font_ascent(
     if(host_version_font_m_read(HOST_FONT_KERNING))
         rs.r[2] |= FONT_SCANSTRING_KERNING;
 
-    if(NULL == (p_kernel_oserror = WrapOsErrorChecking(_kernel_swi(Font_ScanString, &rs, &rs))))
+    if(NULL == (p_kernel_oserror = WrapOsErrorChecking(cs_kernel_swi(Font_ScanString, &rs))))
     {   /* returns i,i,e,e bbox */
         const U32 YEigFactor = host_modevar_cache_current.YEigFactor;
         const S32 divisor = MILLIPOINTS_PER_RISCOS << YEigFactor;
@@ -2799,7 +2804,7 @@ render_line(
             rs.r[4] = y - base_line_shift;
             rs.r[7] = showcnt;
 
-            if(NULL != WrapOsErrorChecking(_kernel_swi(Font_Paint, &rs, &rs)))
+            if(NULL != WrapOsErrorChecking(cs_kernel_swi(Font_Paint, &rs)))
                 status = create_error(ERR_FONT_PAINT);
         }
         else
@@ -3556,7 +3561,7 @@ colourtrans_ReturnColourNumber(
 #if defined(NORCROFT_INLINE_ASM)
     __asm {
         MOV     r0, word;
-        SWI     (ColourTrans_ReturnColourNumber | XOS_Bit), /*in*/ {R0}, /*out*/ {R0}, /*corrupted*/ {PSR};
+        SWI     (ColourTrans_ReturnColourNumber | XOS_Bit), /*in*/ {R0}, /*out*/ {R0,PSR}, /*corrupted*/ {};
         MOVVS   r0, #0
         MOV     colnum, r0
     }
@@ -3566,7 +3571,7 @@ colourtrans_ReturnColourNumber(
 #else
     _kernel_swi_regs rs;
     rs.r[0] = word;
-    colnum = (/*NULL !=*/ _kernel_swi(ColourTrans_ReturnColourNumber, &rs, &rs)) ? 0 : rs.r[0];
+    colnum = (/*NULL !=*/ cs_kernel_swi(ColourTrans_ReturnColourNumber, &rs)) ? 0 : rs.r[0];
 #endif
     return(colnum);
 }
@@ -3613,7 +3618,7 @@ host_set_EOR_for_mlec(void)
     _kernel_swi_regs rs;
     rs.r[0] = 3;
     rs.r[1] = colnum_foreground ^ colnum_background;
-    void_WrapOsErrorChecking(_kernel_swi(OS_SetColour, &rs, &rs));
+    void_WrapOsErrorChecking(cs_kernel_swi(OS_SetColour, &rs));
 #endif
 }
 

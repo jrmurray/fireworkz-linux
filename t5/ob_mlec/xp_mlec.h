@@ -7,9 +7,9 @@
 /* Copyright (C) 1992-1998 Colton Software Limited
  * Copyright (C) 1998-2015 R W Colton */
 
-#ifndef __xp_mlec_h
-#define __xp_mlec_h
+#ifndef XP_MLEC_H
+#define XP_MLEC_H
 
-#endif /* __xp_mlec_h */
+#endif /* XP_MLEC_H */
 
 /* end of xp_mlec.h */

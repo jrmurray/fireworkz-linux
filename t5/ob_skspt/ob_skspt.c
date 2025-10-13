@@ -17,11 +17,11 @@
 
 #include "ob_skspt/ui_styin.h"
 
-#ifndef          __sk_slot_h
+#ifndef            SK_SLOT_H
 #include "ob_cells/sk_slot.h"
 #endif
 
-#ifndef         __xp_skeld_h
+#ifndef           XP_SKELD_H
 #include "ob_skel/xp_skeld.h"
 #endif
 
@@ -38,7 +38,7 @@ extern PC_U8 rb_skel_split_msg_weak;
 
 #define P_BOUND_RESOURCES_OBJECT_ID_SKEL_SPLIT DONT_LOAD_RESOURCES
 
-#ifndef          __ce_edit_h
+#ifndef            CE_EDIT_H
 #include "ob_cells/ce_edit.h"
 #endif
 

@@ -11,7 +11,7 @@
 
 #if RISCOS
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -21,6 +21,13 @@
 #include "ob_skel/prodinfo.h"
 
 #include <signal.h>
+
+/*ncr*/
+extern _kernel_oserror *
+cs_kernel_swi(int swi_code, _kernel_swi_regs * in_and_out)
+{
+    return(_kernel_swi(swi_code, in_and_out, in_and_out));
+}
 
 _Check_return_
 _Ret_maybenull_
@@ -132,7 +139,7 @@ wimp_reporterror_rf(
 #endif
         }
 
-        if(NULL == (err = _kernel_swi(Wimp_ReportError, &rs, &rs)))
+        if(NULL == (err = cs_kernel_swi(Wimp_ReportError, &rs)))
             *p_button_clicked = rs.r[1];
 
         riscos_hourglass_on();
@@ -165,7 +172,7 @@ host_os_version_determine(void)
 
     rs.r[0] = 0; /* Read code features */
 
-    if(NULL == _kernel_swi(OS_PlatformFeatures, &rs, &rs))
+    if(NULL == cs_kernel_swi(OS_PlatformFeatures, &rs))
     {
         g_host_platform_features = rs.r[0];
     }

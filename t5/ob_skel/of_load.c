@@ -13,7 +13,7 @@
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -27,15 +27,15 @@
 
 #include "ob_file/xp_file.h"
 
-#ifndef         __xp_skeld_h
+#ifndef           XP_SKELD_H
 #include "ob_skel/xp_skeld.h"
 #endif
 
-#ifndef          __typepack_h
+#ifndef            TYPEPACK_H
 #include "cmodules/typepack.h"
 #endif
 
-#ifndef          __utf16_h
+#ifndef            UTF16_H
 #include "cmodules/utf16.h"
 #endif
 
@@ -489,7 +489,7 @@ input_initialise_input(
                 else
                     p_ip_format_input->file.file_size_in_bytes = filelength.u.words.lo;
 
-                status = file_buffer(p_ip_format_input->file.file_handle, NULL, 16384); /* SKS big buffering for loads */
+                status = file_buffer(p_ip_format_input->file.file_handle, NULL, file_nice_buffer_size());
             }
         }
     }

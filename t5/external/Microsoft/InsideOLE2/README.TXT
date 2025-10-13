@@ -5,7 +5,7 @@ external/Microsoft/InsideOLE2/
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-# Copyright © 2013-2022 Stuart Swales
+# Copyright © 2013-2025 Stuart Swales
 
 Updated samples from the Inside OLE 2 book by Kraig Brockschmidt (Microsoft Press).
 

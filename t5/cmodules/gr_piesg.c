@@ -13,7 +13,7 @@
 
 #include "ob_chart/ob_chart.h"
 
-#ifndef                   __mathnums_h
+#ifndef                     MATHNUMS_H
 #include "cmodules/coltsoft/mathnums.h"
 #endif
 

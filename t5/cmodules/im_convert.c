@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2015-2022 Stuart Swales */
+/* Copyright (C) 2015-2025 Stuart Swales */
 
 /* Module that handles conversion for image file cache */
 
@@ -263,13 +263,13 @@ image_convert_do_convert_file(
     rs.r[0] = -1; /* read */
     rs.r[1] = -1; /* read next slot */
 #define MIN_NEXT_SLOT (512 * 1024)
-    if(NULL != WrapOsErrorReporting(_kernel_swi(Wimp_SlotSize, &rs, &rs)))
+    if(NULL != WrapOsErrorReporting(cs_kernel_swi(Wimp_SlotSize, &rs)))
         return(STATUS_FAIL);
     else if(rs.r[1] < MIN_NEXT_SLOT)
     {
         rs.r[0] = -1; /* read */
         rs.r[1] = MIN_NEXT_SLOT; /* write next slot */
-        if(NULL != WrapOsErrorReporting(_kernel_swi(Wimp_SlotSize, &rs, &rs))) /* sorry for the override, but it does need some space to run! */
+        if(NULL != WrapOsErrorReporting(cs_kernel_swi(Wimp_SlotSize, &rs))) /* sorry for the override, but it does need some space to run! */
             return(STATUS_FAIL);
     }
     } /*block*/

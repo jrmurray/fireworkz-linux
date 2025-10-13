@@ -25,7 +25,7 @@
 
 #if defined(LOADS_CODE_MODULES)
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -330,7 +330,7 @@ host_load_module(
 
                                 rs.r[0] = 0x8;
 
-                                if(NULL != _kernel_swi(/*Squash_Decompress*/ 0x042701, &rs, &rs))
+                                if(NULL != cs_kernel_swi(/*Squash_Decompress*/ 0x042701, &rs))
                                 {
                                     status = create_error_from_kernel_oserror(_kernel_last_oserror());
                                     break;
@@ -355,7 +355,7 @@ host_load_module(
                                 rs.r[4] = (int) expansion_space;
                                 rs.r[5] = (int) chunk_header.expanded_size;
 
-                                if(NULL != _kernel_swi(/*Squash_Decompress*/ 0x042701, &rs, &rs))
+                                if(NULL != cs_kernel_swi(/*Squash_Decompress*/ 0x042701, &rs))
                                 {
                                     status = create_error_from_kernel_oserror(_kernel_last_oserror());
                                     break;
@@ -525,7 +525,7 @@ host_load_module(
             rs.r[1] = (int) p_runtime_info->p_code;
             rs.r[2] = (int) p_runtime_info->p_code + (int) p_runtime_info->code_size;
             rs.r[2] = ((rs.r[2] + 3) & ~3) - 4; /* inclusive address required, so round up then lose a word */
-            WrapOsErrorReporting(_kernel_swi(OS_SynchroniseCodeAreas, &rs, &rs));
+            WrapOsErrorReporting(cs_kernel_swi(OS_SynchroniseCodeAreas, &rs));
         }
 
         if(module_header.entry_offset != 0)

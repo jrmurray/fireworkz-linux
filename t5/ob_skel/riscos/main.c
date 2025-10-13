@@ -15,7 +15,7 @@
 
 #if RISCOS
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -248,18 +248,6 @@ decode_run_options(void)
 
                 goto past_arg;
             }
-
-            test_arg = "kill-duplicates";
-            test_len = strlen32(test_arg);
-
-            if((arg_len >= test_len) && (0 == memcmp32(arg, test_arg, test_len)))
-            {
-                arg += test_len;
-
-                g_kill_duplicates = TRUE;
-
-                goto past_arg;
-            }
         }
         else
         {
@@ -442,10 +430,8 @@ t5_signal_handler_common(int sig)
 
     if(0 == host_task_handle())
     {
-        _kernel_swi_regs rs;
         report_output(err.errmess);
-        rs.r[0] = (int) &err;
-        consume(_kernel_oserror *, _kernel_swi(OS_GenerateError, &rs, &rs));
+        _swi(OS_GenerateError, _IN(0), (int) &err);
     }
     else if(must_die)
     {
@@ -483,7 +469,13 @@ t5_signal_handler_common(int sig)
 
 PROC_ATEXIT_PROTO(static, window_manager_atexit)
 {
+    riscos_hourglass_off();
+
+#if defined(NORCROFT_INLINE_SWIX)
+    void_WrapOsErrorReporting(_swix(Wimp_CloseDown, _IN(0), host_task_handle())); /* No 'TASK' needed here */
+#else
     void_WrapOsErrorReporting(wimp_close_down(host_task_handle()));
+#endif
 }
 
 static BOOL g_host_must_die = FALSE;
@@ -534,7 +526,7 @@ host_report_and_trace_enable(void)
         trace_1(TRACE_OUT | TRACE_ANY, TEXT("main: sp ~= ") PTR_XTFMT, &scptr);
         scptr = _kernel_current_stack_chunk();
         scsize = scptr->sc_size;
-        void_WrapOsErrorChecking(_kernel_swi(OS_GetEnv, &rs, &rs));
+        void_WrapOsErrorChecking(cs_kernel_swi(OS_GetEnv, &rs));
         trace_4(TRACE_OUT | TRACE_ANY, TEXT("main: stack chunk ") PTR_XTFMT TEXT(", size ") S32_TFMT TEXT(", top ") PTR_XTFMT TEXT(", slot end ") PTR_XTFMT, scptr, scsize, (char *) scptr + scsize, (char *) rs.r[1]);
     }
 #endif /* TRACE_ALLOWED */
@@ -655,6 +647,8 @@ main_init(
                 de_const_cast(int *, t5_wimp_messages),
                 &g_current_wm_version,
                 &g_host_task_handle);
+
+    riscos_hourglass_on();
 
     atexit(window_manager_atexit); /* will now need to close our task correctly */
 

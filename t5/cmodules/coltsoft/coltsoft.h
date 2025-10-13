@@ -11,8 +11,8 @@
 
 /* MRJC September 1989 / December 1991 */
 
-#ifndef __coltsoft_h
-#define __coltsoft_h
+#ifndef COLTSOFT_H
+#define COLTSOFT_H
 
 #if RISCOS
 
@@ -242,12 +242,21 @@ typedef  int16_t S16; typedef S16 * P_S16, ** P_P_S16; typedef const S16 * PC_S1
 typedef uint16_t U16; typedef U16 * P_U16, ** P_P_U16; typedef const U16 * PC_U16;
 
 typedef  int32_t S32; typedef S32 * P_S32, ** P_P_S32; typedef const S32 * PC_S32;
+/* maximum of a pair of S32 values (not macro) */
+_Check_return_ static inline S32 s32_max(S32 a, S32 b) { return((a >= b) ? a : b); }
+/* minimum of a pair of S32 values (not macro) */
+_Check_return_ static inline S32 s32_min(S32 a, S32 b) { return((a <= b) ? a : b); }
 
 typedef uint32_t U32; typedef U32 * P_U32, ** P_P_U32; typedef const U32 * PC_U32;
+/* maximum of a pair of U32 values (not macro) */
+_Check_return_ static inline U32 u32_max(U32 a, U32 b) { return((a >= b) ? a : b); }
+/* minimum of a pair of U32 values (not macro) */
+_Check_return_ static inline U32 u32_min(U32 a, U32 b) { return((a <= b) ? a : b); }
 
 #define P_S32_NONE _P_DATA_NONE(P_S32)
 
 typedef double   F64; typedef F64 * P_F64, ** P_P_F64; typedef const F64 * PC_F64;
+/* use fmax_sane/fmin_sane (which propagate NaN) or fmax/fmin (which do not) as appropriate */
 
 typedef BOOL * P_BOOL; typedef const BOOL * PC_BOOL;
 
@@ -1728,6 +1737,6 @@ typedef uint64_t U64; typedef U64 * P_U64, ** P_P_U64; typedef const U64 * PC_U6
     (v_int64) < 0 )
 #endif
 
-#endif /* __coltsoft_h */
+#endif /* COLTSOFT_H */
 
 /* end of coltsoft.h */

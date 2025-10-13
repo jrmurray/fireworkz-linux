@@ -13,10 +13,10 @@
 
 #if RISCOS
 
-#ifndef __xp_dlgr_h
-#define __xp_dlgr_h
+#ifndef XP_DLGR_H
+#define XP_DLGR_H
 
-#ifndef         __xp_skelr_h
+#ifndef           XP_SKELR_H
 #include "ob_skel/xp_skelr.h"
 #endif
 
@@ -173,7 +173,7 @@ typedef struct DIALOG_RISCOS_EVENT_RESIZE
 }
 DIALOG_RISCOS_EVENT_RESIZE, * P_DIALOG_RISCOS_EVENT_RESIZE;
 
-#endif /* __xp_dlgr_h */
+#endif /* XP_DLGR_H */
 
 #endif /* RISCOS */
 

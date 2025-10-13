@@ -4,10 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2006-2022 Stuart Swales */
+/* Copyright (C) 2006-2025 Stuart Swales */
 
-#ifndef __u0180_h
-#define __u0180_h
+#ifndef UNICODE_U0180_H
+#define UNICODE_U0180_H
 
 /*
 0180..024F Latin Extended-B
@@ -234,6 +234,6 @@
 #define UCH_LATIN_CAPITAL_LETTER_Y_WITH_STROKE 0x024EU
 #define UCH_LATIN_SMALL_LETTER_Y_WITH_STROKE 0x024FU
 
-#endif /* __u0180_h */
+#endif /* UNICODE_U0180_H */
 
 /* end of u0180.h */

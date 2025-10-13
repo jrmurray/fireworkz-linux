@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2014-2022 Stuart Swales */
+/* Copyright (C) 2014-2025 Stuart Swales */
 
 /* Statistical function routines for evaluator */
 
@@ -14,7 +14,7 @@
 
 #include "cmodules/mathxtr2.h" /* for linest() */
 #include "cmodules/mathxtr3.h" /* for uniform_distribution() */
-#include "cmodules/mathxtr4.h" /* for mx_ln_beta() */
+#include "cmodules/mathxtr4.h" /* for mathxtra_ln_beta() */
 
 /******************************************************************************
 *

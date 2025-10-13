@@ -11,8 +11,8 @@
 
 /* RCM May 1991 */
 
-#ifndef __mlec_h
-#define __mlec_h
+#ifndef MLEC_H
+#define MLEC_H
 
 #ifndef MLEC_OFF
 
@@ -301,6 +301,6 @@ message definition (keep consistent with CModules.*.msg.mlec)
 
 #endif /* MLEC_OFF */
 
-#endif /* __mlec_h */
+#endif /* MLEC_H */
 
 /* end of mlec.h */

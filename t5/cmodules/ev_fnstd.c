@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2014-2022 Stuart Swales */
+/* Copyright (C) 2014-2025 Stuart Swales */
 
 /* Statistical function routines (distributions etc) for evaluator */
 
@@ -12,11 +12,11 @@
 
 #include "ob_ss/ob_ss.h"
 
-#include "cmodules/mathxtr4.h" /* for mx_ln_binomial_coefficient() */
+#include "cmodules/mathxtr4.h" /* for mathxtra_ln_binomial_coefficient() */
 
 #include "cmodules/mathxtri.h"
 
-#ifndef                   __mathnums_h
+#ifndef                     MATHNUMS_H
 #include "cmodules/coltsoft/mathnums.h"
 #endif
 
@@ -80,7 +80,7 @@ binom_dist_cdf_calc(
         const F64 one_minus_p = 1.0 - p;
         const S32 n_minus_k = n - k;
         const S32 k_plus_one = k + 1;
-        ss_data_set_real(p_ss_data_out, mx_Ix_beta(one_minus_p, n_minus_k, k_plus_one));
+        ss_data_set_real(p_ss_data_out, mathxtra_Ix_beta(one_minus_p, n_minus_k, k_plus_one));
         return;
     }
 
@@ -120,7 +120,7 @@ alternate_binom_dist_pmf_calc(
 
     errno = 0;
 
-    ln_binomial_term = mx_ln_binomial_coefficient(n, k);
+    ln_binomial_term = mathxtra_ln_binomial_coefficient(n, k);
 
     ln_power_term_k = log(p) * k;
 
@@ -208,7 +208,7 @@ binom_dist_range_calc(
         S32 n_minus_k_plus_one;
         k = S;
         n_minus_k_plus_one = n - k + 1;
-        ss_data_set_real(p_ss_data_out, mx_Ix_beta(p, k, n_minus_k_plus_one));
+        ss_data_set_real(p_ss_data_out, mathxtra_Ix_beta(p, k, n_minus_k_plus_one));
         return;
     }
 
@@ -339,8 +339,8 @@ alternate_hypgeom_dist_pmf_calc(
     _InVal_     S32 N,
     _InVal_     F64 ln_denominator)
 {
-    const F64 ln_numerator_lhs = mx_ln_binomial_coefficient(M, s);
-    const F64 ln_numerator_rhs = mx_ln_binomial_coefficient(N - M, n - s);
+    const F64 ln_numerator_lhs = mathxtra_ln_binomial_coefficient(M, s);
+    const F64 ln_numerator_rhs = mathxtra_ln_binomial_coefficient(N - M, n - s);
     const F64 ln_numerator = ln_numerator_lhs + ln_numerator_rhs;
     const F64 ln_term = ln_numerator - ln_denominator;
 
@@ -367,7 +367,7 @@ alternate_hypgeom_dist_calc(
 
     errno = 0;
 
-    ln_denominator = mx_ln_binomial_coefficient(N, n);
+    ln_denominator = mathxtra_ln_binomial_coefficient(N, n);
 
     /* CDF is the sum from the terms over [0..x]; PMF is just the single term at x  */
     for(i = cumulative ? 0 : x; i <= x; ++i)
@@ -600,7 +600,7 @@ poisson_dist_calc(
 
         if(more_logs)
         {
-            const F64 ln_denominator = mx_ln_factorial(k);
+            const F64 ln_denominator = mathxtra_ln_factorial(k);
 
             ss_data_set_real(&term, exp(ln_numerator - ln_denominator));
         }

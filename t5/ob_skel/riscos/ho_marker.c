@@ -15,7 +15,7 @@
 
 #if RISCOS
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -25,7 +25,7 @@
 
 #include "ob_skel/xp_skelr.h"
 
-#ifndef __gr_diag_h
+#ifndef            GR_DIAG_H
 #include "cmodules/gr_diag.h"
 #endif
 

@@ -11,8 +11,8 @@
 
 /* MRJC April 1991 / May 1992; JAD September 1994 */
 
-#ifndef __ev_eval_h
-#define __ev_eval_h
+#ifndef EV_EVAL_H
+#define EV_EVAL_H
 
 #define EV_MAX_ARGS 25          /* maximum number of arguments */
 
@@ -1288,6 +1288,6 @@ ev_uref.c external functions
 
 PROC_UREF_EVENT_PROTO(extern, ev_uref_uref_event);
 
-#endif /* __ev_eval_h */
+#endif /* EV_EVAL_H */
 
 /* end of ev_eval.h */

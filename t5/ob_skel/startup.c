@@ -9,7 +9,7 @@
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -110,7 +110,7 @@ startup_t5_application_1(void)
     {
     _kernel_swi_regs rs;
     rs.r[1] = (int) "ColourPicker_OpenDialogue" /*0x47702*/;
-    if(NULL != _kernel_swi(OS_SWINumberFromString, &rs, &rs))
+    if(NULL != cs_kernel_swi(OS_SWINumberFromString, &rs))
         g_has_colour_picker = FALSE;
     } /*block*/
 #endif /* RISCOS */

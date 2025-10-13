@@ -11,8 +11,8 @@
 
 /* SKS February 1990 */
 
-#ifndef __file_h
-#define __file_h
+#ifndef FILE_H
+#define FILE_H
 
 /*
 macro definitions
@@ -285,6 +285,10 @@ file_buffer(
     _InoutRef_opt_ FILE_HANDLE file_handle,
     _In_opt_    void * buffer,
     _InVal_     U32 bufsize);
+
+_Check_return_
+extern U32
+file_nice_buffer_size(void);
 
 _Check_return_
 extern STATUS
@@ -871,6 +875,6 @@ error definition
 #define FILE_ERR_FRAG_REMOVING          FILE_ERR(115)
 #define FILE_ERR_FRAG_CREATE_DIRECTORY  FILE_ERR(116)
 
-#endif /* __file_h */
+#endif /* FILE_H */
 
 /* end of file.h */

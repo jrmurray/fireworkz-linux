@@ -54,6 +54,10 @@ report_flex_size(
 
 extern int flex_granularity;
 
+/*ncr*/
+extern int
+flex_granularity_read(void);
+
 /* like flex_free(), but caters for already freed / not yet allocated */
 
 extern void

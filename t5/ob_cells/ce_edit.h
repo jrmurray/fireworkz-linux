@@ -9,8 +9,8 @@
 
 /* MRJC August 1994 */
 
-#ifndef __ce_edit_h
-#define __ce_edit_h
+#ifndef CE_EDIT_H
+#define CE_EDIT_H
 
 /*
 external routines
@@ -70,6 +70,6 @@ cell_owner_from_slr(
     _DocuRef_   P_DOCU p_docu,
     _InRef_     PC_SLR p_slr);
 
-#endif /* __ce_edit_h */
+#endif /* CE_EDIT_H */
 
 /* end of ce_edit.h */

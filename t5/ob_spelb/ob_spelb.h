@@ -11,8 +11,8 @@
 
 /* SKS Sep 1993 */
 
-#ifndef __ob_spelb_h
-#define __ob_spelb_h
+#ifndef OB_SPELB_H
+#define OB_SPELB_H
 
 /*
 messages
@@ -29,6 +29,6 @@ messages
 #define MSG_DIALOG_CHOICES_SPELB_LOAD_USER      SPELB_MSG(4)
 #define MSG_DIALOG_CHOICES_SPELB_WRITE_USER     SPELB_MSG(5)
 
-#endif /* __ob_spelb_h */
+#endif /* OB_SPELB_H */
 
 /* end of ob_spelb.h */

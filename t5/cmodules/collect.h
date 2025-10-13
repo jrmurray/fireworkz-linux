@@ -9,8 +9,8 @@
 
 /* MRJC December 1991 */
 
-#ifndef __collect_h
-#define __collect_h
+#ifndef COLLECT_H
+#define COLLECT_H
 
 #include "cmodules/list.h"
 
@@ -139,6 +139,6 @@ collect_subtract_entry(
     _InoutRef_  P_LIST_BLOCK p_list_block,
     _InVal_     LIST_ITEMNO key);
 
-#endif /* __collect_h */
+#endif /* COLLECT_H */
 
 /* end of collect.h */

@@ -9,8 +9,8 @@
 
 /* MRJC January 1992 */
 
-#ifndef __sk_col_h
-#define __sk_col_h
+#ifndef SK_COL_H
+#define SK_COL_H
 
 /*
 exported routines
@@ -204,6 +204,6 @@ extern PIXIT
 total_docu_width(
     _DocuRef_   P_DOCU p_docu);
 
-#endif /* __sk_col_h */
+#endif /* SK_COL_H */
 
 /* end of sk_col.h */

@@ -7,10 +7,10 @@
 /* Copyright (C) 1992-1998 Colton Software Limited
  * Copyright (C) 1998-2015 R W Colton */
 
-#ifndef __xp_skeld_h
-#define __xp_skeld_h
+#ifndef XP_SKELD_H
+#define XP_SKELD_H
 
-#ifndef        __xp_dlg_h
+#ifndef          XP_DLG_H
 #include "ob_dlg/xp_dlg.h"
 #endif
 
@@ -384,6 +384,6 @@ typedef struct CHOICES_SET_BLOCK
 }
 CHOICES_SET_BLOCK, * P_CHOICES_SET_BLOCK;
 
-#endif /* __xp_skeld_h */
+#endif /* XP_SKELD_H */
 
 /* end of xp_skeld.h */

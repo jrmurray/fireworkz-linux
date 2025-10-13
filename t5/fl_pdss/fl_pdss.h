@@ -11,7 +11,7 @@
 
 /* MRJC March 1992 */
 
-#ifndef          __sk_slot_h
+#ifndef            SK_SLOT_H
 #include "ob_cells/sk_slot.h"
 #endif
 

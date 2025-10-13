@@ -11,8 +11,8 @@
 
 /* SKS March 1992 */
 
-#ifndef __ri_lbox_h
-#define __ri_lbox_h
+#ifndef RI_LBOX_H
+#define RI_LBOX_H
 
 /*
 a handle to a list box control for our clients (and ourselves if the truth be known)
@@ -188,6 +188,6 @@ extern STATUS
 ri_lbox_source_modified(
     _InVal_     RI_LBOX_HANDLE handle);
 
-#endif /* __ri_lbox_h */
+#endif /* RI_LBOX_H */
 
 /* end of ri_lbox.h */

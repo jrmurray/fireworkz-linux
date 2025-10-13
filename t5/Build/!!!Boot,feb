@@ -9,19 +9,19 @@
 |
 If "<Hdr$Path>"="" Then Error AcornC/C++ Tools not yet opened
 |
-BASIC -quit <Obey$Dir>.Tools.SetBuildEnv -variable fireworkz_root -strip t5.Build.Tools.SetBuildEnv
+BASIC -quit <Obey$Dir>.Tools.SetBuildEnv { > null: } -variable fireworkz_root -strip t5.Build.Tools.SetBuildEnv
 |
 | RISC OS filetypes are stored using ,xyz suffixes for this project
 | and not the svn:riscosfiletype property
 Set svn$filetypeext ""
 |
-Set FIREWORKZ_TBT fireworkz__2_32__branch
+Set FIREWORKZ_TBT fireworkz__2_33b__branch
 |et FIREWORKZ_TBT trunk
 |et fireworkz_root <disc_root>.fireworkz.<FIREWORKZ_TBT>
 |
+Dir <fireworkz_root>
 URD <fireworkz_root>
 |Lib &.arm.Library
-Dir &
 |
 | Fireworkz Pro can only be built if R-Comp components are present
 IfThere <fireworkz_root>.^.^.coltsoft.<FIREWORKZ_TBT>.cs-nonfree.DataPower.DPlib.<C$Mode>.DPlib    Then Set DPlib$Path    <fireworkz_root>.^.^.coltsoft.<FIREWORKZ_TBT>.cs-nonfree.DataPower.DPlib.<C$Mode>.

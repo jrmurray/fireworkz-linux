@@ -2769,7 +2769,7 @@ sle_find_font(
     rs.r[4] = 0;
     rs.r[5] = 0;
 
-    if(NULL == (p_kernel_oserror = (_kernel_swi(Font_FindFont, &rs, &rs))))
+    if(NULL == (p_kernel_oserror = (cs_kernel_swi(Font_FindFont, &rs))))
         host_font = (HOST_FONT) rs.r[0];
 
     return(host_font);
@@ -2806,14 +2806,30 @@ riscos_fonty_sle(
 
             if(HOST_FONT_NONE != host_font)
             {
+                host_font_dispose(&host_font, P_REDRAW_CONTEXT_NONE);
+
                 if(status_ok(fontmap_font_spec_from_host_base_name(&font_spec, "DejaVuSans.Mono")))
                 {
                     font_spec.size_y = size_y * PIXITS_PER_POINT;
 
                     yes_or_no = 1;
                 }
+            }
+        }
+        else
+        {
+            host_font = sle_find_font("\\F" "VerityMono" /*current alphabet*/ , /*x16_size_x ? x16_size_x :*/ x16_size_y, x16_size_y);
 
+            if(HOST_FONT_NONE != host_font)
+            {
                 host_font_dispose(&host_font, P_REDRAW_CONTEXT_NONE);
+
+                if(status_ok(fontmap_font_spec_from_host_base_name(&font_spec, "VerityMono")))
+                {
+                    font_spec.size_y = size_y * PIXITS_PER_POINT;
+
+                    yes_or_no = 1;
+                }
             }
         }
     }

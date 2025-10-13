@@ -13,7 +13,7 @@
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -54,24 +54,10 @@ static OBJECT_ID object_id_exit_services1 = OBJECT_ID_FIRST;
 static BITMAP(bitmap_exit_services2, MAX_OBJECTS);
 static OBJECT_ID object_id_exit_services2 = OBJECT_ID_FIRST;
 
-#if RISCOS
-
-static BOOL cwimp_exit_services2;
-
-extern void
-riscos_hourglass_off(void);
-
-extern void
-riscos_hourglass_on(void);
-
-#endif /* RISCOS */
-
 /* send the T5_MSG_IC__SERVICES_EXIT2 to all inited objects */
 
 PROC_ATEXIT_PROTO(static, atexit_services2)
 {
-    MSG_INITCLOSE msg_initclose;
-
     while(object_id_exit_services2 < OBJECT_ID_MAX)
     {
         OBJECT_ID this_object = object_id_exit_services2; OBJECT_ID_INCR(object_id_exit_services2);
@@ -80,35 +66,11 @@ PROC_ATEXIT_PROTO(static, atexit_services2)
         {
             bitmap_bit_clear(bitmap_exit_services2, this_object, N_BITS_ARG(MAX_OBJECTS));
 
-            /* catch serious errors from object call, exit() will come back here, but with the next object to process */
-#if RISCOS
-            atexit(atexit_services2);
-#endif
-
-            trace_on();
-            msg_initclose.t5_msg_initclose_message = T5_MSG_IC__SERVICES_EXIT2;
+            // reportf("aes2 %d\n", this_object);
+            static MSG_INITCLOSE msg_initclose = { T5_MSG_IC__SERVICES_EXIT2 };
             status_assert(object_call_id(this_object, P_DOCU_NONE, T5_MSG_INITCLOSE, &msg_initclose));
-            trace_off();
-
-#if RISCOS
-            return; /* back to exit(), which will call this atexit() handler again */
-#endif
         }
     }
-
-#if RISCOS
-    if(cwimp_exit_services2)
-    {
-        cwimp_exit_services2 = 0;
-
-        /* catch serious errors from proc, exit() will come back here, but with the next object to process */
-        atexit(atexit_services2);
-
-        riscos_hourglass_off();
-
-        return; /* back to exit(), which will call this atexit() handler again */
-    }
-#endif
 
     resource_shutdown(); /* SKS after 1.12 28oct94 - nasty explicit tidy up */
 
@@ -125,8 +87,6 @@ PROC_ATEXIT_PROTO(static, atexit_services2)
 
 PROC_ATEXIT_PROTO(static, atexit_services1)
 {
-    MSG_INITCLOSE msg_initclose;
-
     while(object_id_exit_services1 < OBJECT_ID_MAX)
     {
         OBJECT_ID this_object = object_id_exit_services1; OBJECT_ID_INCR(object_id_exit_services1);
@@ -135,20 +95,9 @@ PROC_ATEXIT_PROTO(static, atexit_services1)
         {
             bitmap_bit_clear(bitmap_exit_services1, this_object, N_BITS_ARG(MAX_OBJECTS));
 
-            /* catch serious errors from object call, exit() will come back here, but with the next object to process */
-#if RISCOS
-            atexit(atexit_services1);
-#endif
-
-            trace_on();
-            msg_initclose.t5_msg_initclose_message = T5_MSG_IC__SERVICES_EXIT1;
+            // reportf("aes1 %d\n", this_object);
+            static MSG_INITCLOSE msg_initclose = { T5_MSG_IC__SERVICES_EXIT1 };
             status_assert(object_call_id(this_object, P_DOCU_NONE, T5_MSG_INITCLOSE, &msg_initclose));
-            trace_off();
-
-#if RISCOS
-            return; /* not exit() 'cos we don't know the rc */
-            /* back to exit(), which will call this atexit() handler again */
-#endif
         }
     }
 }
@@ -163,32 +112,20 @@ static BOOL send_maeve_exit_application2;
 
 PROC_ATEXIT_PROTO(static, atexit_application2)
 {
-    MSG_INITCLOSE msg_initclose;
-
     if(send_maeve_exit_application2)
     {
         send_maeve_exit_application2 = FALSE;
 
-        /* catch serious errors from maeve procs, exit() will come back here, but with the objects still to process */
-#if RISCOS
-        atexit(atexit_application2);
-#endif
-
-        trace_on();
-        msg_initclose.t5_msg_initclose_message = T5_MSG_IC__EXIT2;
+        // reportf("aea2 mse\n");
+        static MSG_INITCLOSE msg_initclose = { T5_MSG_IC__EXIT2 };
         status_assert(maeve_service_event(P_DOCU_NONE, T5_MSG_INITCLOSE, &msg_initclose));
         maeve_service_event_exit2(); /* tidy up */
-        trace_off();
 
         /* nasty explicit once offs */
 #if RISCOS
         host_invalidate_cache(HIC_PURGE);
 #endif
         arglist_cache_reduce();
-
-#if RISCOS
-        return; /* back to exit(), which will call this atexit() handler again */
-#endif
     }
 
     /* send the T5_MSG_IC__EXIT2 to all inited objects */
@@ -200,44 +137,22 @@ PROC_ATEXIT_PROTO(static, atexit_application2)
         {
             bitmap_bit_clear(bitmap_exit_application2, this_object, N_BITS_ARG(MAX_OBJECTS));
 
-            /* catch serious errors from object call, exit() will come back here, but with the next object to process */
-#if RISCOS
-            atexit(atexit_application2);
-#endif
-
-            trace_on();
-            msg_initclose.t5_msg_initclose_message = T5_MSG_IC__EXIT2;
+            // reportf("aea2 %d\n", this_object);
+            static MSG_INITCLOSE msg_initclose = { T5_MSG_IC__EXIT2 };
             status_assert(object_call_id(this_object, P_DOCU_NONE, T5_MSG_INITCLOSE, &msg_initclose));
-            trace_off();
-
-#if RISCOS
-            return; /* back to exit(), which will call this atexit() handler again */
-#endif
         }
     }
 }
 
 PROC_ATEXIT_PROTO(static, atexit_application1)
 {
-    MSG_INITCLOSE msg_initclose;
-
     if(send_maeve_exit_application1)
     {
         send_maeve_exit_application1 = FALSE;
 
-        /* catch serious errors from maeve, exit() will come back here, but with the objects still to process */
-#if RISCOS
-        atexit(atexit_application1);
-#endif
-
-        trace_on();
-        msg_initclose.t5_msg_initclose_message = T5_MSG_IC__EXIT1;
+        // reportf("aea1 mse\n");
+        static MSG_INITCLOSE msg_initclose = { T5_MSG_IC__EXIT1 };
         status_assert(maeve_service_event(P_DOCU_NONE, T5_MSG_INITCLOSE, &msg_initclose));
-        trace_off();
-
-#if RISCOS
-        return; /* back to exit(), which will call this atexit() handler again */
-#endif
     }
 
     /* send the T5_MSG_IC__EXIT1 to all inited objects */
@@ -249,19 +164,9 @@ PROC_ATEXIT_PROTO(static, atexit_application1)
         {
             bitmap_bit_clear(bitmap_exit_application1, this_object, N_BITS_ARG(MAX_OBJECTS));
 
-            /* catch serious errors from object call, exit() will come back here, but with the next object to process */
-#if RISCOS
-            atexit(atexit_application1);
-#endif
-
-            trace_on();
-            msg_initclose.t5_msg_initclose_message = T5_MSG_IC__EXIT1;
+            // reportf("aea1 %d\n", this_object);
+            static MSG_INITCLOSE msg_initclose = { T5_MSG_IC__EXIT1 };
             status_assert(object_call_id(this_object, P_DOCU_NONE, T5_MSG_INITCLOSE, &msg_initclose));
-            trace_off();
-
-#if RISCOS
-            return; /* back to exit(), which will call this atexit() handler again */
-#endif
         }
     }
 }
@@ -277,17 +182,13 @@ object_new_type(
     _DocuRef_   P_DOCU p_docu,
     _InRef_     PC_SLR p_slr)
 {
-    STYLE style;
-    STYLE_SELECTOR selector;
-    OBJECT_ID object_id;
-
     /* get new object type */
-    style_selector_clear(&selector);
+    STYLE_SELECTOR selector; style_selector_clear(&selector);
     style_selector_bit_set(&selector, STYLE_SW_PS_NEW_OBJECT);
 
-    style_init(&style);
+    STYLE style; style_init(&style);
     style_from_slr(p_docu, &style, &selector, p_slr);
-    object_id = OBJECT_ID_UNPACK(style.para_style.new_object);
+    OBJECT_ID object_id = OBJECT_ID_UNPACK(style.para_style.new_object);
     if(!object_present(object_id))
         object_id = OBJECT_ID_TEXT;
 
@@ -704,7 +605,6 @@ object_load_internal_install(
     _InRef_     P_PROC_OBJECT p_proc_object)
 {
     STATUS status;
-    MSG_INITCLOSE msg_initclose;
 
     if(!IS_OBJECT_ID_VALID(object_id))
     {
@@ -716,6 +616,7 @@ object_load_internal_install(
 
     g_proc_object[object_id] = p_proc_object;
 
+    MSG_INITCLOSE msg_initclose;
     msg_initclose.t5_msg_initclose_message = T5_MSG_IC__STARTUP_SERVICES;
     status_return(object_call_id(object_id, P_DOCU_NONE, T5_MSG_INITCLOSE, &msg_initclose));
 
@@ -1035,26 +936,22 @@ static STATUS
 object_startup_phase_1(void)
 {
     STATUS status = STATUS_OK;
-    MSG_INITCLOSE msg_initclose;
-    OBJECT_ID object_id;
 
-#if RISCOS
     if(atexit(atexit_services2)) /* ensure service SERVICES_EXIT2 closedown proc called on exit */
         return(EXIT_FAILURE);
 
     if(atexit(atexit_services1)) /* ensure service SERVICES_EXIT1 closedown proc called on exit before SERVICES_EXIT2 closedown proc */
         return(EXIT_FAILURE);
-#endif
 
     /* service-init interested bound objects on startup (reverse order to get file module up first of all) */
-    object_id = OBJECT_ID_MAX;
+    OBJECT_ID object_id = OBJECT_ID_MAX;
 
     do  {
         OBJECT_ID_DECR(object_id);
 
         if(object_present(object_id))
         {
-            msg_initclose.t5_msg_initclose_message = T5_MSG_IC__STARTUP_SERVICES;
+            static MSG_INITCLOSE msg_initclose = { T5_MSG_IC__STARTUP_SERVICES };
             if(status_fail(status = object_call_id(object_id, P_DOCU_NONE, T5_MSG_INITCLOSE, &msg_initclose)))
             {
                 reperr_null(status);
@@ -1068,12 +965,6 @@ object_startup_phase_1(void)
     }
     while(OBJECT_ID_FIRST != object_id);
 
-#if RISCOS
-    riscos_hourglass_on();
-
-    cwimp_exit_services2 = 1; /* we piggyback on atexit_services2 so it's no-go until that's installed */
-#endif
-
     return(status);
 }
 
@@ -1084,22 +975,18 @@ static STATUS
 object_startup_phase_2(void)
 {
     STATUS status = STATUS_OK;
-    MSG_INITCLOSE msg_initclose;
-    OBJECT_ID object_id;
 
-#if RISCOS
     if(atexit(atexit_application2)) /* ensure object EXIT2 closedown proc called on exit */
         return(STATUS_FAIL);
 
     if(atexit(atexit_application1)) /* ensure object EXIT1 closedown proc called on exit before EXIT2 closedown proc */
         return(STATUS_FAIL);
-#endif
 
-    for(object_id = OBJECT_ID_FIRST; object_id < OBJECT_ID_MAX; OBJECT_ID_INCR(object_id))
+    for(OBJECT_ID object_id = OBJECT_ID_FIRST; object_id < OBJECT_ID_MAX; OBJECT_ID_INCR(object_id))
     {
         if(object_present(object_id))
         {
-            msg_initclose.t5_msg_initclose_message = T5_MSG_IC__STARTUP;
+            static MSG_INITCLOSE msg_initclose = { T5_MSG_IC__STARTUP };
             if(status_fail(status = object_call_id(object_id, P_DOCU_NONE, T5_MSG_INITCLOSE, &msg_initclose)))
             {
                 reperr_null(status);
@@ -1125,8 +1012,8 @@ static STATUS
 object_startup_phase_3(void)
 {
     STATUS status = STATUS_OK;
-    MSG_INITCLOSE msg_initclose;
 
+    MSG_INITCLOSE msg_initclose;
     msg_initclose.t5_msg_initclose_message = T5_MSG_IC__STARTUP_CONFIG;
     status = object_call_all(P_DOCU_NONE, T5_MSG_INITCLOSE, &msg_initclose);
 
@@ -1160,14 +1047,9 @@ object_startup(
         /* nothing needed here yet */
         return(STATUS_OK);
 
-    case 1:
-        return(object_startup_phase_1());
-
-    case 2:
-        return(object_startup_phase_2());
-
-    case 3:
-        return(object_startup_phase_3());
+    case 1:                             return(object_startup_phase_1());
+    case 2:                             return(object_startup_phase_2());
+    case 3:                             return(object_startup_phase_3());
     }
 }
 
@@ -1313,10 +1195,10 @@ MAEVE_SERVICES_EVENT_PROTO(extern, maeve_services_event_object)
 extern void
 t5_do_exit(void)
 {
-    atexit_application1();
-    atexit_application2();
-    atexit_services1();
-    atexit_services2();
+    //atexit_application1();
+    //atexit_application2();
+    //atexit_services1();
+    //atexit_services2();
 }
 
 #endif /* WINDOWS */

@@ -11,8 +11,8 @@
 
 /* MRJC September 1992 */
 
-#ifndef __xp_note_h
-#define __xp_note_h
+#ifndef XP_NOTE_H
+#define XP_NOTE_H
 
 /*
 exported structure
@@ -183,6 +183,6 @@ typedef struct NOTE_UPDATE_NOW
 }
 NOTE_UPDATE_NOW, * P_NOTE_UPDATE_NOW;
 
-#endif /* __xp_note_h */
+#endif /* XP_NOTE_H */
 
 /* end of xp_note.h */

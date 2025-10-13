@@ -18,11 +18,11 @@
 
 #include "ob_chart/ob_chart.h"
 
-#ifndef          __im_cache_h
+#ifndef            IM_CACHE_H
 #include "cmodules/im_cache.h"
 #endif
 
-#ifndef          __bezier_h
+#ifndef            BEZIER_H
 #include "cmodules/bezier.h"
 #endif
 
@@ -105,7 +105,7 @@ gr_riscdiag_host_font_from_textstyle(
         rs.r[4] = 0;
         rs.r[5] = 0;
 
-        if(NULL == (p_kernel_oserror = (_kernel_swi(Font_FindFont, &rs, &rs))))
+        if(NULL == (p_kernel_oserror = (cs_kernel_swi(Font_FindFont, &rs))))
             host_font = (HOST_FONT) rs.r[0];
     }
 

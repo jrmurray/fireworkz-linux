@@ -2,7 +2,7 @@
 @rem License, v. 2.0. If a copy of the MPL was not distributed with this
 @rem file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-@rem Copyright © 2014-2022 Stuart Swales
+@rem Copyright © 2014-2025 Stuart Swales
 
 @rem Assumes N: is mapped to the root of your development tree i.e. the dir containing \fireworkz
 @rem You can easily do this with a batch file dropped in your Startup folder
@@ -42,7 +42,8 @@ copy /A "%EXAMPLES_SRC_DIR%\Examples\Chars,bdf"                 %EXAMPLES_OUT_DI
 copy /A "%EXAMPLES_SRC_DIR%\Examples\Commands,bdf"              %EXAMPLES_OUT_DIR%\Examples\Commands.fwk
 copy /A "%EXAMPLES_SRC_DIR%\Examples\Keystrokes,bdf"            %EXAMPLES_OUT_DIR%\Examples\Keystrokes.fwk
 copy /A "%EXAMPLES_SRC_DIR%\Examples\Numforms,bdf"              %EXAMPLES_OUT_DIR%\Examples\Numforms.fwk
-copy /A "%EXAMPLES_SRC_DIR%\Examples\YearPlan20,bdf"            %EXAMPLES_OUT_DIR%\Examples\YearPlan20.fwk
+copy /A "%EXAMPLES_SRC_DIR%\Examples\YearPlan26,bdf"            %EXAMPLES_OUT_DIR%\Examples\YearPlan26.fwk
+copy /A "%EXAMPLES_SRC_DIR%\Examples\YearPlan27,bdf"            %EXAMPLES_OUT_DIR%\Examples\YearPlan27.fwk
 @rem
 copy /A "%EXAMPLES_SRC_DIR%\Examples\Charts\Bar,bdf"            %EXAMPLES_OUT_DIR%\Examples\Charts\Bar.fwk
 copy /A "%EXAMPLES_SRC_DIR%\Examples\Charts\Bar_unempl,bdf"     %EXAMPLES_OUT_DIR%\Examples\Charts\Bar_unempl.fwk

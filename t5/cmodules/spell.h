@@ -11,8 +11,8 @@
 
 /* MRJC May 1988 / November 1992 new style */
 
-#ifndef __spell_h
-#define __spell_h
+#ifndef SPELL_H
+#define SPELL_H
 
 typedef S32 DICT_NUMBER;
 
@@ -182,6 +182,6 @@ maximum length of word (MAX_CHAR - 1 + 2)
 #define MAX_WORD 65
 #define BUF_MAX_WORD (MAX_WORD + 1)
 
-#endif /* __spell_h */
+#endif /* SPELL_H */
 
 /* end of spell.h */

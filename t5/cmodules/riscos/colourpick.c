@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2014-2022 Stuart Swales */
+/* Copyright (C) 2014-2025 Stuart Swales */
 
 /* RISC OS specific colour picker routines for Fireworkz */
 
@@ -14,7 +14,7 @@
 
 #if RISCOS
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -205,7 +205,7 @@ colourpicker_message_ColourPickerResetColourRequest(
         | (1 << 6) /* update from RGB triplet */;
     rs.r[1] = p_colourpicker_callback->dialogue_handle;
     rs.r[2] = (int) &colour_picker_block;
-    e = WrapOsErrorReporting(_kernel_swi(/*ColourPicker_UpdateDialogue*/ 0x47704, &rs, &rs));
+    e = WrapOsErrorReporting(cs_kernel_swi(/*ColourPicker_UpdateDialogue*/ 0x47704, &rs));
     } /*block*/
 
     return(TRUE);
@@ -288,7 +288,7 @@ colourpicker_open_dialogue(
     rs.r[0] = (int) p_colourpicker_callback->colour_picker_type;
     rs.r[1] = (int) &colour_picker_block;
 
-    if(NULL != (e = WrapOsErrorReporting(_kernel_swi(/*ColourPicker_OpenDialogue*/ 0x47702, &rs, &rs))))
+    if(NULL != (e = WrapOsErrorReporting(cs_kernel_swi(/*ColourPicker_OpenDialogue*/ 0x47702, &rs))))
     {
         p_colourpicker_callback->dialogue_handle = 0;
         p_colourpicker_callback->window_handle = 0;
@@ -365,7 +365,7 @@ colourpicker_close_dialogue(
         _kernel_oserror * e;
         rs.r[0] = 0;
         rs.r[1] = p_colourpicker_callback->dialogue_handle;
-        e = WrapOsErrorReporting(_kernel_swi(/*ColourPicker_CloseDialogue*/ 0x47703, &rs, &rs));
+        e = WrapOsErrorReporting(cs_kernel_swi(/*ColourPicker_CloseDialogue*/ 0x47703, &rs));
         p_colourpicker_callback->dialogue_handle = 0;
     }
 }

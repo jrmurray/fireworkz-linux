@@ -7,8 +7,8 @@
 | Copyright © 1993-1998 Colton Software Limited
 | Copyright © 1998-2015 R W Colton
 
-Set t5$Release 2_32
-Set t5$Release 2_32_02
+Set t5$Release 2_33
+|et t5$Release 2_33_01
 
 Set t5$Disc $.Temp.Fire.Fireworkz_<t5$Release>
 IfThere     $.Temp      Then Else %CDir $.Temp
@@ -50,6 +50,8 @@ X %Wipe                                                     <t5$Disc>.* ~cfr~v
 | RISC OS 5 has different orientation pin in ic_xxx
 %Copy <t5$Build$Dir>.!SpritesR5                             <t5$Disc>.Z.* ~rf~cln~v
 %Copy <t5$Build$Dir>.!SpritesR511                           <t5$Disc>.Z.* ~rf~cln~v
+
+%Copy <ap$Resource$Dir>.RISC_OS.Neutral.MergeGuide          <t5$Disc>.Z.* ~rf~cln~v
 
 | Use the same licence in the distributed package
 |%Copy <t5$Product$Dir>.r.RiscPkg.Copyright                  <t5$Disc>.Z.LICENCE ~rf~cln~v

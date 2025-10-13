@@ -1,19 +1,16 @@
-/* This source code in this file is licensed to You by Castle Technology
- * Limited ("Castle") and its licensors on contractual terms and conditions
- * ("Licence") which entitle you freely to modify and/or to distribute this
- * source code subject to Your compliance with the terms of the Licence.
+/* Copyright 1997 Acorn Computers Ltd
  *
- * This source code has been made available to You without any warranties
- * whatsoever. Consequently, Your use, modification and distribution of this
- * source code is entirely at Your own risk and neither Castle, its licensors
- * nor any other person who has contributed to this source code shall be
- * liable to You for any loss or damage which You may suffer as a result of
- * Your use, modification or distribution of this source code.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Full details of Your rights and obligations are set out in the Licence.
- * You should have received a copy of the Licence with this source code file.
- * If You have not received a copy, the text of the Licence is available
- * online at www.castle-technology.co.uk/riscosbaselicence.htm
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 /* Title  > c.flex
  * Purpose: provide memory allocation for interactive programs requiring
@@ -65,7 +62,9 @@
 #include "opts.h"
 #endif /* SKS_ACW */
 #include "flex.h"
+#ifndef SKS_ACW
 #include "swiextra.h"
+#endif
 
 /* 'Big' magic number for specifying that there is no free space in the flex heap */
 #define NO_COMPACTION_NEEDED 0x7fffffff
@@ -80,23 +79,15 @@ static int  flex__initialised = 0;
 static char *program_name = 0;
 static int  *error_fd = 0;
 
-#ifdef SKS_ACW
-
-#define MSGS_flex1 "flex1:" "Flex memory error"
-#define MSGS_flex2 "flex2:" "Not enough memory, or not within *desktop world"
-#define MSGS_flex3 "flex3:" "Flex not initialised"
-
-#else /* SKS_ACW */
-
+#ifndef SKS_ACW
 #define MSGS_flex1 "flex1", "Flex memory error"
 #define MSGS_flex2 "flex2", "Not enough memory, or not within *desktop world"
 #define MSGS_flex3 "flex3", "Flex not initialised"
-
 #endif /* SKS_ACW */
 
 /* internal versions of RISC_OSLib functions which report errors */
 
-static void flex_werr(int fatal, const char* format, ...)
+static void werr(int fatal, const char* format, ...)
 
 { va_list va;
   _kernel_oserror e;
@@ -116,7 +107,7 @@ static void flex_werr(int fatal, const char* format, ...)
 
 #ifndef SKS_ACW
 
-static char *flex_msgs_lookup(char *tag, char *dft)
+static char *msgs_lookup(char *tag, char *dft)
 {
     _kernel_swi_regs r;
     char             buffer[128];   /* buffer for result - 128 should be plenty big enough */
@@ -153,7 +144,7 @@ typedef struct {
 
 static void flex__fail(int i)
 {
-  flex_werr(TRUE, flex_msgs_lookup(MSGS_flex1));
+  werr(TRUE, msgs_lookup(MSGS_flex1));
 
   i = i; /* avoid compiler warning. */
 
@@ -162,7 +153,7 @@ static void flex__fail(int i)
 static void flex__check(void)
 {
   if(flex__initialised == 0)
-    flex_werr(TRUE, flex_msgs_lookup(MSGS_flex3));
+    werr(TRUE, msgs_lookup(MSGS_flex3));
 }
 
 #endif /* SKS_ACW */
@@ -1063,7 +1054,7 @@ int flex_init(char *pname, int *efd, int dynamic_size)
   {
     void *a;
     if (! flex_alloc(&a, 1)) {
-      flex_werr(TRUE, flex_msgs_lookup(MSGS_flex2));
+      werr(TRUE, msgs_lookup(MSGS_flex2));
     };
     flex_free(&a);
   };

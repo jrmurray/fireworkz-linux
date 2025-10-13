@@ -9,10 +9,10 @@
 
 /* Style editing UI exports */
 
-#ifndef __xp_uisty_h
-#define __xp_uisty_h
+#ifndef XP_UISTY_H
+#define XP_UISTY_H
 
-#ifndef         __xp_skeld_h
+#ifndef           XP_SKELD_H
 #include "ob_skel/xp_skeld.h"
 #endif
 
@@ -40,6 +40,6 @@ typedef struct MSG_UISTYLE_STYLE_EDIT
 }
 MSG_UISTYLE_STYLE_EDIT, * P_MSG_UISTYLE_STYLE_EDIT;
 
-#endif /* __xp_uisty_h */
+#endif /* XP_UISTY_H */
 
 /* end of xp_uisty.h */

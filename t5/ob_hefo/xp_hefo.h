@@ -11,8 +11,8 @@
 
 /* MRJC September 1992 */
 
-#ifndef __xp_hefo_h
-#define __xp_hefo_h
+#ifndef XP_HEFO_H
+#define XP_HEFO_H
 
 #define ARG_PAGE_HEFO_BREAK_VALUES_ROW                      0
 #define ARG_PAGE_HEFO_BREAK_VALUES_PAGE_BREAK               1
@@ -38,6 +38,6 @@
 #define ARG_PAGE_HEFO_BREAK_VALUES_FOOTER_FIRST_OFFSET      21
 #define ARG_PAGE_HEFO_BREAK_VALUES_N_ARGS                   22
 
-#endif /* __xp_hefo_h */
+#endif /* XP_HEFO_H */
 
 /* end of xp_hefo.h */

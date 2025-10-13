@@ -11,8 +11,8 @@
 
 /* SKS December 1993 */
 
-#ifndef __xp_toolb_h
-#define __xp_toolb_h
+#ifndef XP_TOOLB_H
+#define XP_TOOLB_H
 
 /* tools are always identifed by a string */
 
@@ -249,6 +249,6 @@ tool_enable(
 #endif /* BIND_OB_TOOLBAR */
 }
 
-#endif /* __xp_toolb_h */
+#endif /* XP_TOOLB_H */
 
 /* end of xp_toolb.h */

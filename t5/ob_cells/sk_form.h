@@ -11,8 +11,8 @@
 
 /* MRJC December 1991 */
 
-#ifndef __sk_form_h
-#define __sk_form_h
+#ifndef SK_FORM_H
+#define SK_FORM_H
 
 /*
 row table entry structure
@@ -154,6 +154,6 @@ virtual_row_table_set(
     _DocuRef_   P_DOCU p_docu,
     _InVal_     BOOL new_vrt);
 
-#endif /* __sk_form_h */
+#endif /* SK_FORM_H */
 
 /* end of sk_form.h */

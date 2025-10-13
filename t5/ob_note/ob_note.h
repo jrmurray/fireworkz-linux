@@ -7,7 +7,7 @@
 /* Copyright (C) 1992-1998 Colton Software Limited
  * Copyright (C) 1998-2015 R W Colton */
 
-#ifndef         __xp_note_h
+#ifndef           XP_NOTE_H
 #include "ob_note/xp_note.h"
 #endif
 

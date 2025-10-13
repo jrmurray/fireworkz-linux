@@ -4,10 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2006-2022 Stuart Swales */
+/* Copyright (C) 2006-2025 Stuart Swales */
 
-#ifndef __uFB00_h
-#define __uFB00_h
+#ifndef UNICODE_UFB00_H
+#define UNICODE_UFB00_H
 
 /*
 FB00..FB4F Alphabetic Presentation Forms
@@ -76,6 +76,6 @@ FB00..FB4F Alphabetic Presentation Forms
 #define UCH_HEBREW_LETTER_PE_WITH_RAFE 0xFB4EU
 #define UCH_HEBREW_LIGATURE_ALEF_LAMED 0xFB4FU
 
-#endif /* __uFB00_h */
+#endif /* UNICODE_UFB00_H */
 
 /* end of uFB00.h */

@@ -15,7 +15,7 @@
 
 #include "ob_mails/ob_mails.h"
 
-#ifndef         __xp_skeld_h
+#ifndef           XP_SKELD_H
 #include "ob_skel/xp_skeld.h"
 #endif
 

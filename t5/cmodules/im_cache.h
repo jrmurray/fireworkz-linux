@@ -11,8 +11,8 @@
 
 /* SKS May 1991 */
 
-#ifndef __im_cache_h
-#define __im_cache_h
+#ifndef IM_CACHE_H
+#define IM_CACHE_H
 
 /*
 exports from im_cache.c
@@ -200,6 +200,6 @@ _Check_return_
 extern STATUS
 image_convert_ensure_PicConvert(void);
 
-#endif /* __im_cache_h */
+#endif /* IM_CACHE_H */
 
 /* end of im_cache.h */

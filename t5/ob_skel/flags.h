@@ -9,22 +9,22 @@
 
 /* skeleton includes */
 
-#ifndef __skel_flags_h
-#define __skel_flags_h
+#ifndef SKEL_FLAGS_H
+#define SKEL_FLAGS_H
 
-#ifndef         __xp_skel_h
+#ifndef           XP_SKEL_H
 #include "ob_skel/xp_skel.h"
 #endif
 
-#ifndef         __xp_note_h
+#ifndef           XP_NOTE_H
 #include "ob_note/xp_note.h"
 #endif
 
-#ifndef    __cells_ob_cells_h
+#ifndef      CELLS_OB_CELLS_H
 #include "ob_cells/ob_cells.h"
 #endif
 
-#ifndef          __ce_edit_h
+#ifndef            CE_EDIT_H
 #include "ob_cells/ce_edit.h"
 #endif
 
@@ -500,6 +500,6 @@ ho_print.c
 
 T5_CMD_PROTO(extern, t5_cmd_print_setup);
 
-#endif /* __skel_flags_h */
+#endif /* SKEL_FLAGS_H */
 
 /* end of flags.h */

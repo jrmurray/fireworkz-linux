@@ -17,13 +17,13 @@
 
 #include "ob_skel/ff_io.h"
 
-#ifndef          __typepack_h
+#ifndef            TYPEPACK_H
 #include "cmodules/typepack.h"
 #endif
 
 #include "cmodules/cfbf.h"
 
-#ifndef         __xp_skeld_h
+#ifndef           XP_SKELD_H
 #include "ob_skel/xp_skeld.h"
 #endif
 
@@ -1711,7 +1711,7 @@ xls_quick_ublock_sbchars_add(
 
 #if TSTR_IS_SBSTR
 
-#ifndef          __utf16_h
+#ifndef            UTF16_H
 #include "cmodules/utf16.h"
 #endif
 

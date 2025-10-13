@@ -11,8 +11,8 @@
 
 /* SKS April 1992 */
 
-#ifndef __xp_file_h
-#define __xp_file_h
+#ifndef XP_FILE_H
+#define XP_FILE_H
 
 /*
 error numbers (sadly these need exposing to other modules)
@@ -103,6 +103,6 @@ GetUserTemplatesDirectoryName(
     _Out_writes_z_(elemof_buffer) PTSTR p_dir_name /*filled*/,
     _InVal_     U32 elemof_buffer);
 
-#endif /* __xp_file_h */
+#endif /* XP_FILE_H */
 
 /* end of xp_file.h */

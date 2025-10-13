@@ -19,14 +19,14 @@
 #
 # Version number and date
 # When changing for release, remember other files
-# The definitive list of files is in common.mf_mid
+# The definitive list of files is in ob_skel/version.h
 #1:2.xx.yy
 #1:2.xx
-1:2.32.02
+1:2.33
 # UK 2:dd mmm yyyy
-2:12 déc. 2022
+2:13 oct. 2025
 #
-3:© 1992-2022 Colton Software
+3:© 1992-2025 Colton Software
 # UK w1037:The product uses the following components
 w1037:The product uses the following components
 # UK w1031:Drawfile rendering DLLs © 1994-2005 Dial Solutions

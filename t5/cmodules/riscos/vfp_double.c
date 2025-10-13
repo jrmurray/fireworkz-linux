@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2021-2022 Stuart Swales */
+/* Copyright (C) 2021-2025 Stuart Swales */
 
 #include "common/gflags.h"
 
@@ -34,7 +34,7 @@ vfp_context_ensure(void)
     rs.r[0] = (1<<1)  /* Application Space flag */
             | (1<<0); /* User mode access required */
     rs.r[1] = 16; /* Number of doubleword registers required  */
-    if(NULL != (e = _kernel_swi(0x58EC0 /*VFPSupport_CheckContext*/, &rs, &rs)))
+    if(NULL != (e = cs_kernel_swi(0x58EC0 /*VFPSupport_CheckContext*/, &rs)))
     {   /* not that bothered if this fails - caller will fall back to FPA hopefully */
         //wimp_reporterror_simple(e);
         return(false);
@@ -53,7 +53,7 @@ vfp_context_ensure(void)
     rs.r[3] |= (1<<24); /*  */
     rs.r[3] |= (1<<25); /*  */
 #endif
-    if(NULL != (e = _kernel_swi(0x58EC1 /*VFPSupport_CreateContext*/, &rs, &rs)))
+    if(NULL != (e = cs_kernel_swi(0x58EC1 /*VFPSupport_CreateContext*/, &rs)))
     {
         //wimp_reporterror_simple(e);
         al_ptr_dispose(&vfp_context);
@@ -77,7 +77,7 @@ vfp_context_destroy(void)
 
     rs.r[0] = (intptr_t) vfp_context;
     rs.r[1] = 0;
-    if(NULL != _kernel_swi(0x58EC2 /*VFPSupport_DestroyContext*/, &rs, &rs))
+    if(NULL != cs_kernel_swi(0x58EC2 /*VFPSupport_DestroyContext*/, &rs))
         /*return*/;
 
     al_ptr_dispose(&vfp_context);

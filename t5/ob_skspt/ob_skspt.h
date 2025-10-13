@@ -9,8 +9,8 @@
 
 /* SKS October 1995 Split off UI for skeleton internal header; SKS May 2014 other UIxxx modules merged back */
 
-#ifndef __ob_skspt_h
-#define __ob_skspt_h
+#ifndef OB_SKSPT_H
+#define OB_SKSPT_H
 
 /*
 errors
@@ -82,6 +82,6 @@ messages
 #define SKEL_SPLIT_MSG_DIALOG_ROWS_ADD                          SKEL_SPLIT_MSG(67)
 #define SKEL_SPLIT_MSG_DIALOG_ROWS_INSERT                       SKEL_SPLIT_MSG(68)
 
-#endif /* __ob_skspt_h */
+#endif /* OB_SKSPT_H */
 
 /* end of ob_skspt.h */

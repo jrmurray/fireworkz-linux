@@ -11,7 +11,7 @@
 
 #if RISCOS
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -23,6 +23,12 @@ internal definitions
 #define EXPOSE_RISCOS_SWIS 1
 
 #include "ob_skel/xp_skelr.h"
+
+#define OS_DynamicArea_Create 0
+#define OS_DynamicArea_Remove 1
+
+#define OS_DynamicArea_Flags_PrivMask 0xf
+#define OS_DynamicArea_Flags_NotDraggable (1U<<7)
 
 /* the well-known implementation of flex has allocated block preceded by: */
 
@@ -217,28 +223,34 @@ report_flex_size(
 
 #endif /* REPORT_FLEX */
 
-int flex_granularity = 0x8000;     /* must be a power-of-two size or zero (exported) */
+int flex_granularity = 0; /* must be a power-of-two size or zero (exported) */
+
+/*ncr*/
+extern int
+flex_granularity_read(void)
+{
+    if(0 == flex_granularity)
+    {
+        flex_granularity = _swi(OS_ReadMemMapInfo, _RETURN(0)); /* page size */
+        if(flex_granularity <= 0x1000)
+            flex_granularity = 0x4000; /* SKS says don't page violently on RISC PC */
+        reportf(TEXT("flex_granularity = %d"), flex_granularity);
+    }
+    return(flex_granularity);
+}
 
 static inline int
 flex_granularity_ceil(int n)
 {
-  if(flex_granularity)
-  {
-    int mask = flex_granularity - 1; /* flex_granularity must be a power-of-two */
-    n = (n + mask) & ~mask;
-  }
-  return n;
+    const int mask = flex_granularity - 1; /* flex_granularity must be a power-of-two */
+    return((mask < 0) ? n : ((n + mask) & ~mask));
 }
 
 static inline int
 flex_granularity_floor(int n)
 {
-  if(flex_granularity)
-  {
-    int mask = flex_granularity - 1; /* flex_granularity must ve a power-of-two */
-    n = n & ~mask;
-  }
-  return n;
+    const int mask = flex_granularity - 1; /* flex_granularity must be a power-of-two */
+    return((mask < 0) ? n : (n & ~mask));
 }
 
 #if defined(TBOXLIBS_FLEX)
@@ -319,11 +331,17 @@ flex_msgs_lookup(
     return(string_for_object(tag_and_default, OBJECT_ID_SKEL));
 }
 
+#define msgs_lookup flex_msgs_lookup
+
 #define SKS_ACW 1 /* make it easy to share with PipeDream's modifications */
 
 #undef TRACE /* don't mess with devices:parallel ! */
 
 #define DefaultSize 0 /* for the Dynamic Area */
+
+#define MSGS_flex1 "flex1:" "Flex memory error"
+#define MSGS_flex2 "flex2:" "Not enough memory, or not within *desktop world"
+#define MSGS_flex3 "flex3:" "Flex not initialised"
 
 #include "tb-flex.c"
 
@@ -331,7 +349,7 @@ static void
 flex__fail(int i)
 {
    UNREFERENCED_PARAMETER_InVal_(i);
-   flex_werr(FALSE, flex_msgs_lookup(MSGS_flex1)); /* don't abort */
+   werr(FALSE, msgs_lookup(MSGS_flex1)); /* don't abort */
 }
 
 #else
@@ -384,7 +402,7 @@ dynamicarea_create(
     rs.r[7] = 0;
     rs.r[8] = (int) name;
 
-    if(NULL == (e = _kernel_swi(OS_DynamicArea, &rs, &rs)))
+    if(NULL == (e = cs_kernel_swi(OS_DynamicArea, &rs)))
         *hand = rs.r[1];
     else
         *hand = 0;
@@ -403,7 +421,7 @@ dynamicarea_kill(
     rs.r[0] = 1;
     rs.r[1] = hand;
 
-    return(_kernel_swi(OS_DynamicArea, &rs, &rs));
+    return(cs_kernel_swi(OS_DynamicArea, &rs));
 }
 
 /* Reads info about a dynamic area */
@@ -420,7 +438,7 @@ dynamicarea_read(
     rs.r[0] = 2;
     rs.r[1] = hand;
 
-    if(NULL != (e = _kernel_swi(OS_DynamicArea, &rs, &rs)))
+    if(NULL != (e = cs_kernel_swi(OS_DynamicArea, &rs)))
     {
         rs.r[2] = 0;
         rs.r[3] = 0;
@@ -444,13 +462,13 @@ dynamicarea_change(
 
     rs.r[0] = hand;
 
-    if(NULL != (e = _kernel_swi(OS_ReadDynamicArea, &rs, &rs)))
+    if(NULL != (e = cs_kernel_swi(OS_ReadDynamicArea, &rs)))
         return(e);
 
     rs.r[1] = size - rs.r[1];
     rs.r[0] = hand;
 
-    return(_kernel_swi(OS_ChangeDynamicArea, &rs, &rs));
+    return(cs_kernel_swi(OS_ChangeDynamicArea, &rs));
 }
 
 /* Reads the size of the current task's slot */
@@ -465,7 +483,7 @@ wimp_currentslot_read(
     rs.r[0] = -1;
     rs.r[1] = -1;
 
-    if(NULL != (e = _kernel_swi(Wimp_SlotSize, &rs, &rs)))
+    if(NULL != (e = cs_kernel_swi(Wimp_SlotSize, &rs)))
         rs.r[0] = 0;
 
     *p_size = rs.r[0];
@@ -485,7 +503,7 @@ wimp_currentslot_change(
     rs.r[0] = *p_size;
     rs.r[1] = -1;
 
-    if(NULL != (e = _kernel_swi(Wimp_SlotSize, &rs, &rs)))
+    if(NULL != (e = cs_kernel_swi(Wimp_SlotSize, &rs)))
         return(e);
 
     *p_size = rs.r[0];
@@ -572,8 +590,9 @@ flex_init(
 
     {
     _kernel_swi_regs rs;
-    void_WrapOsErrorChecking(_kernel_swi(OS_ReadMemMapInfo, &rs, &rs));
+    void_WrapOsErrorChecking(cs_kernel_swi(OS_ReadMemMapInfo, &rs));
     flex_granularity = rs.r[0]; /* page size */
+    reportf(TEXT("flex_init: flex_granularity = %d"), flex_granularity);
     } /*block*/
 
     if(flex_granularity < 0x4000)

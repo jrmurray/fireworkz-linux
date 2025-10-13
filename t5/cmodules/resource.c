@@ -11,7 +11,7 @@
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -170,7 +170,7 @@ spriteop_select_sprite(
     rs.r[1] = (int) sprite_area;
     rs.r[2] = (int) sprite_name;
 
-    if(NULL == (p_kernel_oserror = _kernel_swi(OS_SpriteOp, &rs, &rs)))
+    if(NULL == (p_kernel_oserror = cs_kernel_swi(OS_SpriteOp, &rs)))
         return(rs.r[2]);
 
     return(0);
@@ -468,7 +468,7 @@ resource_bitmap_find_system(
 
     { /* have a look in Window Manager's back pockets */
     _kernel_swi_regs rs;
-    void_WrapOsErrorChecking(_kernel_swi(Wimp_BaseOfSprites, &rs, &rs));
+    void_WrapOsErrorChecking(cs_kernel_swi(Wimp_BaseOfSprites, &rs));
     sprite_areas[0] = (P_ANY) rs.r[1]; /* RAM */
     sprite_areas[1] = (P_ANY) rs.r[0]; /* ROM */
     } /*block*/
@@ -550,7 +550,7 @@ resource_bitmap_gdi_size_query(
         rs.r[0] = 40; /* Read sprite information */
         rs.r[2] = resource_bitmap_handle.i & ~RESOURCE_BITMAP_HANDLE_RISCOS_BODGE;
 
-        ok = (NULL == _kernel_swi(Wimp_SpriteOp, &rs, &rs));
+        ok = (NULL == cs_kernel_swi(Wimp_SpriteOp, &rs));
     }
     else
     {
@@ -558,7 +558,7 @@ resource_bitmap_gdi_size_query(
         rs.r[1] = (int) 0x89ABFEDC; /* kill the OS or any twerp who dares to access this! */
         rs.r[2] = resource_bitmap_handle.i;
 
-        ok = (NULL == _kernel_swi(OS_SpriteOp, &rs, &rs));
+        ok = (NULL == cs_kernel_swi(OS_SpriteOp, &rs));
     }
 
     if(!ok)
@@ -950,13 +950,13 @@ riscos_sprite_readfile_into(
             rs.r[1] = (int) *p_p_sah;
             rs.r[2] = area_size;
 
-            void_WrapOsErrorChecking(_kernel_swi(OS_SpriteOp, &rs, &rs));
+            void_WrapOsErrorChecking(cs_kernel_swi(OS_SpriteOp, &rs));
 
             rs.r[0] = 0x100 | 10; /* Load sprite file */
             rs.r[1] = (int) *p_p_sah;
             rs.r[2] = (int) filename;
 
-            if(NULL != (e = _kernel_swi(OS_SpriteOp, &rs, &rs)))
+            if(NULL != (e = cs_kernel_swi(OS_SpriteOp, &rs)))
                 al_ptr_dispose((void **) p_p_sah);
         }
 
@@ -1636,7 +1636,7 @@ riscos_filesprite(
         _kernel_swi_regs rs;
         rs.r[0] = 24; /* Select sprite */
         rs.r[2] = (int) sbstr_buf;
-        if(NULL == _kernel_swi(Wimp_SpriteOp, &rs, &rs))
+        if(NULL == cs_kernel_swi(Wimp_SpriteOp, &rs))
             return;
 #endif
 

@@ -11,8 +11,8 @@
 
 /* MRJC December 1991 */
 
-#ifndef __list_h
-#define __list_h
+#ifndef LIST_H
+#define LIST_H
 
 /******************************************************************************
 
@@ -257,8 +257,8 @@ list_size(
     _OutRef_    P_U32 p_size,
     _OutRef_    P_U32 p_pools);
 
-#endif
+#endif /* TRACE_ALLOWED */
 
-#endif /* __list_h */
+#endif /* LIST_H */
 
 /* end of list.h */

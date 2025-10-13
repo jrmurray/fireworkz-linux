@@ -11,14 +11,14 @@
 
 /* Do not include unless you want a whole host of very RISC OS specific stuff */
 
-#ifndef __xp_skelr_h
-#define __xp_skelr_h
+#ifndef XP_SKELR_H
+#define XP_SKELR_H
 
 #if RISCOS
 
 /* #define EXPOSE_RISCOS_xxx to expose various bits of RISC OS interfaces */
 
-#ifndef __xp_skel_h /* e.g. when used directly from WindLibC */
+#ifndef XP_SKEL_H /* e.g. when used directly from WindLibC */
 #define ARRAY_HANDLE unsigned int
 #define HOST_FONT int
 #endif
@@ -29,13 +29,16 @@ __pragma(warning(push)) __pragma(warning(disable:4255)) /* no function prototype
 __pragma(warning(pop))
 #endif
 
+/*ncr*/
+extern _kernel_oserror * cs_kernel_swi(int no, _kernel_swi_regs * in_and_out);
+
 #ifndef __os_h
 #define __os_h /* Fireworkz does not directly use os.h so suppress it (WindLibC will have included it already) */
 #endif
 
 #define os_error _kernel_oserror /* doesn't matter whether typedef'd or #define'd by os.h */
 
-#ifdef EXPOSE_RISCOS_SWIS
+#if defined(EXPOSE_RISCOS_SWIS) || defined(NORCROFT_INLINE_SWIX)
 
 #ifndef __swis_h
 #include "swis.h" /* C: */
@@ -43,7 +46,7 @@ __pragma(warning(pop))
 
 #endif /* EXPOSE_RISCOS_SWIS */
 
-#if defined(__xp_skel_h)
+#if defined(XP_SKEL_H)
 
 _Check_return_
 static inline STATUS
@@ -53,13 +56,13 @@ create_error_from_kernel_oserror(
     return(create_error_from_tstr(e->errmess));
 }
 
-#endif /* __xp_skel_h */
+#endif /* XP_SKEL_H */
 
-#ifndef                   __filetype_h
+#ifndef                     FILETYPE_H
 #include "cmodules/coltsoft/filetype.h"
 #endif
 
-#ifndef          __riscos_osfile_h
+#ifndef            RISCOS_OSFILE_H
 #include "cmodules/riscos/osfile.h"
 #endif
 
@@ -182,7 +185,7 @@ BBox_height(
     (bbox__ref).xmax = (gdi_rect).br.x, \
     (bbox__ref).ymax = (gdi_rect).tl.y
 
-#if defined(__xp_skel_h)
+#if defined(XP_SKEL_H)
 
 static inline void
 host_framed_BBox_trim(
@@ -192,7 +195,7 @@ host_framed_BBox_trim(
     host_framed_box_trim_frame((P_GDI_BOX) p_bbox, border_style);
 }
 
-#endif /* __xp_skel_h */
+#endif /* XP_SKEL_H */
 
 /*
 Icons
@@ -464,7 +467,7 @@ wimp_create_icon_with_bitset(
 
     rs.r[1] = (int) icreate;
 
-    e = _kernel_swi(/*Wimp_CreateIcon*/ 0x000400C2, &rs, &rs);
+    e = cs_kernel_swi(/*Wimp_CreateIcon*/ 0x000400C2, &rs);
 
     *p_icon_handle = (NULL == e) ? (wimp_i) rs.r[0] : BAD_WIMP_I;
 
@@ -782,7 +785,7 @@ event_return_real_menu(
 /* end of event.h */
 
 #ifdef EXPOSE_RISCOS_FLEX
-#ifndef          __riscos_ho_flex_h
+#ifndef            RISCOS_HO_FLEX_H
 #include "cmodules/riscos/ho_flex.h"
 #endif
 #endif /* EXPOSE_RISCOS_FLEX */
@@ -1025,8 +1028,6 @@ winx_submenu_query_closed_child(void);
 
 /* end of cs-winx.h */
 
-extern BOOL g_kill_duplicates;
-
 typedef BOOL (* P_PROC_RISCOS_MESSAGE_FILTER) (
     _InVal_     int event_code,
     _In_        const WimpPollBlock * const p_event_data,
@@ -1166,6 +1167,6 @@ host_xfer_save_file_for_DataRequest(
 
 #endif /* RISCOS */
 
-#endif /* __xp_skelr_h */
+#endif /* XP_SKELR_H */
 
 /* end of xp_skelr.h */

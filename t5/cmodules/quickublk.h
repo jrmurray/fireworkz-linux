@@ -11,8 +11,8 @@
 
 /* SKS May 2014 split off from quickblk.h */
 
-#ifndef __quickublk_h
-#define __quickublk_h
+#ifndef QUICKUBLK_H
+#define QUICKUBLK_H
 
 #if CHECKING && 1
 #define CHECKING_QUICK_UBLOCK 1
@@ -381,6 +381,6 @@ quick_ublock_ucs4_add_aiu(
 
 #endif /* USTR_IS_SBSTR */
 
-#endif /* __quickublk_h */
+#endif /* QUICKUBLK_H */
 
 /* end of quickublk.h */

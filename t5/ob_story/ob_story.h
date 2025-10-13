@@ -11,8 +11,8 @@
 
 /* MRJC July 1994 */
 
-#ifndef __ob_story_h
-#define __ob_story_h
+#ifndef OB_STORY_H
+#define OB_STORY_H
 
 /*
 ob_story instance data
@@ -118,6 +118,6 @@ TEXT_INLINE_REDISPLAY, * P_TEXT_INLINE_REDISPLAY;
 
 #include "ob_story/tx_main.h"
 
-#endif /* __ob_story_h */
+#endif /* OB_STORY_H */
 
 /* end of ob_story.h */

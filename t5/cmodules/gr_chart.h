@@ -11,8 +11,8 @@
 
 /* SKS May 1991 */
 
-#ifndef __gr_chart_h
-#define __gr_chart_h
+#ifndef GR_CHART_H
+#define GR_CHART_H
 
 /*
 chart object 'names'
@@ -92,7 +92,7 @@ GR_CHART_OBJID, * P_GR_CHART_OBJID; typedef const GR_CHART_OBJID * PC_GR_CHART_O
 
 #define GR_CHART_OBJID_DEFINED
 
-#ifndef          __gr_diag_h
+#ifndef            GR_DIAG_H
 #include "cmodules/gr_diag.h"
 #endif
 
@@ -432,6 +432,6 @@ callback_from_gr_chart(
     P_ANY client_handle,
     _In_        GR_CHART_CALLBACK_RC rc);
 
-#endif /* __gr_chart_h */
+#endif /* GR_CHART_H */
 
 /* end of gr_chart.h */

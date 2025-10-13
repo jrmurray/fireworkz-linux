@@ -13,7 +13,7 @@
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -21,7 +21,7 @@
 
 #include "cmodules/collect.h"
 
-#ifndef          __utf16_h
+#ifndef            UTF16_H
 #include "cmodules/utf16.h"
 #endif
 

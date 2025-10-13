@@ -9,8 +9,8 @@
 
 /* Some target-specific definitions for the target machine and OS */
 
-#ifndef __defineos_h
-#define __defineos_h
+#ifndef DEFINEOS_H
+#define DEFINEOS_H
 
 /*
  * target machine definition
@@ -26,7 +26,7 @@
 
 #if defined(RISCOS)
 /* set up on command line */
-#elif defined(__acorn) && defined(__CC_NORCROFT) /* defined by Norcroft ARM compiler */
+#elif defined(__CC_NORCROFT) && defined(__acorn) /* defined by Norcroft ARM C compiler */
 #define RISCOS 1
 #elif defined(TARGET_RISCOS)
 #define RISCOS 1
@@ -205,6 +205,6 @@ __pragma(message("CROSS_COMPILE: HOST_WINDOWS & TARGET_RISCOS"))
 
 /* much more of differences covered in coltsoft/coltsoft.h ... */
 
-#endif /* __defineos_h */
+#endif /* DEFINEOS_H */
 
 /* end of defineos.h */

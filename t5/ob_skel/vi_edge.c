@@ -9,11 +9,11 @@
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
-#ifndef         __vi_edge_h
+#ifndef           VI_EDGE_H
 #include "ob_skel/vi_edge.h"
 #endif
 
@@ -166,7 +166,7 @@ border_horz_cache_height(
         rs.r[0] = host_font_redraw;
         rs.r[1] = 'A';
         rs.r[2] = 0;
-        if(NULL == _kernel_swi(Font_CharBBox, &rs, &rs))
+        if(NULL == cs_kernel_swi(Font_CharBBox, &rs))
         {
             col_repr_height  = pixits_from_millipoints_ceil(abs(rs.r[4]));
             col_repr_descent = pixits_from_millipoints_ceil(abs(rs.r[2]));
@@ -411,7 +411,7 @@ ruler_horz_cache_height(
         rs.r[0] = host_font_redraw;
         rs.r[1] = '0';
         rs.r[2] = 0;
-        if(NULL == _kernel_swi(Font_CharBBox, &rs, &rs))
+        if(NULL == cs_kernel_swi(Font_CharBBox, &rs))
         {
             digits_height = pixits_from_millipoints_ceil(abs(rs.r[4]));
             base_line = digits_height;
@@ -492,7 +492,7 @@ ruler_vert_cache_width(
         rs.r[0] = host_font_redraw;
         rs.r[1] = '0';
         rs.r[2] = 0;
-        if(NULL == _kernel_swi(Font_CharBBox, &rs, &rs))
+        if(NULL == cs_kernel_swi(Font_CharBBox, &rs))
         {
             two_digits_width = pixits_from_millipoints_ceil(abs(rs.r[3])) * 2;
         }

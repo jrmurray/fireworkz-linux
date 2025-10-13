@@ -11,8 +11,8 @@
 
 /* SKS February 1992 */
 
-#ifndef __profile_h
-#define __profile_h
+#ifndef PROFILE_H
+#define PROFILE_H
 
 #if RISCOS
 
@@ -48,22 +48,19 @@ external functions
 static inline _kernel_oserror *
 profile_init(void)
 {
-    _kernel_swi_regs rs;
-    return(_kernel_swi(Profiler_Init, &rs, &rs));
+    return(_swix(Profiler_Init, 0));
 }
 
 static inline _kernel_oserror *
 profile_on(void)
 {
-    _kernel_swi_regs rs;
-    return(_kernel_swi(Profiler_On, &rs, &rs));
+    return(_swix(Profiler_On, 0));
 }
 
 static inline _kernel_oserror *
 profile_off(void)
 {
-    _kernel_swi_regs rs;
-    return(_kernel_swi(Profiler_Off, &rs, &rs));
+    return(_swix(Profiler_Off, 0));
 }
 
 static inline _kernel_oserror *
@@ -72,36 +69,29 @@ profile_output(
     const char * filename,
     const char * sep)
 {
-    _kernel_swi_regs rs;
-    rs.r[0] =       sort_by;
-    rs.r[1] = (int) filename;
-    rs.r[2] = (int) sep;
-    return(_kernel_swi(Profiler_Output, &rs, &rs));
+    return(_swix(Profiler_Output, _INR(0,2), sort_by, filename, sep));
 }
 
 static inline _kernel_oserror *
 profile_reset(void)
 {
-    _kernel_swi_regs rs;
-    return(_kernel_swi(Profiler_Reset, &rs, &rs));
+    return(_swix(Profiler_Reset, 0));
 }
 
 static inline _kernel_oserror *
 profile_taskchange(void)
 {
-    _kernel_swi_regs rs;
-    return(_kernel_swi(Profiler_TaskChange, &rs, &rs));
+    return(_swix(Profiler_TaskChange, 0));
 }
 
 static inline _kernel_oserror *
 profile_fini(void)
 {
-    _kernel_swi_regs rs;
-    return(_kernel_swi(Profiler_Fini, &rs, &rs));
+    return(_swix(Profiler_Fini, 0));
 }
 
 #endif /* RISCOS */
 
-#endif /* __profile_h */
+#endif /* PROFILE_H */
 
 /* end of profile.h */

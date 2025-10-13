@@ -13,21 +13,21 @@
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
-#ifndef          __im_cache_h
+#ifndef            IM_CACHE_H
 #include "cmodules/im_cache.h"
 #endif
 
-#ifndef          __gr_diag_h
+#ifndef            GR_DIAG_H
 #include "cmodules/gr_diag.h"
 #endif
 
 #include "cmodules/collect.h"
 
-#ifndef          __typepack_h
+#ifndef            TYPEPACK_H
 #include "cmodules/typepack.h"
 #endif
 
@@ -1171,7 +1171,7 @@ image_cache_process_loaded_or_embedded_data(
 
                 status_break(image_convert_ensure_PicConvert());
 
-                if(_kernel_swi(PicConvert_BMPtoFF9 /*0x48E00*/, &rs, &rs))
+                if(cs_kernel_swi(PicConvert_BMPtoFF9 /*0x48E00*/, &rs))
                 {   /* enquiry failed - bind as BMP object into Drawfile regardless */
                     break;
                 }
@@ -1202,7 +1202,7 @@ image_cache_process_loaded_or_embedded_data(
                 rs.r[1] = (int) readp_new;
                 rs.r[2] = options;
 
-                if(NULL != _kernel_swi(PicConvert_BMPtoFF9 /*0x48E00*/, &rs, &rs))
+                if(NULL != cs_kernel_swi(PicConvert_BMPtoFF9 /*0x48E00*/, &rs))
                 {   /* conversion failed, discard new memory - bind as BMP object into Draw file regardless */
                     al_array_dispose(&new_h_data_draw);
                     break;
@@ -1349,7 +1349,7 @@ image_cache_process_loaded_or_embedded_data(
                 rs.r[0] = 1; /* return dimensions */
                 rs.r[1] = (int) (pJpegObject+ 1); /* point to JPEG image */
                 rs.r[2] = (int) n_bytes;
-                if(NULL == _kernel_swi(/*JPEG_Info*/ 0x49980, &rs, &rs))
+                if(NULL == cs_kernel_swi(/*JPEG_Info*/ 0x49980, &rs))
                 {
                   /*if(rs.r[0] & (1<<2))
                         reportf(TEXT("JPEG_Info: simple ratio"));*/
@@ -1785,7 +1785,7 @@ __pragma(warning(pop))
 
         status_break(image_convert_ensure_PicConvert());
 
-        if(_kernel_swi(PicConvert_BMPtoFF9 /*0x48E00*/, &rs, &rs))
+        if(cs_kernel_swi(PicConvert_BMPtoFF9 /*0x48E00*/, &rs))
             break;
 
         if(0 == (newlength = rs.r[1]))
@@ -1799,7 +1799,7 @@ __pragma(warning(pop))
         rs.r[1] = (int) readp_new;
         rs.r[2] = options;
 
-        if(_kernel_swi(PicConvert_BMPtoFF9 /*0x48E00*/, &rs, &rs))
+        if(cs_kernel_swi(PicConvert_BMPtoFF9 /*0x48E00*/, &rs))
             break;
 
         required_size = newlength - sizeof32(SAH) + sizeof32(DRAW_OBJECT_HEADER);

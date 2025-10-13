@@ -9,8 +9,8 @@
 
 /* SKS April 1992 */
 
-#ifndef __resource_h
-#define __resource_h
+#ifndef RESOURCE_H
+#define RESOURCE_H
 
 typedef struct BOUND_RESOURCES
 {
@@ -299,6 +299,6 @@ resource_lookup_quick_tblock_no_default(
     _InoutRef_  P_QUICK_TBLOCK p_quick_tblock /*appended*/,
     _InVal_     STATUS status);
 
-#endif /* __resource_h */
+#endif /* RESOURCE_H */
 
 /* end of resource.h */

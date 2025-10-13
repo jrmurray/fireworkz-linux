@@ -22,15 +22,15 @@
 
 #include "common/gflags.h"
 
-#ifndef          __typepack_h
+#ifndef            TYPEPACK_H
 #include "cmodules/typepack.h"
 #endif
 
-#ifndef          __utf16_h
+#ifndef            UTF16_H
 #include "cmodules/utf16.h"
 #endif
 
-#ifndef          __quickublk_h
+#ifndef            QUICKUBLK_H
 #include "cmodules/quickublk.h"
 #endif
 

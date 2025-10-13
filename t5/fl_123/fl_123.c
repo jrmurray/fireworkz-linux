@@ -17,11 +17,11 @@
 
 #include "ob_skel/ff_io.h"
 
-#ifndef          __ev_eval_h
+#ifndef            EV_EVAL_H
 #include "cmodules/ev_eval.h"
 #endif
 
-#ifndef          __typepack_h
+#ifndef            TYPEPACK_H
 #include "cmodules/typepack.h"
 #endif
 

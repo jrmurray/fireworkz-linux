@@ -13,13 +13,13 @@
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
 #include "ob_skel/ff_io.h"
 
-#ifndef         __xp_skeld_h
+#ifndef           XP_SKELD_H
 #include "ob_skel/xp_skeld.h"
 #endif
 
@@ -3325,7 +3325,7 @@ save_template_locate(
     _kernel_oserror * e;
     rs.r[0] = OSFile_ReadNoPath;
     rs.r[1] = (intptr_t) dirname;
-    if(NULL != (e = WrapOsErrorChecking(_kernel_swi(OS_File, &rs, &rs))))
+    if(NULL != (e = WrapOsErrorChecking(cs_kernel_swi(OS_File, &rs))))
         return(file_error_set(e->errmess));
     if(rs.r[0] != 0)
         return(create_error(ERR_TEMPLATE_DEST_EXISTS));
@@ -3334,7 +3334,7 @@ save_template_locate(
     rs.r[1] = (intptr_t) p_save_callback->initial_template_dir;
     rs.r[2] = (intptr_t) dirname;
     rs.r[3] = 0x5603; /*~a~c~dfln~p~qrs~t~v*/
-    if(NULL != (e = WrapOsErrorChecking(_kernel_swi(OS_FSControl, &rs, &rs))))
+    if(NULL != (e = WrapOsErrorChecking(cs_kernel_swi(OS_FSControl, &rs))))
         return(file_error_set(e->errmess));
 #endif
 

@@ -15,7 +15,7 @@
 
 #include "fl_pdss/fl_pdss.h"
 
-#ifndef          __ev_eval_h
+#ifndef            EV_EVAL_H
 #include "cmodules/ev_eval.h"
 #endif
 

@@ -11,8 +11,8 @@
 
 /* SKS October 1990 */
 
-#ifndef __monotime_h
-#define __monotime_h
+#ifndef MONOTIME_H
+#define MONOTIME_H
 
 /*
 types
@@ -34,8 +34,8 @@ typedef S32 MONOTIMEDIFF;
 #define MONOTIME_MILLISECONDS_PER_TICK 1
 #endif
 
-/* convert millisecond value to something we can
- * directly compare MONOTIMEs against
+/* convert millisecond value to something we
+ * can directly compare MONOTIMEs against
 */
 #define MONOTIMEDIFF_VALUE_FROM_MS(ms) ( \
     ((MONOTIMEDIFF) (ms)) / MONOTIME_MILLISECONDS_PER_TICK )
@@ -82,6 +82,6 @@ monotime_diff(
     return(monotime_difftimes(monotime(), oldtime));
 }
 
-#endif /* __monotime_h */
+#endif /* MONOTIME_H */
 
 /* end of monotime.h */

@@ -13,7 +13,7 @@
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -25,23 +25,23 @@
 
 #include "ob_skel/ho_print.h"
 
-#ifndef         __xp_skeld_h
+#ifndef           XP_SKELD_H
 #include "ob_skel/xp_skeld.h"
 #endif
 
 #if RISCOS
-#ifndef         __xp_skelr_h
+#ifndef           XP_SKELR_H
 #include "ob_skel/xp_skelr.h"
 #endif
 
 #include "cmodules/riscos/mimemap.h"
 #endif
 
-#ifndef          __utf8_h
+#ifndef            UTF8_H
 #include "cmodules/utf8.h"
 #endif
 
-#ifndef          __utf16_h
+#ifndef            UTF16_H
 #include "cmodules/utf16.h"
 #endif
 

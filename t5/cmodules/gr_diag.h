@@ -11,8 +11,8 @@
 
 /* SKS April/June 1993 split out of gr_chart.h */
 
-#ifndef __gr_diag_h
-#define __gr_diag_h
+#ifndef GR_DIAG_H
+#define GR_DIAG_H
 
 /*
 exports from gr_diag.c -- diagram building
@@ -897,6 +897,6 @@ end of exports from gr_rdiag.c
 
 #endif /* RISCOS */
 
-#endif /* __gr_diag_h */
+#endif /* GR_DIAG_H */
 
 /* end of gr_diag.h */

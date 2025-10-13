@@ -11,8 +11,8 @@
 
 /* SKS 14-Feb-1989 */
 
-#ifndef __gflags_h
-#define __gflags_h
+#ifndef COMMON_GFLAGS_H
+#define COMMON_GFLAGS_H
 
 /* Define the version number of this release */
 #include "ob_skel/version.h"
@@ -82,6 +82,13 @@
 #define USE_GLOBAL_CLIPBOARD 1
 
 #define EDIT_XX_SINGLE_LINE_WIMP_RO 1
+
+#if defined(__CC_NORCROFT)
+#define NORCROFT_INLINE_ASM 1
+#if __CC_NORCROFT_VERSION >= 590
+#define NORCROFT_INLINE_SWIX 1
+#endif
+#endif /* CROSS_COMPILE */
 #endif /* RISCOS */
 
 #if WINDOWS
@@ -179,6 +186,6 @@ RISC OS Draw file stuff needed on all platforms
 }   /* ... extern "C" */
 #endif
 
-#endif /* __gflags_h */
+#endif /* COMMON_GFLAGS_H */
 
 /* end of gflags.h */

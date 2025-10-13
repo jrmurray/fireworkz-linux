@@ -13,7 +13,7 @@
 
 #include "common/gflags.h"
 
-#ifndef    __cells_ob_cells_h
+#ifndef      CELLS_OB_CELLS_H
 #include "ob_cells/ob_cells.h"
 #endif
 

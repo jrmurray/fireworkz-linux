@@ -11,10 +11,7 @@
 
 /* JAD Jul 1993 */
 
-#ifndef __fl_rtf_h
-#define __fl_rtf_h
-
-#ifndef          __sk_slot_h
+#ifndef            SK_SLOT_H
 #include "ob_cells/sk_slot.h"
 #endif
 
@@ -84,7 +81,5 @@ RTF_TABLE, * P_RTF_TABLE;
 #define RTF_BORDER_OFF 0
 #define RTF_BORDER_ON 1
 #define RTF_BORDER_DONT_CARE 2
-
-#endif /* __fl_rtf_h */
 
 /* end of fl_rtf.h */

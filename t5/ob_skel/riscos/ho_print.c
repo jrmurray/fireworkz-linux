@@ -15,7 +15,7 @@
 
 #if RISCOS
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -127,7 +127,7 @@ _kernel_swi_stash_error(
     _kernel_swi_regs * r,
     P_OSERROR_STASH p_oserror_stash)
 {
-    _kernel_oserror * p_kernel_oserror = _kernel_swi(swi_code, r, r);
+    _kernel_oserror * p_kernel_oserror = cs_kernel_swi(swi_code, r);
 
     /* do nothing if no-error fed in, or one already stashed */
 
@@ -174,7 +174,7 @@ host_print_document(
     /* open an output stream onto "printer:" */
     rs.r[0] = 0x8F; /* OpenOut, Ignore File$Path, give err if a dir.! */
     rs.r[1] = (int) "printer:";
-    if(NULL != WrapOsErrorReporting(_kernel_swi(OS_Find, &rs, &rs)))
+    if(NULL != WrapOsErrorReporting(cs_kernel_swi(OS_Find, &rs)))
         return(STATUS_FAIL);
 
     /* check for RISC OS 2.00 FileSwitch bug (returning a zero handle) */
@@ -199,7 +199,7 @@ host_print_document(
      */
 
     if(status_ok(oserror_stash.status))
-        if(NULL == _kernel_swi(PDriver_Info, &rs, &rs))
+        if(NULL == cs_kernel_swi(PDriver_Info, &rs))
             font_downloading = rs.r[3] & (1<<29 /* declare font supported */);
 
     /* calculate inputBB (x0,y0,x1,y1) transmat (xx,xy,yx,yy) */
@@ -261,7 +261,7 @@ host_print_document(
             }
             else
             {
-                void_WrapOsErrorChecking(_kernel_swi(PDriver_AbortJob, &rs, &rs));
+                void_WrapOsErrorChecking(cs_kernel_swi(PDriver_AbortJob, &rs));
             }
 
             /* in either case, reselect print job (if any) that was active on entry */
@@ -947,7 +947,7 @@ host_printer_name_query(
     p_ui_text->type = UI_TEXT_TYPE_RESID;
     p_ui_text->text.resource_id = MSG_DIALOG_PRINT_NO_RISCOS;
 
-    if(NULL == WrapOsErrorChecking(_kernel_swi(PDriver_Info, &rs, &rs)))
+    if(NULL == WrapOsErrorChecking(cs_kernel_swi(PDriver_Info, &rs)))
     {
         tstr_xstrkpy(printer_description, elemof32(printer_description), (PCTSTR) rs.r[4]);
 
@@ -998,7 +998,7 @@ host_read_printer_paper_details(
 
     trace_0(TRACE_APP_PRINT, TEXT("host_read_printer_paper_details"));
 
-    if(_kernel_swi(PDriver_PageSize, &rs, &rs))
+    if(cs_kernel_swi(PDriver_PageSize, &rs))
     {
         trace_1(TRACE_OUT | TRACE_APP_PRINT, TEXT("error from pagesize: '%s'"), _kernel_last_oserror()->errmess);
         return(create_error(ERR_PRINT_PAPER_DETAILS));

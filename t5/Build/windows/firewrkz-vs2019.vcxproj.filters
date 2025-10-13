@@ -1824,9 +1824,6 @@
     <ClInclude Include="..\..\cmodules\coltsoft\target_riscos_host_gccsdk.h">
       <Filter>Header Files\coltsoft</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\ob_skel\riscos\swiextra.h">
-      <Filter>Source Files\ob_skel\ob_skel_riscos</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\cmodules\coltsoft\host_clang.h">
       <Filter>Header Files\coltsoft</Filter>
     </ClInclude>
@@ -1853,6 +1850,9 @@
     </ClInclude>
     <ClInclude Include="..\..\cmodules\coltsoft\target_riscos_host_clang.h">
       <Filter>Header Files\coltsoft</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ob_skel\ho_gdip_image.h">
+      <Filter>Source Files\ob_skel\ob_skel_windows</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -3686,6 +3686,42 @@
     </None>
     <None Include="..\..\..\docs\UserGuide\content\sg06d\sg6_DB.htm">
       <Filter>Docs\UserGuide\sg\sg06\sg6_financial</Filter>
+    </None>
+    <None Include="..\Configure,fd7">
+      <Filter>Source Files\build_tools_riscos</Filter>
+    </None>
+    <None Include="..\MkConfig">
+      <Filter>Source Files\build_tools_riscos</Filter>
+    </None>
+    <None Include="..\..\..\docs\GSGuide\riscos\content\images\LICENCE">
+      <Filter>Docs\RISC OS\GSGuide</Filter>
+    </None>
+    <None Include="..\..\..\docs\GSGuide\windows\content\images\LICENCE">
+      <Filter>Docs\Windows\GSGuide</Filter>
+    </None>
+    <None Include="..\..\..\docs\GSGuide\.editorconfig">
+      <Filter>Docs\RISC OS\GSGuide</Filter>
+    </None>
+    <None Include="..\..\..\docs\UserGuide\content\common\images\LICENCE">
+      <Filter>Docs\UserGuide</Filter>
+    </None>
+    <None Include="..\..\..\docs\LICENCE">
+      <Filter>Docs</Filter>
+    </None>
+    <None Include="..\..\..\docs\RiscPkg\LICENCE">
+      <Filter>Docs\RISC OS\RiscPkg</Filter>
+    </None>
+    <None Include="..\..\ob_skel\resource\Neutral\tangod\LICENCE">
+      <Filter>Source Files\ob_skel\ob_skel_resource\Neutral</Filter>
+    </None>
+    <None Include="..\..\ob_spell\resource\UK\Dicts\process.sh">
+      <Filter>Source Files\ob_spell</Filter>
+    </None>
+    <None Include="..\..\Resources\Neutral\RISC_OS\ImgConvert,feb">
+      <Filter>Source Files\ob_skel\ob_skel_riscos</Filter>
+    </None>
+    <None Include="..\..\ob_skel\skel+mkr">
+      <Filter>Source Files\ob_skel\ob_skel_riscos</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

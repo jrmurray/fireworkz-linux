@@ -1,0 +1,19 @@
+IfThere <Obey$Dir>.Manuals Then Else Error Download the Fireworkz-Manuals package from the website. Drag the Manuals directory from the archive to this location and try again
+|
+Echo Merging Manuals directory with Fireworkz Resources
+Echo
+|
+IfThere <Obey$Dir>.Resources.UK.RISC_OS.StartGuide Then Echo Removing existing StartGuide
+X Wipe  <Obey$Dir>.Resources.UK.RISC_OS.StartGuide FR~C~V
+IfThere <Obey$Dir>.Resources.UK.RISC_OS.UserGuide  Then Echo Removing existing UserGuide
+X Wipe  <Obey$Dir>.Resources.UK.RISC_OS.UserGuide  FR~C~V
+Rename <Obey$Dir>.Manuals.Fireworkz.UK.StartGuide <Obey$Dir>.Resources.UK.RISC_OS.StartGuide
+Rename <Obey$Dir>.Manuals.Fireworkz.UK.UserGuide  <Obey$Dir>.Resources.UK.RISC_OS.UserGuide
+| Remove these now-empty directories
+Delete <Obey$Dir>.Manuals.Fireworkz.UK
+Delete <Obey$Dir>.Manuals.Fireworkz
+Delete <Obey$Dir>.Manuals
+|
+Echo
+Echo StartGuide and UserGuide are now located within Fireworkz where Help will find
+Echo them: <Obey$Dir>.Resources.UK.RISC_OS

@@ -13,15 +13,15 @@
 
 #include "common/gflags.h"
 
-#ifndef          __mathxtr2_h
+#ifndef            MATHXTR2_H
 #include "cmodules/mathxtr2.h"
 #endif
 
-#ifndef          __mathxtra_h
+#ifndef            MATHXTRA_H
 #include "cmodules/mathxtra.h"
 #endif
 
-#ifndef                   __mathnums_h
+#ifndef                     MATHNUMS_H
 #include "cmodules/coltsoft/mathnums.h"
 #endif
 

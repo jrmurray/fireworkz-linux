@@ -6,7 +6,7 @@
 <!-- This Source Code Form is subject to the terms of the Mozilla Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at https://mozilla.org/MPL/2.0/. -->
-<!-- Copyright © 2016-2022 Stuart Swales -->
+<!-- Copyright © 2016-2025 Stuart Swales -->
 
 <title>Fireworkz:!ReadMe</title>
 </head>
@@ -69,7 +69,7 @@ Replaces *WimpSlot in the application's !Run file.
 
 <h4>UK.Choices</h4>
 <p>Directory containing localised initial application configuration for the United Kingdom.</p>
-<p>The file Choices18 is used to configure the Fireworkz tool bar.</p>
+<p>The file Choice18 is used to configure the Fireworkz tool bar.</p>
 
 <h4>UK.Dicts</h4>
 <p>Directory containing master dictionaries for the United Kingdom.</p>

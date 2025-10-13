@@ -2,12 +2,12 @@
 @rem License, v. 2.0. If a copy of the MPL was not distributed with this
 @rem file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-@rem Copyright © 2013-2022 Stuart Swales
+@rem Copyright © 2013-2025 Stuart Swales
 
 pushd %~dp0
 IF NOT EXIST BLDCD2.BAT EXIT
 
-set BLDCD2_DIR=fwin-23202
+set BLDCD2_DIR=fwin-23300
 
 rmdir /s /q                                            %BLDCD2_DIR%
 @del                                                   %BLDCD2_DIR%.zip

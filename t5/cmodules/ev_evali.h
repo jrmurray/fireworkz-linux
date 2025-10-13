@@ -11,10 +11,10 @@
 
 /* MRJC January 1991 */
 
-#ifndef __ev_evali_h
-#define __ev_evali_h
+#ifndef EV_EVALI_H
+#define EV_EVALI_H
 
-#ifndef          __ev_eval_h
+#ifndef            EV_EVAL_H
 #include "cmodules/ev_eval.h"
 #endif
 
@@ -1688,7 +1688,7 @@ read_cur_sym(
     memcpy32((to), (from), (size))
 
 #if defined(EV_IDNO_U16)
-#ifndef          __typepack_h
+#ifndef            TYPEPACK_H
 #include "cmodules/typepack.h"
 #endif
 static inline void
@@ -1828,6 +1828,6 @@ tree_sort_event_use(void);
 link_ev.c
 */
 
-#endif /* __ev_evali_h */
+#endif /* EV_EVALI_H */
 
 /* end of ev_evali.h */

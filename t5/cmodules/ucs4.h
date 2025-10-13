@@ -4,10 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2006-2022 Stuart Swales */
+/* Copyright (C) 2006-2025 Stuart Swales */
 
-#ifndef __ucs4_h
-#define __ucs4_h
+#ifndef UCS4_H
+#define UCS4_H
 
 /*
 UCS-4 functions
@@ -128,6 +128,6 @@ ucs4_to_sbchar_try_with_codepage(
     _InVal_     UCS4 ucs4,
     _InVal_     SBCHAR_CODEPAGE sbchar_codepage);
 
-#endif /* __ucs4_h */
+#endif /* UCS4_H */
 
 /* end of ucs4.h */

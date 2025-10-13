@@ -15,7 +15,7 @@
 
 #include "ob_ruler/ob_ruler.h"
 
-#ifndef         __vi_edge_h
+#ifndef           VI_EDGE_H
 #include "ob_skel/vi_edge.h"
 #endif
 
@@ -1743,7 +1743,7 @@ ruler_scale_and_figures(
     rs.r[0] = host_font_redraw;
     rs.r[1] = '0';
     rs.r[2] = 0;
-    if(NULL == _kernel_swi(Font_CharBBox, &rs, &rs))
+    if(NULL == cs_kernel_swi(Font_CharBBox, &rs))
     {
         two_digits_width = pixits_from_millipoints_ceil(abs(rs.r[3])) * 2;
         digits_height = pixits_from_millipoints_ceil(abs(rs.r[4]));

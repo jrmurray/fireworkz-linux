@@ -15,7 +15,7 @@
 
 #if RISCOS
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -25,7 +25,7 @@
 
 #include "ob_skel/xp_skelr.h"
 
-#ifndef __gr_diag_h
+#ifndef            GR_DIAG_H
 #include "cmodules/gr_diag.h"
 #endif
 
@@ -173,7 +173,7 @@ colourtrans_ReturnColourNumber(
 #if defined(NORCROFT_INLINE_ASM)
     __asm {
         MOV     r0, word;
-        SWI     (ColourTrans_ReturnColourNumber | XOS_Bit), /*in*/ {R0}, /*out*/ {R0}, /*corrupted*/ {PSR};
+        SWI     (ColourTrans_ReturnColourNumber | XOS_Bit), /*in*/ {R0}, /*out*/ {R0,PSR}, /*corrupted*/ {};
         MOVVS   r0, #0
         MOV     colnum, r0
     }
@@ -183,7 +183,7 @@ colourtrans_ReturnColourNumber(
 #else
     _kernel_swi_regs rs;
     rs.r[0] = word;
-    colnum = (/*NULL !=*/ _kernel_swi(ColourTrans_ReturnColourNumber, &rs, &rs)) ? 0 : rs.r[0];
+    colnum = (/*NULL !=*/ cs_kernel_swi(ColourTrans_ReturnColourNumber, &rs)) ? 0 : rs.r[0];
 #endif
     return(colnum);
 }
@@ -200,7 +200,7 @@ colourtrans_SetGCOL(
     rs.r[3] = flags;
     rs.r[4] = gcol_action;
     assert((rs.r[3] & 0xfffffe7f) == 0); /* just bits 7 and 8 are valid */
-    return(_kernel_swi(ColourTrans_SetGCOL, &rs, &rs) ? 0 : rs.r[0]);
+    return(cs_kernel_swi(ColourTrans_SetGCOL, &rs) ? 0 : rs.r[0]);
 }
 
 extern void
@@ -647,7 +647,7 @@ host_paint_border_line(
     rs.r[5] = (int) &line_attributes.spec;
     rs.r[6] = (int) line_attributes.dash_pattern;
 
-    if(_kernel_swi(/*Draw_Stroke*/ 0x040704, &rs, &rs))
+    if(cs_kernel_swi(/*Draw_Stroke*/ 0x040704, &rs))
     {
         trace_1(TRACE_OUT | TRACE_APP_HOST_PAINT, TEXT("host_paint_border_line: Draw_Stroke error: %s"), _kernel_last_oserror()->errmess);
     }
@@ -845,7 +845,7 @@ host_paint_underline(
     rs.r[5] = (int) &line_attributes.spec;
     rs.r[6] = (int) line_attributes.dash_pattern;
 
-    void_WrapOsErrorChecking(_kernel_swi(/*Draw_Stroke*/ 0x040704, &rs, &rs));
+    void_WrapOsErrorChecking(cs_kernel_swi(/*Draw_Stroke*/ 0x040704, &rs));
     } /*block*/
 }
 
@@ -880,7 +880,7 @@ swi_DrawFile_Render(
     rs.r[3] = (int) trfm;
     rs.r[4] = (int) clip;
     rs.r[5] = flatness;
-    return(_kernel_swi(/*DrawFile_Render*/ 0x45540, &rs, &rs));
+    return(cs_kernel_swi(/*DrawFile_Render*/ 0x45540, &rs));
 }
 
 static void
@@ -922,7 +922,7 @@ host_paint_drawfile_render_path(
         rs.r[2] = (int) p_t;
         rs.r[3] = flatness;
 
-        void_WrapOsErrorChecking(_kernel_swi(/*Draw_Fill*/ 0x040702, &rs, &rs));
+        void_WrapOsErrorChecking(cs_kernel_swi(/*Draw_Fill*/ 0x040702, &rs));
     }
 
     /* stroke the path */
@@ -956,7 +956,7 @@ host_paint_drawfile_render_path(
         _kernel_swi_regs rs;
         rs.r[0] = 3;
         rs.r[1] = colnum_foreground ^ colnum_background;
-        void_WrapOsErrorChecking(_kernel_swi(OS_SetColour, &rs, &rs));
+        void_WrapOsErrorChecking(cs_kernel_swi(OS_SetColour, &rs));
 #endif
         } /*block*/
 
@@ -985,7 +985,7 @@ host_paint_drawfile_render_path(
         rs.r[5] = (int) &cjspec;
         rs.r[6] = (int) line_dash_pattern;
 
-        void_WrapOsErrorChecking(_kernel_swi(/*Draw_Stroke*/ 0x040704, &rs, &rs));
+        void_WrapOsErrorChecking(cs_kernel_swi(/*Draw_Stroke*/ 0x040704, &rs));
         } /*block*/
     }
 }
@@ -1149,7 +1149,7 @@ host_font_find(
     rs.r[4] = 0;
     rs.r[5] = 0;
 
-    if(NULL == (p_kernel_oserror = _kernel_swi(Font_FindFont, &rs, &rs)))
+    if(NULL == (p_kernel_oserror = cs_kernel_swi(Font_FindFont, &rs)))
         host_font = (HOST_FONT) rs.r[0];
 
     /*if(*array_tstr(&p_host_font_spec->h_host_name_tstr) == '\\')*/
@@ -1194,7 +1194,7 @@ host_fonty_uchars_width_mp(
     if(host_version_font_m_read(HOST_FONT_KERNING))
         rs.r[2] |= FONT_SCANSTRING_KERNING;
 
-    if(NULL == (p_kernel_oserror = WrapOsErrorChecking(_kernel_swi(Font_ScanString, &rs, &rs))))
+    if(NULL == (p_kernel_oserror = WrapOsErrorChecking(cs_kernel_swi(Font_ScanString, &rs))))
         return(rs.r[3]); /*x*/
 
     return(0);
@@ -1318,7 +1318,7 @@ host_fonty_text_paint_uchars_rubout(
     rs.r[3] = gdi_point_mp.x; /* NB coordinates are in millipoints */
     rs.r[4] = gdi_point_mp.y;
 
-    if(NULL != WrapOsErrorChecking(_kernel_swi(Font_Paint, &rs, &rs)))
+    if(NULL != WrapOsErrorChecking(cs_kernel_swi(Font_Paint, &rs)))
         /*ERR_FONT_PAINT*/;
 }
 
@@ -1374,7 +1374,7 @@ host_fonty_text_paint_uchars_simple(
     if(host_version_font_m_read(HOST_FONT_KERNING))
         rs.r[2] |= FONT_PAINT_KERNING;
 
-    if(NULL != WrapOsErrorChecking(_kernel_swi(Font_Paint, &rs, &rs)))
+    if(NULL != WrapOsErrorChecking(cs_kernel_swi(Font_Paint, &rs)))
         /*ERR_FONT_PAINT*/;
 }
 
@@ -1531,13 +1531,13 @@ host_font_ascent(
     rs.r[0] = host_font;
     rs.r[1] = this_character;
     rs.r[2] = FONT_PAINT_OSCOORDS;
-    if(NULL == (p_kernel_oserror = _kernel_swi(Font_CharBBox, &rs, &rs)))
+    if(NULL == (p_kernel_oserror = cs_kernel_swi(Font_CharBBox, &rs)))
         ascent = abs(rs.r[4]) * PIXITS_PER_RISCOS;
 
     if(0 == ascent)
     {   /* Caters for silly techie fonts with only a couple of symbols defined */
         rs.r[0] = host_font;
-        if(NULL == (p_kernel_oserror = _kernel_swi(Font_ReadInfo, &rs, &rs)))
+        if(NULL == (p_kernel_oserror = cs_kernel_swi(Font_ReadInfo, &rs)))
         {
             if(0 == ascent)
                 ascent = abs(rs.r[4]) * PIXITS_PER_RISCOS;
@@ -1560,13 +1560,13 @@ host_font_descent(
     rs.r[0] = host_font;
     rs.r[1] = this_character;
     rs.r[2] = FONT_PAINT_OSCOORDS;
-    if(NULL == (p_kernel_oserror = _kernel_swi(Font_CharBBox, &rs, &rs)))
+    if(NULL == (p_kernel_oserror = cs_kernel_swi(Font_CharBBox, &rs)))
         descent = abs(rs.r[2]) * PIXITS_PER_RISCOS;
 
     if(0 == descent)
     {   /* Caters for silly techie fonts with only a couple of symbols defined */
         rs.r[0] = host_font;
-        if(NULL == (p_kernel_oserror = _kernel_swi(Font_ReadInfo, &rs, &rs)))
+        if(NULL == (p_kernel_oserror = cs_kernel_swi(Font_ReadInfo, &rs)))
         {
             if(0 == descent)
                 descent = abs(rs.r[2]) * PIXITS_PER_RISCOS;
@@ -1919,7 +1919,7 @@ host_invert_rectangle_filled(
     _kernel_swi_regs rs;
     rs.r[0] = 3;
     rs.r[1] = colnum_foreground ^ colnum_background;
-    void_WrapOsErrorChecking(_kernel_swi(OS_SetColour, &rs, &rs));
+    void_WrapOsErrorChecking(cs_kernel_swi(OS_SetColour, &rs));
 #endif
     } /*block*/
 
@@ -2092,7 +2092,7 @@ host_invert_rectangle_outline(
     _kernel_swi_regs rs;
     rs.r[0] = 3;
     rs.r[1] = colnum_foreground ^ colnum_background;
-    void_WrapOsErrorChecking(_kernel_swi(OS_SetColour, &rs, &rs));
+    void_WrapOsErrorChecking(cs_kernel_swi(OS_SetColour, &rs));
 #endif
     } /*block*/
 
@@ -2428,7 +2428,7 @@ host_setfontcolours(
     rs.r[2] = rgb_fg.word;
     rs.r[3] = 14; /* max offset - some magic number, !Draw uses 14 */
 
-    if(_kernel_swi(ColourTrans_SetFontColours, &rs, &rs))
+    if(cs_kernel_swi(ColourTrans_SetFontColours, &rs))
         return(ERR_FONT_COLOUR);
 #endif
 
@@ -2473,7 +2473,7 @@ host_setfontcolours_for_mlec(
     rs.r[2] = rgb_fg.word;
     rs.r[3] = 14; /* max offset - some magic number, !Draw uses 14 */
 
-    if(_kernel_swi(ColourTrans_SetFontColours, &rs, &rs))
+    if(cs_kernel_swi(ColourTrans_SetFontColours, &rs))
         return(ERR_FONT_COLOUR);
 #endif
 
@@ -2581,7 +2581,7 @@ host_set_pointer_shape(
             rs.r[6] = 0; /* scale appropriately */
             rs.r[7] = (int) pointer__ttab;
 
-            if(NULL != _kernel_swi(OS_SpriteOp, &rs, &rs))
+            if(NULL != cs_kernel_swi(OS_SpriteOp, &rs))
                 pointer_shape = POINTER_DEFAULT;
             else
                 /* set pointer to shape 2 */
@@ -3370,13 +3370,16 @@ extern void
 host_ploticon(
     _InRef_     PC_WimpIconBlockWithBitset p_icon)
 {
-    _kernel_swi_regs rs;
-
     host_invalidate_cache(HIC_PLOTICON);
 
+#if defined(NORCROFT_INLINE_SWIX)
+    void_WrapOsErrorReporting(_swix(Wimp_PlotIcon, _INR(0,1), 0, p_icon));
+#else
+    _kernel_swi_regs rs;
     rs.r[0] = 0;
     rs.r[1] = (int) p_icon;
-    void_WrapOsErrorReporting(_kernel_swi(Wimp_PlotIcon, &rs, &rs));
+    void_WrapOsErrorReporting(cs_kernel_swi(Wimp_PlotIcon, &rs));
+#endif
 }
 
 /* host_ploticon() plots window relative */
@@ -3510,7 +3513,7 @@ host_paint_sprite_abs_coords(
     rs.r[1] = (int) 0x89ABFEDC; /* kill the OS or any twerp who dares to access this! */
     rs.r[2] = (int) p_scb;
 
-    if(NULL != _kernel_swi(OS_SpriteOp, &rs, &rs))
+    if(NULL != cs_kernel_swi(OS_SpriteOp, &rs))
         status = STATUS_FAIL;
     else
     {
@@ -3686,7 +3689,7 @@ supersprite(
 
     status_return(image_convert_ensure_PicConvert());
 
-    if(NULL != _kernel_swi(/*PicConvert_SStoFF9*/ 0x48E01, &rs, &rs))
+    if(NULL != cs_kernel_swi(/*PicConvert_SStoFF9*/ 0x48E01, &rs))
         return(STATUS_FAIL);
 
     len = rs.r[1];
@@ -3707,7 +3710,7 @@ supersprite(
     rs.r[0] = 0x100 | 9;
     rs.r[1] = (int) p_sah;
 
-    if(NULL != _kernel_swi(OS_SpriteOp, &rs, &rs))
+    if(NULL != cs_kernel_swi(OS_SpriteOp, &rs))
         status = STATUS_FAIL;
     else
 #endif
@@ -3717,7 +3720,7 @@ supersprite(
         rs.r[2] = 0;
         rs.r[3] = 0;
 
-        if(NULL != _kernel_swi(/*PicConvert_SStoFF9*/ 0x48E01, &rs, &rs))
+        if(NULL != cs_kernel_swi(/*PicConvert_SStoFF9*/ 0x48E01, &rs))
             status = STATUS_FAIL;
         else
             status = host_paint_sprite_abs_coords(p_redraw_context, x, y, w, h, (P_SCB) p_sah, paint_sprite_scale);
@@ -3755,7 +3758,7 @@ plotscaled2(
     r7 = generate_table(p_redraw_context, p_scb, pixtrans, &rs.r[5]);
     rs.r[7] = (int) r7;
 
-    if(NULL != _kernel_swi(OS_SpriteOp, &rs, &rs))
+    if(NULL != cs_kernel_swi(OS_SpriteOp, &rs))
         return(STATUS_FAIL);
 
     return(STATUS_OK);
@@ -3810,7 +3813,7 @@ generate_table(
             rs.r[6] = 0;
             rs.r[7] = (int) pixtrans;
 
-            void_WrapOsErrorReporting(_kernel_swi(Wimp_ReadPixTrans, &rs, &rs));
+            void_WrapOsErrorReporting(cs_kernel_swi(Wimp_ReadPixTrans, &rs));
 
             /* Check to see if pixtrans[] is redundant (for faster OS_SpriteOp) */
             for(Q = 0; Q < Q_limit; ++Q)
@@ -3855,7 +3858,7 @@ generate_table(
 
             rs.r[0] = (int) p_s32[Q];
 
-            if(NULL == WrapOsErrorChecking(_kernel_swi(ColourTrans_ReturnColourNumber, &rs, &rs)))
+            if(NULL == WrapOsErrorChecking(cs_kernel_swi(ColourTrans_ReturnColourNumber, &rs)))
                 pixtrans[Q] = u8_from_int(rs.r[0]);
             else
                 pixtrans[Q] = u8_from_int(Q);
@@ -3891,9 +3894,9 @@ generate_table(
         rs.r[6] = 0;
         rs.r[7] = 0;
 
-        if(NULL != WrapOsErrorReporting(_kernel_swi(ColourTrans_SelectTable, &rs, &rs)))
+        if(NULL != WrapOsErrorReporting(cs_kernel_swi(ColourTrans_SelectTable, &rs)))
             status = STATUS_FAIL;
-reportf("s %s CTST length %d", p_scb->name, rs.r[4]);
+// reportf("s %s CTST length %d", p_scb->name, rs.r[4]);
 if(rs.r[4] > 1024) return(NULL);
 
         rs.r[0] = (int) p_scb; //p_scb->mode;
@@ -3912,7 +3915,7 @@ if(rs.r[4] > 1024) return(NULL);
         rs.r[6] = 0;
         rs.r[7] = 0;
 
-        if(NULL != WrapOsErrorReporting(_kernel_swi(ColourTrans_SelectTable, &rs, &rs)))
+        if(NULL != WrapOsErrorReporting(cs_kernel_swi(ColourTrans_SelectTable, &rs)))
             status = STATUS_FAIL;
         else
         {
@@ -3996,7 +3999,7 @@ host_paint_bitmap(
     if(status_fail(image_convert_ensure_PicConvert()))
         return;
 
-    if(NULL != _kernel_swi(/*PicConvert_BMPtoFF9*/ 0x48E00, &rs, &rs))
+    if(NULL != cs_kernel_swi(/*PicConvert_BMPtoFF9*/ 0x48E00, &rs))
         return;
 
     newlength = rs.r[1];
@@ -4013,7 +4016,7 @@ host_paint_bitmap(
         rs.r[1] = (int) p_sah;
         rs.r[2] = options;
 
-        if(NULL != _kernel_swi(/*PicConvert_BMPtoFF9*/ 0x48E00, &rs, &rs))
+        if(NULL != cs_kernel_swi(/*PicConvert_BMPtoFF9*/ 0x48E00, &rs))
         {
             al_array_dispose(&newhandle);
             return;
@@ -4157,7 +4160,7 @@ os_read_mode_variable(
     _kernel_swi_regs rs;
     rs.r[0] = mode_specifier;
     rs.r[1] = variable;
-    void_WrapOsErrorChecking(_kernel_swi(OS_ReadModeVariable, &rs, &rs));
+    void_WrapOsErrorChecking(cs_kernel_swi(OS_ReadModeVariable, &rs));
     return(rs.r[2]);
 }
 
@@ -4289,7 +4292,7 @@ host_modevar_cache_reset(void)
     U32 current_mode_specifier;
 
     rs.r[0] = 135;
-    void_WrapOsErrorChecking(_kernel_swi(OS_Byte, &rs, &rs));
+    void_WrapOsErrorChecking(cs_kernel_swi(OS_Byte, &rs));
 
     current_mode_specifier = rs.r[2]; /* a mode specifier (number < 256 | selector >= 256) may be returned on RISC OS 3.5 and on */
 
@@ -4351,7 +4354,7 @@ host_disable_rgb(
     rs.r[1] = g_16_16;
     rs.r[2] = b_16_16;
 
-    if(NULL == (e = _kernel_swi(ColourTrans_ConvertRGBToHSV, &rs, &rs)))
+    if(NULL == (e = cs_kernel_swi(ColourTrans_ConvertRGBToHSV, &rs)))
     {
         if(-1 == rs.r[0])
         {    /* achromatic */
@@ -4372,7 +4375,7 @@ host_disable_rgb(
             rs.r[1] = s_16_16;
             rs.r[2] = v_16_16;
 
-            if(NULL == (e = _kernel_swi(ColourTrans_ConvertHSVToRGB, &rs, &rs)))
+            if(NULL == (e = cs_kernel_swi(ColourTrans_ConvertHSVToRGB, &rs)))
             {
                 r_16_16 = rs.r[0];
                 g_16_16 = rs.r[1];

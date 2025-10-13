@@ -19,7 +19,7 @@
 
 #include "ob_toolb/xp_toolb.h"
 
-#ifndef         __xp_skeld_h
+#ifndef           XP_SKELD_H
 #include "ob_skel/xp_skeld.h"
 #endif
 

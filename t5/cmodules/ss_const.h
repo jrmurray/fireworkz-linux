@@ -11,8 +11,8 @@
 
 /* MRJC April 1992 */
 
-#ifndef __ss_const_h
-#define __ss_const_h
+#ifndef SS_CONST_H
+#define SS_CONST_H
 
 #define LEAP_YEAR_ACTUAL(year) ( \
     (((year    ) % 4  ) ? 0 : 1) && \
@@ -1327,6 +1327,6 @@ ss_recog_string(
     _OutRef_    P_SS_DATA p_ss_data,
     _In_z_      PC_USTR in_str);
 
-#endif /* __ss_const_h */
+#endif /* SS_CONST_H */
 
 /* end of ss_const.h */

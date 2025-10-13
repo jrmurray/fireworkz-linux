@@ -9,8 +9,8 @@
 
 /* Some target-specific definitions for Windows */
 
-#ifndef __def_win32_h
-#define __def_win32_h
+#ifndef DEFWIN32_H
+#define DEFWIN32_H
 
 #if !defined(WINVER)
 #error WINVER not defined (try 0x0500)
@@ -342,6 +342,6 @@ typedef unsigned int _Bool;
 
 #define inline_when_fast_fp inline
 
-#endif /* __def_win32_h */
+#endif /* DEFWIN32_H */
 
 /* end of defwin32.h */

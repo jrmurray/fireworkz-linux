@@ -11,8 +11,8 @@
 
 /* SKS Apr 2014 */
 
-#ifndef __xustring_h
-#define __xustring_h
+#ifndef XUSTRING_H
+#define XUSTRING_H
 
 /*
 exported functions
@@ -262,6 +262,6 @@ ustrtod(
     return((F64) strtod((const char *) ustr_in, (char **) endptr));
 }
 
-#endif /* __xustring_h */
+#endif /* XUSTRING_H */
 
 /* end of xustring.h */

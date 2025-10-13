@@ -13,7 +13,7 @@
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -21,7 +21,7 @@
 
 #include "cmodules/collect.h"
 
-#ifndef          __utf16_h
+#ifndef            UTF16_H
 #include "cmodules/utf16.h"
 #endif
 
@@ -176,7 +176,7 @@ op_output_initialise_save(
 
             if(status_ok(status)) /* SKS 26feb97 fix the status-losing bug */
 #endif
-                status_assert(file_buffer(p_op_format_output->u.file.file_handle, NULL, 16384)); /* SKS 19apr95 big buffering for saves */
+                status_assert(file_buffer(p_op_format_output->u.file.file_handle, NULL, file_nice_buffer_size()));
         }
     }
     else

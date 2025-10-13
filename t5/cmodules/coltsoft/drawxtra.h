@@ -9,8 +9,8 @@
 
 /* RISC OS Draw file / object structure definition */
 
-#ifndef __drawxtra_h
-#define __drawxtra_h
+#ifndef DRAWXTRA_H
+#define DRAWXTRA_H
 
 /*
 structure
@@ -697,6 +697,6 @@ DS_DRAW_CAP_JOIN_SPEC;
 #define DMFT_PATH_Thicken   0x20000000  /* thicken the path */
 #define DMFT_PATH_Reflatten 0x40000000  /* re-flatten the path */
 
-#endif /* __drawxtra_h */
+#endif /* DRAWXTRA_H */
 
 /* end of drawxtra.h */

@@ -35,11 +35,11 @@
 
 #include "cmodules/mathxtri.h"
 
-#ifndef          __mathxtra_h
+#ifndef            MATHXTRA_H
 #include "cmodules/mathxtra.h"
 #endif
 
-#ifndef                    _mathnums_h
+#ifndef                     MATHNUMS_H
 #include "cmodules/coltsoft/mathnums.h"
 #endif
 
@@ -76,7 +76,7 @@ mathxtra_range_error(
 
 _Check_return_
 extern F64
-mx_cosec(
+mathxtra_cosec(
     _InVal_     F64 x)
 {
     /* trivial implementation */
@@ -95,7 +95,7 @@ mx_cosec(
 
 _Check_return_
 extern F64
-mx_cot(
+mathxtra_cot(
     _InVal_     F64 x)
 {
     /* trivial implementation */
@@ -114,7 +114,7 @@ mx_cot(
 
 _Check_return_
 extern F64
-mx_sec(
+mathxtra_sec(
     _InVal_     F64 x)
 {
     /* trivial implementation */
@@ -141,7 +141,7 @@ mx_sec(
 
 _Check_return_
 extern F64
-mx_acosec(
+mathxtra_acosec(
     _InVal_     F64 x)
 {
     F64 y, ax;
@@ -168,7 +168,7 @@ mx_acosec(
 
 _Check_return_
 extern F64
-mx_acot(
+mathxtra_acot(
     _InVal_     F64 x)
 {
     F64 y, ax;
@@ -195,7 +195,7 @@ mx_acot(
 
 _Check_return_
 extern F64
-mx_asec(
+mathxtra_asec(
     _InVal_     F64 x)
 {
     F64 y, ax;
@@ -238,7 +238,7 @@ mx_asec(
 
 _Check_return_
 extern F64
-mx_cosech(
+mathxtra_cosech(
     _InVal_     F64 x)
 {
     F64 y, ax;
@@ -275,7 +275,7 @@ mx_cosech(
 
 _Check_return_
 extern F64
-mx_coth(
+mathxtra_coth(
     _InVal_     F64 x)
 {
     F64 y, ax;
@@ -312,7 +312,7 @@ mx_coth(
 
 _Check_return_
 extern F64
-mx_sech(
+mathxtra_sech(
     _InVal_     F64 x)
 {
     F64 y, ax;
@@ -366,7 +366,7 @@ mx_sech(
 
 _Check_return_
 extern F64
-mx_acosh(
+mathxtra_acosh(
     _InVal_     F64 x)
 {
     if(x <= F64_ONE)
@@ -417,7 +417,7 @@ mx_acosh(
 
 _Check_return_
 extern F64
-mx_acosech(
+mathxtra_acosech(
     _InVal_     F64 x)
 {
     F64 ax, y, invax;
@@ -465,7 +465,7 @@ mx_acosech(
 
 _Check_return_
 extern F64
-mx_acoth(
+mathxtra_acoth(
     _InVal_     F64 x)
 {
     F64 y, ax;
@@ -511,7 +511,7 @@ mx_acoth(
 
 _Check_return_
 extern F64
-mx_asech(
+mathxtra_asech(
     _InVal_     F64 x)
 {
     F64 y, invax;
@@ -563,7 +563,7 @@ mx_asech(
 
 _Check_return_
 extern F64
-mx_asinh(
+mathxtra_asinh(
     _InVal_     F64 x)
 {
     if(x == F64_ZERO)
@@ -610,7 +610,7 @@ mx_asinh(
 
 _Check_return_
 extern F64
-mx_atanh(
+mathxtra_atanh(
     _InVal_     F64 x)
 {
     F64 y, ax;
@@ -650,7 +650,7 @@ mx_atanh(
 
 _Check_return_
 extern F64
-mx_fhypot(
+mathxtra_hypot(
     _InVal_     F64 x,
     _InVal_     F64 y)
 {
@@ -664,9 +664,9 @@ mx_fhypot(
         return(abs_x);
 
     if(abs_x >= abs_y)
-        return(abs_x * sqrt(F64_ONE + mx_fsquare(abs_y / abs_x)));
+        return(abs_x * sqrt(F64_ONE + mathxtra_square(abs_y / abs_x)));
     else
-        return(abs_y * sqrt(F64_ONE + mx_fsquare(abs_x / abs_y)));
+        return(abs_y * sqrt(F64_ONE + mathxtra_square(abs_x / abs_y)));
 }
 
 #endif /* __STDC_VERSION__ */
@@ -679,7 +679,7 @@ mx_fhypot(
 
 _Check_return_
 extern F64
-mx_gcd(
+mathxtra_gcd(
     _InVal_     F64 a_in,
     _InVal_     F64 b_in)
 {
@@ -708,11 +708,11 @@ mx_gcd(
 
 _Check_return_
 extern F64
-mx_lcm(
+mathxtra_lcm(
     _InVal_     F64 a,
     _InVal_     F64 b)
 {
-    const F64 gcd_ab = mx_gcd(a, b);
+    const F64 gcd_ab = mathxtra_gcd(a, b);
 
     if(0.0 == gcd_ab)
         return(0.0);

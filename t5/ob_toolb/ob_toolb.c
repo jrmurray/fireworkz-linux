@@ -171,7 +171,7 @@ object_construct_table[] =
 {                                                                                                   /*   fi ti mi ur up xi md mf nn cp sm ba fo */
 
     { "Tool",                   args_cmd_toolbar_tool,          T5_CMD_TOOLBAR_TOOL },
-    { "ToolPossible",           args_cmd_toolbar_tool,          T5_CMD_COMMENT }, /* there just to comment the Choices18 file for the advanced hacker */
+    { "ToolPossible",           args_cmd_toolbar_tool,          T5_CMD_COMMENT }, /* there just to comment the Choice18 file for the advanced hacker */
 
     { "StatusLine",             NULL,                           T5_CMD_REMOVED },
 
@@ -733,6 +733,18 @@ intersect_pixit_rect(
 #if RISCOS
 
 static BOOL g_Win31 = FALSE;
+
+static const U32 desktop_default_palette_2[2*2] =
+{   /*BBGGRR00*/
+    0xFFFFFF00U,0xFFFFFF00U,
+    0x00000000U,0x00000000U
+};
+
+static const U32 desktop_greyed_palette_2[2*2] =
+{   /*BBGGRR00*/
+    0xFFFFFF00U,0xFFFFFF00U,
+    0x88888800U,0x88888800U
+};
 
 static const U32 desktop_default_palette_16[16*2] =
 {   /*BBGGRR00*/
@@ -1327,6 +1339,11 @@ do_paint_tool(
                 case 4:
                     replacement_palette = enabled ? desktop_default_palette_16 : desktop_greyed_palette_16;
                     replacement_palette_bytes = sizeof(desktop_greyed_palette_16);
+                    break;
+
+                case 1:
+                    replacement_palette = enabled ? desktop_default_palette_2 : desktop_greyed_palette_2;
+                    replacement_palette_bytes = sizeof(desktop_greyed_palette_2);
                     break;
 
                 default:

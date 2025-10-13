@@ -11,11 +11,11 @@
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
-#ifndef         __vi_edge_h
+#ifndef           VI_EDGE_H
 #include "ob_skel/vi_edge.h"
 #endif
 

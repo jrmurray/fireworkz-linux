@@ -7,8 +7,8 @@
 /* Copyright (C) 1993-1998 Colton Software Limited
  * Copyright (C) 1998-2015 R W Colton */
 
-#ifndef __ui_styin_h
-#define __ui_styin_h
+#ifndef UI_STYIN_H
+#define UI_STYIN_H
 
 #include "ob_skspt/xp_uisty.h"
 
@@ -534,6 +534,6 @@ es_tweak_style_precreate(
 
 PROC_DIALOG_EVENT_PROTO(extern, dialog_event_tweak_style);
 
-#endif /* __ui_styin_h */
+#endif /* UI_STYIN_H */
 
 /* end of ui_styin.h */

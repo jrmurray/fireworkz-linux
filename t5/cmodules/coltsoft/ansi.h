@@ -9,8 +9,8 @@
 
 /* Standard includes */
 
-#ifndef __ansi_h
-#define __ansi_h
+#ifndef ANSI_H
+#define ANSI_H
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -116,6 +116,6 @@ __pragma(warning(pop))
 
 #include <errno.h>
 
-#endif /* __ansi_h */
+#endif /* ANSI_H */
 
 /* end of ansi.h */

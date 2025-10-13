@@ -19,7 +19,7 @@
 
 #include "cmodules/mathxtra.h"
 
-#ifndef                   __mathnums_h
+#ifndef                     MATHNUMS_H
 #include "cmodules/coltsoft/mathnums.h" /* for _log10_e */
 #endif
 

@@ -15,7 +15,7 @@
 
 #if RISCOS
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -85,7 +85,7 @@ host_squash_expand_from_file(
     {
         rs.r[0] = 0x8;
 
-        if(NULL != _kernel_swi(/*Squash_Decompress*/ 0x042701, &rs, &rs))
+        if(NULL != cs_kernel_swi(/*Squash_Decompress*/ 0x042701, &rs))
         {
             status = STATUS_FAIL;
             break;
@@ -112,7 +112,7 @@ host_squash_expand_from_file(
         rs.r[4] = (int) p_any;
         rs.r[5] = (int) expand_size;
 
-        if((NULL != _kernel_swi(/*Squash_Decompress*/ 0x042701, &rs, &rs)) || (rs.r[3] != 0))
+        if((NULL != cs_kernel_swi(/*Squash_Decompress*/ 0x042701, &rs)) || (rs.r[3] != 0))
         {
             status = STATUS_FAIL;
             break;

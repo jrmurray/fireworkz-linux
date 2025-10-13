@@ -4,10 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2006-2022 Stuart Swales */
+/* Copyright (C) 2006-2025 Stuart Swales */
 
-#ifndef __utf8_h
-#define __utf8_h
+#ifndef UTF8_H
+#define UTF8_H
 
 #if CHECKING && 1
 #define CHECKING_UTF8 1
@@ -790,6 +790,6 @@ number of bytes
 
 #endif /* OS */
 
-#endif /* __utf8_h */
+#endif /* UTF8_H */
 
 /* end of utf8.h */

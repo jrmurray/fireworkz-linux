@@ -11,7 +11,7 @@
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -636,16 +636,21 @@ ss_local_time_as_ymd_hms(
     _kernel_swi_regs rs;
     TCHARZ buffer[8];
 
+#if defined(NORCROFT_INLINE_SWIX)
+    buffer[0] = 3 /*OSWord_ReadUTC*//*1*/;
+    void_WrapOsErrorChecking(_swix(OS_Word, _INR(0,1), 14, buffer));
+#else
     rs.r[0] = 14;
     rs.r[1] = (int) buffer;
     buffer[0] = 3 /*OSWord_ReadUTC*//*1*/;
-    void_WrapOsErrorChecking(_kernel_swi(OS_Word, &rs, &rs));
+    void_WrapOsErrorChecking(cs_kernel_swi(OS_Word, &rs));
+#endif
 
     rs.r[0] = -1; /* use current territory */
     rs.r[1] = (int) buffer;
     rs.r[2] = (int) &time_ordinals;
 
-    if(NULL == WrapOsErrorChecking(_kernel_swi(Territory_ConvertTimeToOrdinals, &rs, &rs)))
+    if(NULL == WrapOsErrorChecking(cs_kernel_swi(Territory_ConvertTimeToOrdinals, &rs)))
     {
         *p_year = time_ordinals.year;
         *p_month = time_ordinals.month;

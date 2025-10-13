@@ -11,10 +11,10 @@
 
 /* MRJC April 1992 */
 
-#ifndef __xp_ss_h
-#define __xp_ss_h
+#ifndef XP_SS_H
+#define XP_SS_H
 
-#ifndef          __ev_eval_h
+#ifndef            EV_EVAL_H
 #include "cmodules/ev_eval.h"
 #endif
 
@@ -475,6 +475,6 @@ extern H_DIALOG h_input_dialog;
 extern S32 input_result;
 extern UI_TEXT ui_text_input;
 
-#endif /* __xp_ss_h */
+#endif /* XP_SS_H */
 
 /* end of xp_ss.h */

@@ -11,8 +11,8 @@
 
 /* SKS Jul 2014 derived from xtstring.h */
 
-#ifndef __xwstring_h
-#define __xwstring_h
+#ifndef XWSTRING_H
+#define XWSTRING_H
 
 /*
 exported functions
@@ -268,6 +268,6 @@ C_wcsnicmp(
 
 #endif /* OS */
 
-#endif /* __xwstring_h */
+#endif /* XWSTRING_H */
 
 /* end of xwstring.h */

@@ -11,8 +11,8 @@
 
 /* RCM Nov 1992 */
 
-#ifndef __ob_spell_h
-#define __ob_spell_h
+#ifndef OB_SPELL_H
+#define OB_SPELL_H
 
 #include "cmodules/spell.h"
 
@@ -168,6 +168,6 @@ guess_next(
 
 #include "ob_spell/resource/resource.h"
 
-#endif /* __ob_spell_h */
+#endif /* OB_SPELL_H */
 
 /* end of ob_spell.h */

@@ -4,10 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2019-2022 Stuart Swales */
+/* Copyright (C) 2019-2025 Stuart Swales */
 
-#ifndef __host_clang_h
-#define __host_clang_h
+#ifndef HOST_CLANG_H
+#define HOST_CLANG_H
 
 #ifndef __CHAR_UNSIGNED__
 #error  __CHAR_UNSIGNED__ must be set (use -funsigned-char switch)
@@ -28,6 +28,6 @@
 #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant" /* NULL gets defined as zero by vcruntime.h */
 #endif
 
-#endif /* __host_clang_h */
+#endif /* HOST_CLANG_H */
 
 /* end of host_clang.h */

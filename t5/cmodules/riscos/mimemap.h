@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2020-2022 Stuart Swales */
+/* Copyright (C) 2020-2025 Stuart Swales */
 
 #ifndef __riscos_mimemap_h
 #define __riscos_mimemap_h
@@ -29,7 +29,7 @@ riscos_mimemap_extension_from_t5_filetype(
     rs.r[2] = MMM_TYPE_DOT_EXTN; /* actually a string WITHOUT the dot... */
     rs.r[3] = (int) extension;
 
-    return(NULL == _kernel_swi(0x050b00 /*MimeMap_Translate*/, &rs, &rs));
+    return(NULL == cs_kernel_swi(0x050b00 /*MimeMap_Translate*/, &rs));
 }
 
 _Check_return_
@@ -45,7 +45,7 @@ riscos_mimemap_t5_filetype_from_extension(
     rs.r[3] = 0;
 
     if(NULL != extension)
-        if(NULL == _kernel_swi(0x050b00 /*MimeMap_Translate*/, &rs, &rs))
+        if(NULL == cs_kernel_swi(0x050b00 /*MimeMap_Translate*/, &rs))
             return((T5_FILETYPE) rs.r[3]);
 
     return(FILETYPE_UNDETERMINED);

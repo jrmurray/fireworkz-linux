@@ -4,12 +4,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2015-2022 Stuart Swales */
+/* Copyright (C) 2015-2025 Stuart Swales */
 
 /* SKS Dec 2015 */
 
-#ifndef __ho_gdip_image_h
-#define __ho_gdip_image_h
+#ifndef HO_GDIP_IMAGE_H
+#define HO_GDIP_IMAGE_H
 
 #if defined(__cplusplus)
 extern "C" {
@@ -63,6 +63,6 @@ GdipImage_SaveAs_BMP(
 }
 #endif
 
-#endif /* ho_gdip_image_h */
+#endif /* HO_GDIP_IMAGE_H */
 
 /* end of ho_gdip_image.h */

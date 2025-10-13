@@ -7,8 +7,8 @@
 /* Copyright (C) 1994-1998 Colton Software Limited
  * Copyright (C) 1998-2015 R W Colton */
 
-#ifndef __mrofmun_h
-#define __mrofmun_h
+#ifndef MROFMUN_H
+#define MROFMUN_H
 
 typedef struct MROFMUN_ENTRY
 {
@@ -26,6 +26,6 @@ autoformat(
     _In_z_      PC_USTR ustr,
     _InRef_     PC_ARRAY_HANDLE p_array_handle_mrofmuns_in);
 
-#endif /* __mrofmun_h */
+#endif /* MROFMUN_H */
 
 /* end of mrofmun.h */

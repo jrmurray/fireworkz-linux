@@ -9,8 +9,8 @@
 
 /* SKS July 1991 */
 
-#ifndef __mathxtra_h
-#define __mathxtra_h
+#ifndef MATHXTRA_H
+#define MATHXTRA_H
 
 /*
 exported functions
@@ -22,74 +22,74 @@ exported functions
 
 _Check_return_
 extern F64
-mx_acosh(
+mathxtra_acosh(
     _InVal_     F64 x);
 
 _Check_return_
 extern F64
-mx_acosec(
+mathxtra_acosec(
     _InVal_     F64 x);
 
 _Check_return_
 extern F64
-mx_acosech(
+mathxtra_acosech(
     _InVal_     F64 x);
 
 _Check_return_
 extern F64
-mx_acot(
+mathxtra_acot(
     _InVal_     F64 x);
 
 _Check_return_
 extern F64
-mx_acoth(
+mathxtra_acoth(
     _InVal_     F64 x);
 
 _Check_return_
 extern F64
-mx_asec(
+mathxtra_asec(
     _InVal_     F64 x);
 
 _Check_return_
 extern F64
-mx_asech(
+mathxtra_asech(
     _InVal_     F64 x);
 
 _Check_return_
 extern F64
-mx_asinh(
+mathxtra_asinh(
     _InVal_     F64 x);
 
 _Check_return_
 extern F64
-mx_atanh(
+mathxtra_atanh(
     _InVal_     F64 x);
 
 _Check_return_
 extern F64
-mx_cosec(
+mathxtra_cosec(
     _InVal_     F64 x);
 
 _Check_return_
 extern F64
-mx_cosech(
+mathxtra_cosech(
     _InVal_     F64 x);
 
 _Check_return_
 extern F64
-mx_cot(
+mathxtra_cot(
     _InVal_     F64 x);
 
 _Check_return_
 extern F64
-mx_coth(
+mathxtra_coth(
     _InVal_     F64 x);
 
 /* return the square of a number (or more likely, hard expression) */
 
 _Check_return_
 static inline F64
-mx_fsquare(
+mathxtra_square(
     _InVal_     F64 x)
 {
     return(x * x);
@@ -97,29 +97,29 @@ mx_fsquare(
 
 _Check_return_
 extern F64
-mx_fhypot(
+mathxtra_hypot(
     _InVal_     F64 x,
     _InVal_     F64 y);
 
 _Check_return_
 extern F64
-mx_sec(
+mathxtra_sec(
     _InVal_     F64 x);
 
 _Check_return_
 extern F64
-mx_sech(
+mathxtra_sech(
     _InVal_     F64 x);
 
 _Check_return_
 extern F64
-mx_gcd(
+mathxtra_gcd(
     _InVal_     F64 a,
     _InVal_     F64 b);
 
 _Check_return_
 extern F64
-mx_lcm(
+mathxtra_lcm(
     _InVal_     F64 a,
     _InVal_     F64 b);
 
@@ -157,11 +157,11 @@ extern double FreeBSD_yn(int, double);
 
 #if __STDC_VERSION__ < 199901L
 
-#define acosh(d) mx_acosh(d)
-#define asinh(d) mx_asinh(d)
-#define atanh(d) mx_atanh(d)
+#define acosh(d) mathxtra_acosh(d)
+#define asinh(d) mathxtra_asinh(d)
+#define atanh(d) mathxtra_atanh(d)
 
-#define hypot(x, y) mx_fhypot(x, y)
+#define hypot(x, y) mathxtra_hypot(x, y)
 
 #define isgreater(x,y)      (!isunordered((x), (y)) && ((x) > (y)))
 #define isgreaterequal(x,y) (!isunordered((x), (y)) && ((x) >= (y)))
@@ -199,7 +199,7 @@ exp2(_InVal_ double d)
 
 #if WINDOWS
 
-#ifndef                   __mathnums_h
+#ifndef                     MATHNUMS_H
 #include "cmodules/coltsoft/mathnums.h" /* for _log2_e */
 #endif
 
@@ -222,6 +222,6 @@ fma(_InVal_ double x, _InVal_ double y, _InVal_ double z)
 #endif /* __STDC_VERSION__ */
 
 
-#endif /* __mathxtra_h */
+#endif /* MATHXTRA_H */
 
 /* end of mathxtra.h  */

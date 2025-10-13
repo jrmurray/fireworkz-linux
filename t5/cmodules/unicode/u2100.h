@@ -4,10 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2006-2022 Stuart Swales */
+/* Copyright (C) 2006-2025 Stuart Swales */
 
-#ifndef __u2100_h
-#define __u2100_h
+#ifndef UNICODE_U2100_H
+#define UNICODE_U2100_H
 
 /*
 2100..214F Letterlike Symbols
@@ -98,6 +98,6 @@
 #define UCH_TURNED_SMALL_F 0x214EU
 #define UCH_SYMBOL_FOR_SAMARITAN_SOURCE 0x214FU
 
-#endif /* __u2100_h */
+#endif /* UNICODE_U2100_H */
 
 /* end of u2100.h */

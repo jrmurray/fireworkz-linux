@@ -4,10 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2006-2022 Stuart Swales */
+/* Copyright (C) 2006-2025 Stuart Swales */
 
-#ifndef __u0100_h
-#define __u0100_h
+#ifndef UNICODE_U0100_H
+#define UNICODE_U0100_H
 
 // VS2013 RegExp:
 // ^([0-9A-Z]+);([0-9A-Z_]+);.+$
@@ -153,6 +153,6 @@
 #define UCH_LATIN_SMALL_LETTER_Z_WITH_CARON 0x017EU
 #define UCH_LATIN_SMALL_LETTER_LONG_S 0x017FU
 
-#endif /* __u0100_h */
+#endif /* UNICODE_U0100_H */
 
 /* end of u0100.h */

@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2014-2022 Stuart Swales */
+/* Copyright (C) 2014-2025 Stuart Swales */
 
 /* More mathematical function routines for evaluator */
 
@@ -12,7 +12,7 @@
 
 #include "ob_ss/ob_ss.h"
 
-#include "cmodules/mathxtra.h" /* for mx_fsquare() */
+#include "cmodules/mathxtra.h" /* for mathxtra_square() */
 
 /******************************************************************************
 *
@@ -901,8 +901,8 @@ sumx2opy2_common(
             (void) array_range_index(&ss_data_x, array_x, ix, iy, EM_REA);
             (void) array_range_index(&ss_data_y, array_y, ix, iy, EM_REA);
 
-            x_squared = mx_fsquare(ss_data_get_real(&ss_data_x));
-            y_squared = mx_fsquare(ss_data_get_real(&ss_data_y));
+            x_squared = mathxtra_square(ss_data_get_real(&ss_data_x));
+            y_squared = mathxtra_square(ss_data_get_real(&ss_data_y));
 
             sum += f_subtract_y2 ? (x_squared - y_squared) : (x_squared + y_squared);
         }

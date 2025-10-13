@@ -11,8 +11,8 @@
 
 /* SKS March 1992 */
 
-#ifndef __xp_dlg_h
-#define __xp_dlg_h
+#ifndef XP_DLG_H
+#define XP_DLG_H
 
 #include "cmodules/resource.h"
 
@@ -1900,6 +1900,6 @@ struct DIALOG_MSG_CTL_USER_REDRAW
 
 #endif /* WINDOWS */
 
-#endif /* __xp_dlg_h */
+#endif /* XP_DLG_H */
 
 /* end of xp_dlg.h */

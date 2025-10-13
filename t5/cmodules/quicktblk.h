@@ -11,8 +11,8 @@
 
 /* SKS May 2014 split off from quickblk.h */
 
-#ifndef __quicktblk_h
-#define __quicktblk_h
+#ifndef QUICKTBLK_H
+#define QUICKTBLK_H
 
 #if CHECKING && 1
 #define CHECKING_QUICK_TBLOCK 1
@@ -305,6 +305,6 @@ quick_tblock_utf8str_add_n(
     _In_z_      PC_UTF8STR ustr,
     _InVal_     U32 uchars_n /*strlen_with,without_NULLCH*/);
 
-#endif /* __quicktblk_h */
+#endif /* QUICKTBLK_H */
 
 /* end of quicktblk.h */

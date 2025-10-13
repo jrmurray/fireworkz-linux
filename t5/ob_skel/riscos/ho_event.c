@@ -9,7 +9,7 @@
 
 #if RISCOS
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -323,22 +323,30 @@ extern void
 host_message_filter_add(
     const int * const wimp_messages)
 {
+#if 1
+    (void) _swix(Wimp_AddMessages, _IN(0), wimp_messages);
+#else
     _kernel_swi_regs rs;
     _kernel_oserror * e;
 
     rs.r[0] = (int) wimp_messages;
-    e = _kernel_swi(Wimp_AddMessages, &rs, &rs);
+    e = cs_kernel_swi(Wimp_AddMessages, &rs);
+#endif
 }
 
 extern void
 host_message_filter_remove(
     const int * const wimp_messages)
 {
+#if 1
+    (void) _swix(Wimp_RemoveMessages, _IN(0), wimp_messages);
+#else
     _kernel_swi_regs rs;
     _kernel_oserror * e;
 
     rs.r[0] = (int) wimp_messages;
-    e = _kernel_swi(Wimp_RemoveMessages, &rs, &rs);
+    e = cs_kernel_swi(Wimp_RemoveMessages, &rs);
+#endif
 }
 
 static void
@@ -457,46 +465,6 @@ general_message_Shutdown(
     status_consume(save_all_modified_docs_for_shutdown());
 
     exit(EXIT_SUCCESS);
-}
-
-/* allow this module to kill off duplicate instances when they start up */
-
-extern BOOL g_kill_duplicates = FALSE;
-
-static void
-general_message_TaskInitialise(
-    _InRef_     PC_WimpMessage p_wimp_message)
-{
-    static int seen_my_birth = FALSE;
-
-    const WimpTaskInitMessage * const p_wimp_message_task_init = (const WimpTaskInitMessage *) &p_wimp_message->data;
-    const char * taskname = p_wimp_message_task_init->taskname;
-
-    trace_1(TRACE_RISCOS_HOST, TEXT("Wimp_MTaskInitialise for %s"), taskname);
-
-    if(0 != /*"C"*/strcmp(product_ui_id(), taskname))
-        return;
-
-    if(seen_my_birth)
-    {
-        trace_1(TRACE_RISCOS_HOST, TEXT("Another %s is trying to start"), taskname);
-        if(g_kill_duplicates)
-        {
-            WimpMessage msg;
-
-            zero_struct_fn(msg);
-            msg.hdr.size = sizeof32(msg.hdr);
-          /*msg.hdr.your_ref = 0;*/ /* fresh msg */
-            msg.hdr.action_code = Wimp_MQuit;
-
-            void_WrapOsErrorReporting(wimp_send_message(Wimp_EUserMessage, &msg, p_wimp_message->hdr.sender, BAD_WIMP_I, NULL));
-        }
-    }
-    else
-    {
-        trace_0(TRACE_RISCOS_HOST, TEXT("witnessing our own birth"));
-        seen_my_birth = TRUE;
-    }
 }
 
 _Check_return_
@@ -693,7 +661,7 @@ canonicalise_unless_rooted(
         rs.r[3] = 0;
         rs.r[4] = 0;
         rs.r[5] = elemof_buffer;
-        _kernel_swi(OS_FSControl, &rs, &rs);
+        cs_kernel_swi(OS_FSControl, &rs);
     }
 
     return(buffer);
@@ -887,10 +855,6 @@ general_message(
 
     case Wimp_MSaveDesktop:
         general_message_SaveDesktop(p_wimp_message);
-        return(TRUE);
-
-    case Wimp_MTaskInitialise:
-        general_message_TaskInitialise(p_wimp_message);
         return(TRUE);
 
     case Wimp_MShutDown:
@@ -1269,7 +1233,7 @@ host_xfer_import_file_via_scrap(
     rs.r[2] = sizeof32(buffer);
     rs.r[3] = 0;
     rs.r[4] = 3;
-    void_WrapOsErrorChecking(_kernel_swi(OS_ReadVarVal, &rs, &rs));
+    void_WrapOsErrorChecking(cs_kernel_swi(OS_ReadVarVal, &rs));
 
     if(rs.r[2] == 0)
     {
@@ -1281,7 +1245,7 @@ host_xfer_import_file_via_scrap(
         rs.r[2] = sizeof32(buffer);
         rs.r[3] = 0;
         rs.r[4] = 3;
-        void_WrapOsErrorChecking(_kernel_swi(OS_ReadVarVal, &rs, &rs));
+        void_WrapOsErrorChecking(cs_kernel_swi(OS_ReadVarVal, &rs));
 
         if(rs.r[2] == 0)
         {
@@ -1354,13 +1318,10 @@ host_xfer_load_file_done(void)
 {
     if(g_host_xfer_loading_via_scrap_file)
     {
-        _kernel_swi_regs rs;
-
         g_host_xfer_loading_via_scrap_file = FALSE;
 
-        rs.r[0] = OSFile_Delete; /* doesn't complain if not there */
-        rs.r[1] = (int) host_xfer_load_statics.scrap_name_buffer;
-        void_WrapOsErrorChecking(_kernel_swi(OS_File, &rs, &rs));
+        /* doesn't complain if not there */
+        void_WrapOsErrorChecking(_swix(OS_File, _INR(0,1), OSFile_Delete, host_xfer_load_statics.scrap_name_buffer));
     }
 }
 

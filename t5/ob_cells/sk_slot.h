@@ -11,8 +11,8 @@
 
 /* MRJC January 1992 */
 
-#ifndef __sk_slot_h
-#define __sk_slot_h
+#ifndef SK_SLOT_H
+#define SK_SLOT_H
 
 /*
 definition of cell structure
@@ -256,6 +256,6 @@ cells_swap_rows(
     _DocuRef_   P_DOCU p_docu,
     _InRef_     PC_REGION p_region);
 
-#endif /* __sk_slot_h */
+#endif /* SK_SLOT_H */
 
 /* end of sk_slot.h */

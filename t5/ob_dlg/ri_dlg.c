@@ -4543,7 +4543,7 @@ part_control_redraw(
         fill_colour = normal_fill_colour;
         break;
 
-    case DIALOG_CONTROL_COMBO_TEXT + 0x100:
+    case DIALOG_CONTROL_COMBO_TEXT_PX100:
         plot_sprite = 1;
         break;
 

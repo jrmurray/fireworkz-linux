@@ -22,11 +22,11 @@
 
 #include "common/gflags.h"
 
-#ifndef          __utf16_h
+#ifndef            UTF16_H
 #include "cmodules/utf16.h"
 #endif
 
-#ifndef          __quickwblk_h
+#ifndef            QUICKWBLK_H
 #include "cmodules/quickwblk.h"
 #endif
 

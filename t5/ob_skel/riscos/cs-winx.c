@@ -11,7 +11,7 @@
 
 #if RISCOS
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
@@ -523,12 +523,13 @@ winx_drag_a_sprite_start(
 
     winx_statics.drag_window_handle = dr->wimp_window;
 
+    winx_statics.dragging_a_sprite = 1;
+
     rs.r[0] = flags;
     rs.r[1] = sprite_area_id;
     rs.r[2] = (int) p_sprite_name;
     rs.r[3] = (int) &dr->dragging_box;
-    winx_statics.dragging_a_sprite = 1;
-    return(_kernel_swi(DragASprite_Start /*0x00042400*/, &rs, &rs));
+    return(cs_kernel_swi(DragASprite_Start /*0x00042400*/, &rs));
 }
 
 extern void
@@ -536,9 +537,9 @@ winx_drag_a_sprite_stop(void)
 {
     if(winx_statics.dragging_a_sprite)
     {
-        _kernel_swi_regs rs;
         winx_statics.dragging_a_sprite = 0;
-        void_WrapOsErrorReporting(_kernel_swi(DragASprite_Stop /*0x00042401*/, &rs, &rs));
+
+        void_WrapOsErrorReporting(_swix(DragASprite_Stop /*0x00042401*/, 0));
     }
 }
 

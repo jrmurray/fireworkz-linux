@@ -13,19 +13,19 @@
 
 #include "common/gflags.h"
 
-#ifndef    __skel_flags_h
+#ifndef      SKEL_FLAGS_H
 #include "ob_skel/flags.h"
 #endif
 
-#ifndef          __im_cache_h
+#ifndef            IM_CACHE_H
 #include "cmodules/im_cache.h"
 #endif
 
-#ifndef          __gr_diag_h
+#ifndef            GR_DIAG_H
 #include "cmodules/gr_diag.h"
 #endif
 
-#ifndef          __typepack_h
+#ifndef            TYPEPACK_H
 #include "cmodules/typepack.h"
 #endif
 
@@ -1480,7 +1480,7 @@ gr_riscdiag_path_recompute_bbox(
     rs.r[6] = (int)  line_dash_pattern;
     rs.r[7] = (int) &bbox | 0x80000000; /* where to put bbox */
 
-    void_WrapOsErrorChecking(_kernel_swi(/*Draw_ProcessPath*/ 0x040700, &rs, &rs));
+    void_WrapOsErrorChecking(cs_kernel_swi(/*Draw_ProcessPath*/ 0x040700, &rs));
 #elif WINDOWS
     draw_error de;
     zero_struct(de);
@@ -1694,7 +1694,7 @@ gr_riscdiag_sprite_recompute_bbox(
         rs.r[1] = (int) 0x89ABFEDC; /* kill the OS or any twerp who dares to access this! */
         rs.r[2] = (int) p_sprite;
 
-        void_WrapOsErrorChecking(_kernel_swi(OS_SpriteOp, &rs, &rs));
+        void_WrapOsErrorChecking(cs_kernel_swi(OS_SpriteOp, &rs));
 
         if((sprite_mode_word.u.u32 < 256U) || (0 == (sprite_mode_word.u.riscos_3_5.mode_word_bit)))
         {   /* Mode Number or Mode Specifier */
@@ -1838,7 +1838,7 @@ gr_riscdiag_string_recompute_bbox(
         rs.r[4] = 0;
         rs.r[5] = 0;
 
-        if(NULL == (p_kernel_oserror = WrapOsErrorChecking(_kernel_swi(Font_FindFont, &rs, &rs))))
+        if(NULL == (p_kernel_oserror = WrapOsErrorChecking(cs_kernel_swi(Font_FindFont, &rs))))
             host_font = (HOST_FONT) rs.r[0];
     }
 
@@ -1847,7 +1847,7 @@ gr_riscdiag_string_recompute_bbox(
         (void) font_SetFont(host_font);
 
         rs.r[1] = (int) sbstr;
-        void_WrapOsErrorChecking(_kernel_swi(Font_StringBBox, &rs, &rs));
+        void_WrapOsErrorChecking(cs_kernel_swi(Font_StringBBox, &rs));
         /* NB. result in mp */
 
         /* scale bbox to riscDraw units - imprecise, but slightly better than a gr_box_xform() */

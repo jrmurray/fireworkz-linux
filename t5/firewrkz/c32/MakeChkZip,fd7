@@ -7,8 +7,8 @@
 | Copyright © 1993-1998 Colton Software Limited
 | Copyright © 1998-2015 R W Colton
 
-Set t5$Release 2_32
-|Set t5$Release 2_32_01
+Set t5$Release 2_33
+|et t5$Release 2_33_01
 
 Set t5$Disc $.Temp.FireChk.Fireworkz_<t5$Release>
 IfThere     $.Temp         Then Else %CDir $.Temp

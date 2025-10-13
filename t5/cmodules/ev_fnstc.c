@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2014-2022 Stuart Swales */
+/* Copyright (C) 2014-2025 Stuart Swales */
 
 /* Statistical function routines (distributions etc) for evaluator */
 
@@ -12,12 +12,12 @@
 
 #include "ob_ss/ob_ss.h"
 
-#include "cmodules/mathxtra.h" /* for mx_fsquare() */
-#include "cmodules/mathxtr4.h" /* for mx_Ix_beta() */
+#include "cmodules/mathxtra.h" /* for mathxtra_square() */
+#include "cmodules/mathxtr4.h" /* for mathxtra_Ix_beta() */
 
 #include "cmodules/mathxtri.h"
 
-#ifndef                   __mathnums_h
+#ifndef                     MATHNUMS_H
 #include "cmodules/coltsoft/mathnums.h"
 #endif
 
@@ -116,7 +116,7 @@ calc_beta_std_cdf(
     if(x >= 1.0)
         return(1.0); /* PDF is zero everywhere above 1, so CDF is one */
 
-    return(mx_Ix_beta(x, alpha, beta));
+    return(mathxtra_Ix_beta(x, alpha, beta));
 }
 
 _Check_return_
@@ -188,7 +188,7 @@ calc_beta_std_pdf(
     }
 
     {
-    const F64 ln_reciprocal_beta_term = mx_ln_reciprocal_beta(alpha, beta);
+    const F64 ln_reciprocal_beta_term = mathxtra_ln_reciprocal_beta(alpha, beta);
     const F64 ln_alpha_power_term = log(x) * (alpha - 1);
     const F64 ln_beta_power_term = log(1.0 - x) * (beta - 1);
     const F64 pdf = exp(ln_reciprocal_beta_term + ln_alpha_power_term + ln_beta_power_term);
@@ -482,7 +482,7 @@ calc_chisq_cdf(
 {
     const F64 half_x = x * 0.5;
     const F64 half_k = k * 0.5;
-    const F64 cdf = mx_P_gamma(half_k, half_x);
+    const F64 cdf = mathxtra_P_gamma(half_k, half_x);
 
     return(cdf);
 }
@@ -652,7 +652,7 @@ chisq_test_calc(
     {
         const F64 delta = ss_data_get_real(&ss_data_a) - ss_data_get_real(&ss_data_e);
 
-        chi_squared_statistic.arg.fp += mx_fsquare(delta) / ss_data_get_real(&ss_data_e);
+        chi_squared_statistic.arg.fp += mathxtra_square(delta) / ss_data_get_real(&ss_data_e);
     }
 
     if((y_size[0] > 1) && (x_size[0] > 1))
@@ -806,7 +806,7 @@ calc_F_cdf(
     const F64 h2 = d2 * 0.5;
     const F64 x_d1 = x * d1;
     const F64 z = x_d1 / (x_d1 + d2);
-    const F64 cdf = mx_Ix_beta(z, h1, h2);
+    const F64 cdf = mathxtra_Ix_beta(z, h1, h2);
 
     return(cdf);
     } /*block*/
@@ -846,7 +846,7 @@ calc_F_pdf(
     const F64 h1 = d1 * 0.5;
     const F64 h2 = d2 * 0.5;
     const F64 D = d1 / d2;
-    const F64 ln_reciprocal_beta_term = mx_ln_reciprocal_beta(h1, h2);
+    const F64 ln_reciprocal_beta_term = mathxtra_ln_reciprocal_beta(h1, h2);
     const F64 ln_numerator_power_term_1 = log(D) * h1;
     const F64 ln_numerator_power_term_2 = log(x) * (h1 - 1.0);
     const F64 ln_numerator_power_term_3 = log(1.0 + (x * D)) * (-(h1 + h2));
@@ -1126,7 +1126,7 @@ statistics_array_variance(
 
         delta = (ss_data_get_real(&ss_data) - sample_mean);
 
-        sum_delta2 += mx_fsquare(delta);
+        sum_delta2 += mathxtra_square(delta);
 
         ++n;
 
@@ -1225,7 +1225,7 @@ calc_gamma_cdf(
     _InVal_     F64 shape,
     _InVal_     F64 scale)
 {
-    const F64 cdf = mx_P_gamma(shape, x / scale);
+    const F64 cdf = mathxtra_P_gamma(shape, x / scale);
 
     return(cdf);
 }
@@ -1737,7 +1737,7 @@ calc_t_cdf(
     const F64 x = nu / (t2 + nu);
     const F64 h1 = nu * 0.5;
     const F64 h2 =      0.5;
-    const F64 half_Ix = mx_Ix_beta(x, h1, h2) * 0.5;
+    const F64 half_Ix = mathxtra_Ix_beta(x, h1, h2) * 0.5;
     const F64 cdf = (t > 0.0) ? (1.0 - half_Ix) : half_Ix;
 
     return(cdf);
@@ -1765,7 +1765,7 @@ calc_t_pdf(
     const F64 x = nu / (t2 + nu);
     const F64 h1 = nu * 0.5;
     const F64 h2 =      0.5;
-    const F64 ln_reciprocal_beta_term = mx_ln_reciprocal_beta(h1, h2);
+    const F64 ln_reciprocal_beta_term = mathxtra_ln_reciprocal_beta(h1, h2);
     const F64 denominator_sqrt_term = sqrt(nu);
     const F64 ln_numerator_power_term = log(x) * (h1 + h2);
     const F64 pdf = exp(ln_reciprocal_beta_term + ln_numerator_power_term) / denominator_sqrt_term;
@@ -2062,7 +2062,7 @@ t_test_paired_calc(
 
         paired_delta = delta_1 - delta_2;
 
-        sum += mx_fsquare(paired_delta);
+        sum += mathxtra_square(paired_delta);
 
         ++n;
     }
@@ -2162,8 +2162,8 @@ t_test_heteroscedastic_calc(
     const F64 v1_div_n1 = v1 / n1;
     const F64 v2_div_n2 = v2 / n2;
     const F64 t = fabs(mean_1 - mean_2) / sqrt(v1_div_n1 + v2_div_n2);
-    const F64 nu_numerator = mx_fsquare(v1_div_n1 + v2_div_n2);
-    const F64 nu_denominator = (mx_fsquare(v1_div_n1) / n1_minus_1) + (mx_fsquare(v2_div_n2) / n2_minus_1);
+    const F64 nu_numerator = mathxtra_square(v1_div_n1 + v2_div_n2);
+    const F64 nu_denominator = (mathxtra_square(v1_div_n1) / n1_minus_1) + (mathxtra_square(v2_div_n2) / n2_minus_1);
     const F64 nu = nu_numerator / nu_denominator;
     const F64 t_dist_rt_result = 1.0 - calc_t_cdf(t, nu);
 
@@ -2310,7 +2310,7 @@ PROC_EXEC_PROTO(c_z_test)
 
             delta = (ss_data_get_real(&ss_data) - sample_mean);
 
-            sum_delta2 += mx_fsquare(delta);
+            sum_delta2 += mathxtra_square(delta);
 
             ++n;
 

@@ -4,10 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2006-2022 Stuart Swales */
+/* Copyright (C) 2006-2025 Stuart Swales */
 
-#ifndef __u2000_h
-#define __u2000_h
+#ifndef UNICODE_U2000_H
+#define UNICODE_U2000_H
 
 /*
 2000..206F General Punctuation
@@ -131,6 +131,6 @@
 #define UCH_NATIONAL_DIGIT_SHAPES 0x206EU
 #define UCH_NOMINAL_DIGIT_SHAPES 0x206FU
 
-#endif /* __u2000_h */
+#endif /* UNICODE_U2000_H */
 
 /* end of u2000.h */

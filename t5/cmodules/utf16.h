@@ -4,29 +4,29 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-/* Copyright (C) 2006-2022 Stuart Swales */
+/* Copyright (C) 2006-2025 Stuart Swales */
 
-#ifndef __utf16_h
-#define __utf16_h
+#ifndef UTF16_H
+#define UTF16_H
 
 /*
 UTF-16 functions
 */
 
 _Check_return_
-static inline BOOL
+static inline bool
 WCHAR_is_utf16_high_surrogate(
     _InVal_     WCHAR high_surrogate)
 {
-    return((high_surrogate >= UCH_SURROGATE_HIGH) && (high_surrogate <= UCH_SURROGATE_HIGH_END));
+    return( (high_surrogate >= UCH_SURROGATE_HIGH) && (high_surrogate <= UCH_SURROGATE_HIGH_END) );
 }
 
 _Check_return_
-static inline BOOL
+static inline bool
 WCHAR_is_utf16_low_surrogate(
     _InVal_     WCHAR low_surrogate)
 {
-    return((low_surrogate >= UCH_SURROGATE_LOW) && (low_surrogate <= UCH_SURROGATE_LOW_END));
+    return( (low_surrogate >= UCH_SURROGATE_LOW) && (low_surrogate <= UCH_SURROGATE_LOW_END) );
 }
 
 _Check_return_
@@ -53,6 +53,6 @@ extern U32 /* number of bytes */
 utf16_bytes_of_char_encoding(
     _InVal_     UCS4 ucs4);
 
-#endif /* __utf16_h */
+#endif /* UTF16_H */
 
 /* end of utf16.h */

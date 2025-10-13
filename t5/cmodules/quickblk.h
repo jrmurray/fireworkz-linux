@@ -11,8 +11,8 @@
 
 /* SKS November 2006 split out of aligator.h; May 2014 split off UCHARS/TCHARS */
 
-#ifndef __quickblk_h
-#define __quickblk_h
+#ifndef QUICKBLK_H
+#define QUICKBLK_H
 
 #if CHECKING && 1
 #define CHECKING_QUICK_BLOCK 1
@@ -256,6 +256,6 @@ quick_block_str(
     return((PC_U8Z) quick_block_ptr(p_quick_block));
 }
 
-#endif /* __quickblk_h */
+#endif /* QUICKBLK_H */
 
 /* end of quickblk.h */

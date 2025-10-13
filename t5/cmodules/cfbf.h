@@ -11,6 +11,9 @@ and
 https://www.openoffice.org/sc/compdocfileformat.pdf
 */
 
+#ifndef CFBF_H
+#define CFBF_H
+
 typedef U32 CFBF_SECT;
 
 #define /*CFBF_SECT*/ CFBF_MAXREGSECT   0xFFFFFFFAU /* regular sector numbers in [0..MAXREGSECT] */
@@ -266,5 +269,7 @@ stg_cfbf_write_stream_in_storage(
     _InVal_     U32 n_bytes);
 
 #endif /* WINDOWS */
+
+#endif /* CFBF_H */
 
 /* end of cfbf.h */
