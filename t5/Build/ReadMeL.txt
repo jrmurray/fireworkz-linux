@@ -115,6 +115,16 @@ Milestone 3 - IN PROGRESS: skeleton and the Qt interface
     clipping and simple text. qth_null.c records paint calls and window state
     and can inject events; paint_smoke checks the whole path.
 
+    The Qt 6 backend (ob_skel/linux/qt/qth_qt.cpp, library fireworkz_qth_qt) implements
+    qt_host.h for real: fonts from QFontDatabase, painting with QPainter (invert is
+    RasterOp_NotDestination), windows as QWidgets turning Qt events into QTH_EVENTs,
+    an inverted caret and the mouse grab. qt_smoke runs it offscreen
+    (QT_QPA_PLATFORM=offscreen) and checks fonts, resize/paint events and the
+    pixels that come out of fill, invert, frame and clip. Needs Qt 6 Widgets
+    (Fedora qt6-qtbase-devel); -DFIREWORKZ_BUILD_QT=OFF skips it.
+    Not yet in the Qt backend: scroll bars (extent and position are remembered
+    only), menus, dialogs, clipboard, printing.
+
     Libraries: fireworkz_host_linux is ob_skel/linux/ho_*.c alone (what the
     tests link); fireworkz_skel is the rest of ob_skel.
 

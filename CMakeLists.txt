@@ -133,3 +133,31 @@ add_test(NAME font_smoke COMMAND fireworkz_font_smoke)
 add_executable(fireworkz_paint_smoke t5/Build/linux/paint_smoke.c t5/Build/linux/core_smoke_host.c t5/ob_skel/sk_alpha.c)
 target_link_libraries(fireworkz_paint_smoke PRIVATE fireworkz_host_linux fireworkz_qth_null fireworkz_core)
 add_test(NAME paint_smoke COMMAND fireworkz_paint_smoke)
+
+# ---- Qt 6 backend --------------------------------------------------------------
+#
+# The real implementation of ob_skel/linux/qt_host.h. Needs Qt 6 Widgets
+# (Fedora: qt6-qtbase-devel; Debian/Ubuntu: qt6-base-dev).
+
+option(FIREWORKZ_BUILD_QT "Build the Qt 6 host backend" ON)
+
+if(FIREWORKZ_BUILD_QT)
+    enable_language(CXX)
+    set(CMAKE_CXX_STANDARD 17)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    find_package(Qt6 COMPONENTS Widgets)
+endif()
+
+if(FIREWORKZ_BUILD_QT AND Qt6_FOUND)
+    add_library(fireworkz_qth_qt STATIC ${T5}/ob_skel/linux/qt/qth_qt.cpp)
+    target_include_directories(fireworkz_qth_qt PUBLIC ${T5})
+    target_link_libraries(fireworkz_qth_qt PUBLIC Qt6::Widgets)
+    target_compile_options(fireworkz_qth_qt PRIVATE -Wall)
+
+    add_executable(fireworkz_qt_smoke t5/Build/linux/qt_smoke.cpp)
+    target_link_libraries(fireworkz_qt_smoke PRIVATE fireworkz_qth_qt)
+    add_test(NAME qt_smoke COMMAND fireworkz_qt_smoke)
+    set_tests_properties(qt_smoke PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+elseif(FIREWORKZ_BUILD_QT)
+    message(WARNING "Qt 6 Widgets not found: the Qt backend is not built (-DFIREWORKZ_BUILD_QT=OFF to silence)")
+endif()
