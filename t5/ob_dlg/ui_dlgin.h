@@ -792,6 +792,10 @@ modeless_dialog_handler(
     _In_        WPARAM wParam,
     _In_        LPARAM lParam);
 
+#endif /* WINDOWS */
+
+#if WINDOWS || LINUX /* LINUX: supplied by the Qt dialog layer, not yet written */
+
 /*
 internally exported routines from wi_dlg.c
 */
@@ -821,7 +825,7 @@ dialog_windows_ictl_enable_here(
 extern void
 dialog_windows_ui_len_init(void);
 
-#endif /* WINDOWS */
+#endif /* WINDOWS || LINUX */
 
 /*
 internally exported variables

@@ -144,6 +144,16 @@ extern double FreeBSD_erfc(double);
 #endif /* _MSC_VER */
 
 
+#if LINUX
+
+/* the C library has these (jn and yn are in POSIX) so there is no need for our FreeBSD copies */
+
+#define bessel_jn(n, x) jn(n, x)
+
+#define bessel_yn(n, x) yn(n, x)
+
+#else
+
 _Check_return_
 extern double FreeBSD_jn(int, double);
 
@@ -153,6 +163,8 @@ _Check_return_
 extern double FreeBSD_yn(int, double);
 
 #define bessel_yn(n, x) FreeBSD_yn(n, x)
+
+#endif /* LINUX */
 
 
 #if __STDC_VERSION__ < 199901L

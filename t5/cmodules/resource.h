@@ -32,6 +32,14 @@ typedef struct BOUND_RESOURCES
 
     P_ANY really_abstract;
 
+#elif LINUX
+
+/* no per-object resource files: messages are generated into Messages/ObNN and images are loaded by the Qt layer */
+
+#define RESOURCE_DLL_SUFFIX /*nothing*/
+
+    P_ANY really_abstract;
+
 #endif /* OS */
 
 }

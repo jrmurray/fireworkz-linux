@@ -110,7 +110,7 @@ toolbar_view_new(
 #define T5_TOOLBAR_ROW_SEP_V    ( 4 * PIXITS_PER_RISCOS)
 
 #define T5_TOOLBAR_LARGE_WIDTH  (16384 * PIXITS_PER_RISCOS)
-#elif WINDOWS
+#elif WINDOWS || LINUX
 /* Defined in terms of Windows screen pixels - these become scaled by DPI in transforms, which is what we want */
 #define T5_TOOLBAR_LM           ( 8 * PIXITS_PER_PIXEL)
 #define T5_TOOLBAR_RM           ( 0 * PIXITS_PER_PIXEL)
@@ -1549,6 +1549,27 @@ do_paint_tool(
     /* else ... User controls on Windows must be separate windows */
 }
 
+#elif LINUX
+
+/* TODO: paint the tool's bitmap and themed button states once resource bitmaps exist on Linux */
+
+static void
+do_paint_tool(
+    _DocuRef_   P_DOCU p_docu,
+    _ViewRef_   P_VIEW p_view,
+    _InRef_     PC_T5_TOOLBAR_VIEW_TOOL_DESC p_t5_toolbar_view_tool_desc,
+    _InRef_     PC_REDRAW_CONTEXT p_redraw_context)
+{
+    const RGB face = RGB_INIT(0xE0, 0xE0, 0xE0);
+    const RGB edge = RGB_INIT(0x80, 0x80, 0x80);
+
+    UNREFERENCED_PARAMETER_DocuRef_(p_docu);
+    UNREFERENCED_PARAMETER_ViewRef_(p_view);
+
+    host_paint_rectangle_filled(p_redraw_context, &p_t5_toolbar_view_tool_desc->pixit_rect, &face);
+    host_paint_rectangle_outline(p_redraw_context, &p_t5_toolbar_view_tool_desc->pixit_rect, &edge);
+}
+
 #endif /* OS */
 
 static void
@@ -2437,6 +2458,19 @@ status_line_view_update(
         UpdateWindow(hwnd);
 }
 
+#elif LINUX
+
+/* TODO: invalidate the status line window once the host views exist on Linux */
+
+static void
+status_line_view_update(
+    _DocuRef_   P_DOCU p_docu,
+    _ViewRef_   P_VIEW p_view)
+{
+    UNREFERENCED_PARAMETER_DocuRef_(p_docu);
+    UNREFERENCED_PARAMETER_ViewRef_(p_view);
+}
+
 #endif /* OS */
 
 T5_MSG_PROTO(static, t5_msg_status_line_set, _InRef_ PC_UI_TEXT p_ui_text)
@@ -2878,7 +2912,7 @@ toolbar_view_new(
     const BOOL has_toolbar = !global_preferences.disable_toolbar;
 #if RISCOS
     const BOOL has_status_line_in_toolbar = !global_preferences.disable_status_line;
-#elif WINDOWS
+#elif WINDOWS || LINUX
     const BOOL has_status_line_in_toolbar = FALSE; /* it is a separate window */
 #endif
     PIXIT_POINT cur_point = { 0, 0 };
@@ -2945,6 +2979,10 @@ toolbar_view_new(
                 /* a little more internal padding from button border to the button image these days, especially now we have themed buttons */
                 this_size.cx += 2 * PIXITS_PER_PIXEL;
                 this_size.cy += 2 * PIXITS_PER_PIXEL;
+#elif LINUX
+                /* a 16 pixel tool bitmap plus padding, in 96 dpi pixels which are scaled by DPI in transforms */
+                this_size.cx = (p_t5_toolbar_tool_desc->bits.thin ? 12 : 24) * PIXITS_PER_PIXEL;
+                this_size.cy = 24 * PIXITS_PER_PIXEL;
 #else
                 this_size.cx = p_t5_toolbar_tool_desc->bits.thin ? TOOL_BUTTON_THIN_WIDTH : TOOL_BUTTON_STD_WIDTH;
                 this_size.cy = TOOL_BUTTON_STD_HEIGHT;

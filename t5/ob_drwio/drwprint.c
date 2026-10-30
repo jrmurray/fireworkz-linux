@@ -350,6 +350,21 @@ skel_rect_from_print_box(
     gdi_rect.br.x = p_redraw_context->windows.paintstruct.rcPaint.right  + p_redraw_context->gdi_org.x;
     gdi_rect.br.y = p_redraw_context->windows.paintstruct.rcPaint.bottom + p_redraw_context->gdi_org.y;
 
+#elif LINUX
+
+static void
+skel_rect_from_print_box(
+    _InoutRef_  P_SKEL_RECT p_skel_rect /*page_num untouched*/,
+    _InRef_     PC_REDRAW_CONTEXT p_redraw_context)
+{
+    GDI_RECT gdi_rect;
+    PIXIT_RECT pixit_rect;
+
+    gdi_rect.tl.x = p_redraw_context->linux_ctx.paint_rect.tl.x   + p_redraw_context->gdi_org.x;
+    gdi_rect.tl.y = p_redraw_context->linux_ctx.paint_rect.tl.y    + p_redraw_context->gdi_org.y;
+    gdi_rect.br.x = p_redraw_context->linux_ctx.paint_rect.br.x  + p_redraw_context->gdi_org.x;
+    gdi_rect.br.y = p_redraw_context->linux_ctx.paint_rect.br.y + p_redraw_context->gdi_org.y;
+
 #endif /* OS */
 
     pixit_rect_from_window_rect(&pixit_rect, &gdi_rect, &p_redraw_context->host_xform);
@@ -382,7 +397,7 @@ save_as_drawfile_one_document_page(
 
 #if RISCOS
     static const GDI_POINT pixels_per_inch = { 180, 180 }; /* actually OS units here */
-#elif WINDOWS
+#elif WINDOWS || LINUX
     static const GDI_POINT pixels_per_inch = { 600, 600 }; /* like a typical medium-res printer */
 #endif
 
@@ -445,6 +460,13 @@ save_as_drawfile_one_document_page(
         p_redraw_context->windows.host_machine_clip_rect = p_redraw_context->windows.paintstruct.rcPaint;
 
         /* no actual GDI clipping region required to be set */
+#elif LINUX
+        p_redraw_context->linux_ctx.paint_rect.tl.x = 0;
+        p_redraw_context->linux_ctx.paint_rect.tl.y = 0;
+        p_redraw_context->linux_ctx.paint_rect.br.x = page_size.x;
+        p_redraw_context->linux_ctx.paint_rect.br.y = page_size.y;
+
+        p_redraw_context->linux_ctx.host_machine_clip_rect = p_redraw_context->linux_ctx.paint_rect;
 #endif /* OS */
 
         /* I tried to use origin but didn't work. Added page_pixit_origin_draw instead. */

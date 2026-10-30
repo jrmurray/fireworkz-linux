@@ -17,12 +17,13 @@ option(FIREWORKZ_RELEASED "Build a release (no tracing, no runtime checks)" ON)
 set(T5 ${CMAKE_CURRENT_SOURCE_DIR}/t5)
 
 file(GLOB FIREWORKZ_CORE_SOURCES CONFIGURE_DEPENDS ${T5}/cmodules/*.c)
+list(APPEND FIREWORKZ_CORE_SOURCES ${T5}/external/OtherFree/wn_pnpoly.c)
 
 add_library(fireworkz_core STATIC ${FIREWORKZ_CORE_SOURCES})
 
 target_include_directories(fireworkz_core PUBLIC ${T5})
 
-target_compile_definitions(fireworkz_core PUBLIC TARGET_LINUX)
+target_compile_definitions(fireworkz_core PUBLIC TARGET_LINUX PORTABLE_MULDIV64)
 if(FIREWORKZ_RELEASED)
     target_compile_definitions(fireworkz_core PUBLIC RELEASED)
 endif()
@@ -104,6 +105,12 @@ file(GLOB FIREWORKZ_SKEL_SOURCES CONFIGURE_DEPENDS ${T5}/ob_skel/*.c)
 add_library(fireworkz_skel STATIC ${FIREWORKZ_SKEL_SOURCES})
 target_link_libraries(fireworkz_skel PUBLIC fireworkz_core)
 
+# All the objects and the file converters (ob_*, fl_*, fs_*), except the skeleton's own
+file(GLOB FIREWORKZ_OBJECT_SOURCES CONFIGURE_DEPENDS ${T5}/ob_*/*.c ${T5}/fl_*/*.c ${T5}/fs_*/*.c)
+list(FILTER FIREWORKZ_OBJECT_SOURCES EXCLUDE REGEX "/ob_skel/")
+add_library(fireworkz_objects STATIC ${FIREWORKZ_OBJECT_SOURCES})
+target_link_libraries(fireworkz_objects PUBLIC fireworkz_core)
+
 # The Linux host layer on its own, so that it can be tested without the rest of the skeleton
 file(GLOB FIREWORKZ_HOST_SOURCES CONFIGURE_DEPENDS ${T5}/ob_skel/linux/ho_*.c)
 add_library(fireworkz_host_linux STATIC ${FIREWORKZ_HOST_SOURCES})
@@ -160,4 +167,14 @@ if(FIREWORKZ_BUILD_QT AND Qt6_FOUND)
     set_tests_properties(qt_smoke PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 elseif(FIREWORKZ_BUILD_QT)
     message(WARNING "Qt 6 Widgets not found: the Qt backend is not built (-DFIREWORKZ_BUILD_QT=OFF to silence)")
+endif()
+
+# ---- The application (milestone 4, in progress) -----------------------------------
+option(FIREWORKZ_BUILD_APP "Try to build the fireworkz executable (does not link yet)" OFF)
+
+if(FIREWORKZ_BUILD_APP AND TARGET fireworkz_qth_qt)
+    add_executable(fireworkz ${T5}/firewrkz/firewrkz.c)
+    target_link_libraries(fireworkz PRIVATE
+        -Wl,--start-group fireworkz_objects fireworkz_skel fireworkz_host_linux fireworkz_core -Wl,--end-group
+        fireworkz_qth_qt)
 endif()

@@ -2445,6 +2445,7 @@ REDRAW_CONTEXT_WINDOWS;
 typedef struct REDRAW_CONTEXT_LINUX
 {
     void * painter; /* native painter (e.g. QPainter *) */
+    GDI_RECT paint_rect; /* the exposed area being painted, as rcPaint on Windows */
     GDI_RECT host_machine_clip_rect;
 }
 REDRAW_CONTEXT_LINUX;

@@ -66,7 +66,7 @@
 #define CHART_ID_BM_LDOT     "ldot"
 #define CHART_ID_BM_LDASHDOT "ldashdot"
 #define CHART_ID_BM_LDADODO  "ldashdotdot"
-#elif WINDOWS
+#elif WINDOWS || LINUX
 /* multi-bitmaps: 0x6n (+1 = high-dpi variant) */
 #define CHART_ID_BM_COMBAR_ID T5_RESOURCE_COMMON_BMP_BASE(OBJECT_ID_CHART, 0) /* bar.bmp */
 #define CHART_ID_BM_COMBAR(n) T5_RESOURCE_COMMON_BMP(CHART_ID_BM_COMBAR_ID, n)

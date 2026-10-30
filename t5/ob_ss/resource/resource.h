@@ -28,7 +28,7 @@
 #define SS_ID_BM_TOOLBAR_MAKE_TEXT      "make_text"
 #define SS_ID_BM_TOOLBAR_MAKE_NUMBER    "make_number"
 #define SS_ID_BM_TOOLBAR_MAKE_CONSTANT  "make_const"
-#elif WINDOWS
+#elif WINDOWS || LINUX
 /* multi-bitmaps: 0x1n (+1 = high-dpi variant) */
 #define SS_ID_BM_TOOLBAR_COM_BTN_ID T5_RESOURCE_COMMON_BMP_BASE(OBJECT_ID_SS, 0)
 #define SS_ID_BM_TOOLBAR_COM_BTN(n) T5_RESOURCE_COMMON_BMP(SS_ID_BM_TOOLBAR_COM_BTN_ID, n)

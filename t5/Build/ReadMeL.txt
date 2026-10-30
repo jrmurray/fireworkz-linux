@@ -136,6 +136,34 @@ Milestone 3 - IN PROGRESS: skeleton and the Qt interface
     host_paint_border_line, framed boxes, bitmaps, drawfile and plain text
     painting are not ported yet.
 
+Milestone 4 - IN PROGRESS: objects and the application
+    Every .c file in ob_*, fl_*, fs_* and firewrkz now compiles for Linux and
+    builds as libfireworkz_objects. (Mostly this was widening "#elif WINDOWS"
+    to "#elif WINDOWS || LINUX" for dialog, toolbar, resource-ID and geometry
+    constants; the toolbar tool and status line have Linux stubs.)
+
+    The executable does not link yet. -DFIREWORKZ_BUILD_APP=ON builds target
+    "fireworkz" and shows what is missing, about 50 symbols, all host layer:
+      views and windows   host_view_init/show/destroy/minimize/maximize/reopen/
+                          query_posn, host_settitle, host_scroll_pane,
+                          host_set_extent_this_view, host_work_area_gdi_size_query,
+                          host_recache_visible_row_range, host_reenter_window
+      updating            host_update, host_update_all, host_update_fast_start/
+                          continue, host_all_update_later
+      caret and pointer   host_main_show_caret, host_main_scroll_caret,
+                          host_set_pointer_shape, host_drag_start/in_progress
+      painting            host_paint_underline, host_paint_border_line,
+                          host_paint_marker, host_over_marker, host_marker_rect_flags,
+                          host_paint_drawfile, host_read_drawfile_pixit_size,
+                          host_fonty_text_paint_uchars_in_rectangle,
+                          fonty_text_paint_simple_uchars, text_segment_paint
+      colour and misc     rgb_stash, host_bleep, host_rand_between, host_shutdown,
+                          ui_list_size_estimate, ui_width_from_tstr_host
+      menus and dialogs   ho_menu_popup/dispose, dialog_windows_build_list
+      printing            host_print_document, host_printer_name_query,
+                          host_read_printer_paper_details, t5_msg_draft_print
+      other               windows_save_as, t5_cmd_help, wm_event_get, main
+
 Interim stubs (search for "TODO" near "LINUX"):
     gr_rdiag.c   text bounding boxes are estimated, not measured
     im_convert.c image conversion fails (no GDI+ or RISC OS ChangeFSI)
