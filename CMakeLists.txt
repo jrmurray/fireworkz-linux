@@ -94,6 +94,18 @@ endforeach()
 
 add_custom_target(fireworkz_messages ALL DEPENDS ${FIREWORKZ_MESSAGE_FILES})
 
+# ---- Skeleton (milestone 3, in progress) --------------------------------------
+#
+# Everything in ob_skel that compiles for Linux so far. fonty.c is excluded: its
+# font metrics are GDI based and need the Qt host layer's C interface first.
+# The Windows and RISC OS host layers (ob_skel/windows, ob_skel/riscos) are not used.
+
+file(GLOB FIREWORKZ_SKEL_SOURCES CONFIGURE_DEPENDS ${T5}/ob_skel/*.c)
+list(REMOVE_ITEM FIREWORKZ_SKEL_SOURCES ${T5}/ob_skel/fonty.c)
+
+add_library(fireworkz_skel STATIC ${FIREWORKZ_SKEL_SOURCES})
+target_link_libraries(fireworkz_skel PUBLIC fireworkz_core)
+
 enable_testing()
 
 # sk_alpha.c supplies the real character class tables; the rest of ob_skel is stubbed for now

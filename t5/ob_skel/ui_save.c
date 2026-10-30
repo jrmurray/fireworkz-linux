@@ -202,6 +202,16 @@ windows_save_hybrid_draw_get_filename(
     _DocuRef_   P_DOCU p_docu,
     _InoutRef_  P_SAVE_CALLBACK p_save_callback);
 
+#elif LINUX
+
+/* the native Save As file dialog is supplied by the Qt host layer; it ends up in proc_save_common() */
+
+_Check_return_
+extern STATUS
+windows_save_as(
+    _DocuRef_   P_DOCU p_docu,
+    _InoutRef_  P_SAVE_CALLBACK p_save_callback);
+
 #endif /* OS */
 
 #if RISCOS || !defined(WINDOWS_SAVE_AS)

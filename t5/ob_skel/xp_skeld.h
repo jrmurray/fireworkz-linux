@@ -27,7 +27,7 @@ dialog_col1_group;
 extern const DIALOG_CONTROL
 dialog_col2_group;
 
-#if WINDOWS
+#if WINDOWS || LINUX
 #define ID_LEFT_OKCANCEL IDOK
 #else
 #define ID_LEFT_OKCANCEL IDCANCEL
@@ -84,7 +84,7 @@ line_style_data[5];
 #if RISCOS
 #define LINE_STYLE_H (48 * 2 * PIXITS_PER_RISCOS + (4 + 2 + 8) * 2 * PIXITS_PER_RISCOS)
 #define LINE_STYLE_V ( 9 * 4 * PIXITS_PER_RISCOS)
-#elif WINDOWS
+#elif WINDOWS || LINUX
 #define LINE_STYLE_H (32 * PIXITS_PER_WDU_H)
 #define LINE_STYLE_V (14 * PIXITS_PER_WDU_V)
 #endif
@@ -178,7 +178,7 @@ measurement_points_data;
 
 #define RGB_PATCHES_H (32 * PIXITS_PER_RISCOS) /* was 28 */
 #define RGB_PATCHES_V (32 * PIXITS_PER_RISCOS)
-#elif WINDOWS
+#elif WINDOWS || LINUX
 #define RGB_TX_H      (8 * PIXITS_PER_WDU_H)
 
 #define RGB_PATCHES_H (8 * PIXITS_PER_WDU_H)

@@ -77,7 +77,7 @@
 
 #define SKEL_ID_BM_DEC                          "down"
 #define SKEL_ID_BM_INC                          "up"
-#elif WINDOWS
+#elif WINDOWS || LINUX
 /* multi-bitmaps: 0x0n (+1 = high-dpi variant) */
 #define SKEL_ID_BM_TOOLBAR_COM_BTN_ID           T5_RESOURCE_COMMON_BMP_BASE(OBJECT_ID_SKEL, 1)
 #define SKEL_ID_BM_TOOLBAR_COM_BTN(n)           T5_RESOURCE_COMMON_BMP(SKEL_ID_BM_TOOLBAR_COM_BTN_ID, n)
@@ -256,7 +256,7 @@ keep consistent with &.t5.ob_skel.resource.msg
 #define STATUS_BAD_INSTRUCT                 -208
 #endif
 
-#if WINDOWS
+#if WINDOWS || LINUX
 #define ERR_PRINT_UNKNOWN                   -211
 #define ERR_PRINT_TERMINATED                -212
 #define ERR_PRINT_TERMINATED_VIA_PM         -213

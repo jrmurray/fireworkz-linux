@@ -1177,7 +1177,7 @@ reperr(
         (void) MessageBox(NULL, output, product_ui_id(), MB_TASKMODAL | MB_OK | MB_ICONEXCLAMATION);
     }
 #else
-    fputs(stderr, output);
+    fputs(output, stderr);
     fputc('\n', stderr);
 #endif /* OS */
 

@@ -468,7 +468,7 @@ paint_desk_strips(
 #if RISCOS
 #define desk_margin_left(display_mode) ((DISPLAY_WORK_AREA == (display_mode)) ? (4 * PIXITS_PER_RISCOS) : (12 * PIXITS_PER_RISCOS))
 #define desk_margin_top(display_mode)  ((DISPLAY_WORK_AREA == (display_mode)) ? (4 * PIXITS_PER_RISCOS) : (12 * PIXITS_PER_RISCOS))
-#elif WINDOWS && 1
+#elif (WINDOWS || LINUX) && 1
 #define desk_margin_left(display_mode) ((DISPLAY_WORK_AREA == (display_mode)) ? (2 * PIXITS_PER_PIXEL) : (6 * PIXITS_PER_PIXEL))
 #define desk_margin_top(display_mode)  ((DISPLAY_WORK_AREA == (display_mode)) ? (2 * PIXITS_PER_PIXEL) : (6 * PIXITS_PER_PIXEL))
 #elif WINDOWS

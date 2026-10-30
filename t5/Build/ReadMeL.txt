@@ -85,6 +85,15 @@ Milestone 2 - DONE for messages: UI message text
     NOT YET DONE: toolbar bitmaps (resource_bitmap_* are still absent
     on Linux and arrive with the Qt layer in milestone 3).
 
+Milestone 3 - IN PROGRESS: skeleton
+    50 of the 51 ob_skel files now build as libfireworkz_skel (dialog
+    metrics, resource IDs, view/edge geometry follow WINDOWS; Save As is
+    declared as windows_save_as() for the Qt layer to supply).
+    Remaining in ob_skel: fonty.c, whose font enumeration and text
+    metrics use GDI (HDC/HFONT/GetTextMetrics/ABC widths). It needs a
+    C interface to Qt (QFontDatabase/QFontMetrics) designed first;
+    the same interface will serve painting, windows and menus.
+
 Interim stubs (search for "TODO" near "LINUX"):
     gr_rdiag.c   text bounding boxes are estimated, not measured
     im_convert.c image conversion fails (no GDI+ or RISC OS ChangeFSI)

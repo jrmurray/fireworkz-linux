@@ -179,7 +179,7 @@ typedef U32 DIALOG_CONTROL_ID; typedef DIALOG_CONTROL_ID * P_DIALOG_CTL_ID; type
 
 #define DIALOG_CONTROL_INVALID  ((DIALOG_CONTROL_ID) 0xBCBCU)
 
-#if RISCOS /* Windows control ids are defined in WinUser.h - define compatible set for use on RISC OS */
+#if RISCOS || LINUX /* Windows control ids are defined in WinUser.h - define compatible set for use on RISC OS and Linux */
 #define IDOK                1U
 #define IDCANCEL            2U
 #define IDHELP              9U
@@ -307,7 +307,7 @@ dialog positions and sizes specified in PIXITS
 #define DIALOG_DEFOK_H          (DIALOG_PUSHBUTTONOVH_H + DIALOG_SYSCHARS_H("OK") + (2 * DIALOG_DEFPUSHEXTRA_H))
 #define DIALOG_STDCANCEL_H      (DIALOG_PUSHBUTTONOVH_H + DIALOG_SYSCHARS_H("Cancel"))
 #define DIALOG_FATCANCEL_H      (DIALOG_PUSHBUTTONOVH_H + DIALOG_SYSCHARS_H("Abbrechen"))
-#elif WINDOWS
+#elif WINDOWS || LINUX /* Linux follows Windows (96 dpi, dialog units) until the Qt layer measures a real font */
 /* the book says that these should be determined from the parent
  * window's system font metrics but that's a little hopeful!
  *
@@ -1859,7 +1859,7 @@ DIALOG_MSG_CTL_STATE_CHANGE; typedef const DIALOG_MSG_CTL_STATE_CHANGE * PC_DIAL
 
 #endif /* RISCOS */
 
-#if WINDOWS
+#if WINDOWS || LINUX
 
 /*
 DIALOG_MSG_CODE_CTL_USER_MOUSE
@@ -1898,7 +1898,7 @@ struct DIALOG_MSG_CTL_USER_REDRAW
     S32 enabled; /*IN*/
 };
 
-#endif /* WINDOWS */
+#endif /* WINDOWS || LINUX */
 
 #endif /* XP_DLG_H */
 
