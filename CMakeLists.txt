@@ -101,14 +101,17 @@ add_custom_target(fireworkz_messages ALL DEPENDS ${FIREWORKZ_MESSAGE_FILES})
 # layers (ob_skel/windows, ob_skel/riscos) are not used.
 
 file(GLOB FIREWORKZ_SKEL_SOURCES CONFIGURE_DEPENDS ${T5}/ob_skel/*.c)
-file(GLOB FIREWORKZ_SKEL_HOST_SOURCES CONFIGURE_DEPENDS ${T5}/ob_skel/linux/ho_*.c)
-list(APPEND FIREWORKZ_SKEL_SOURCES ${FIREWORKZ_SKEL_HOST_SOURCES})
-
 add_library(fireworkz_skel STATIC ${FIREWORKZ_SKEL_SOURCES})
 target_link_libraries(fireworkz_skel PUBLIC fireworkz_core)
 
+# The Linux host layer on its own, so that it can be tested without the rest of the skeleton
+file(GLOB FIREWORKZ_HOST_SOURCES CONFIGURE_DEPENDS ${T5}/ob_skel/linux/ho_*.c)
+add_library(fireworkz_host_linux STATIC ${FIREWORKZ_HOST_SOURCES})
+target_link_libraries(fireworkz_host_linux PUBLIC fireworkz_core)
+
 # Headless stand-in for the Qt layer, for tests
 add_library(fireworkz_qth_null STATIC ${T5}/ob_skel/linux/qth_null.c)
+target_compile_options(fireworkz_qth_null PRIVATE -Wall)
 target_include_directories(fireworkz_qth_null PUBLIC ${T5})
 
 enable_testing()
@@ -124,5 +127,9 @@ add_dependencies(fireworkz_core_smoke fireworkz_messages)
 add_test(NAME core_smoke COMMAND fireworkz_core_smoke)
 
 add_executable(fireworkz_font_smoke t5/Build/linux/font_smoke.c t5/Build/linux/core_smoke_host.c t5/ob_skel/sk_alpha.c)
-target_link_libraries(fireworkz_font_smoke PRIVATE fireworkz_skel fireworkz_qth_null fireworkz_core)
+target_link_libraries(fireworkz_font_smoke PRIVATE fireworkz_host_linux fireworkz_qth_null fireworkz_core)
 add_test(NAME font_smoke COMMAND fireworkz_font_smoke)
+
+add_executable(fireworkz_paint_smoke t5/Build/linux/paint_smoke.c t5/Build/linux/core_smoke_host.c t5/ob_skel/sk_alpha.c)
+target_link_libraries(fireworkz_paint_smoke PRIVATE fireworkz_host_linux fireworkz_qth_null fireworkz_core)
+add_test(NAME paint_smoke COMMAND fireworkz_paint_smoke)

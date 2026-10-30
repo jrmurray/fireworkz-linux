@@ -10,6 +10,7 @@
 
 #include "ob_skel/linux/qt_host.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -95,3 +96,340 @@ qth_font_text_width(const QTH_FONT * p_font, const uint8_t * p_latin1, uint32_t 
 }
 
 /* end of qth_null.c */
+
+/* ---- Painting, images, windows ---------------------------------------------- */
+
+#include "ob_skel/linux/qth_null.h"
+
+#include <stdio.h>
+
+struct QTH_PAINTER
+{
+    int32_t dpi_x, dpi_y;
+    char * log;
+    size_t log_length, log_size;
+};
+
+static void
+painter_logf(QTH_PAINTER * p_painter, const char * format, ...)
+{
+    char line[200];
+    size_t n;
+    va_list va;
+
+    va_start(va, format);
+    n = (size_t) vsnprintf(line, sizeof(line) - 1, format, va);
+    va_end(va);
+
+    if(n > sizeof(line) - 2)
+        n = sizeof(line) - 2;
+    line[n++] = '\n';
+
+    if(p_painter->log_length + n + 1 > p_painter->log_size)
+    {
+        size_t new_size = (p_painter->log_size + n + 1) * 2;
+        char * p_new = realloc(p_painter->log, new_size);
+        if(NULL == p_new)
+            return;
+        p_painter->log = p_new;
+        p_painter->log_size = new_size;
+    }
+
+    memcpy(p_painter->log + p_painter->log_length, line, n);
+    p_painter->log_length += n;
+    p_painter->log[p_painter->log_length] = '\0';
+}
+
+QTH_PAINTER *
+qth_null_painter_new(int32_t dpi_x, int32_t dpi_y)
+{
+    QTH_PAINTER * p_painter = calloc(1, sizeof(*p_painter));
+
+    if(NULL != p_painter)
+    {
+        p_painter->dpi_x = dpi_x;
+        p_painter->dpi_y = dpi_y;
+    }
+
+    return(p_painter);
+}
+
+const char *
+qth_null_painter_log(const QTH_PAINTER * p_painter)
+{
+    return((NULL != p_painter->log) ? p_painter->log : "");
+}
+
+void
+qth_null_painter_clear_log(QTH_PAINTER * p_painter)
+{
+    p_painter->log_length = 0;
+    if(NULL != p_painter->log)
+        p_painter->log[0] = '\0';
+}
+
+void
+qth_null_painter_free(QTH_PAINTER * p_painter)
+{
+    if(NULL != p_painter)
+    {
+        free(p_painter->log);
+        free(p_painter);
+    }
+}
+
+void
+qth_painter_dpi(const QTH_PAINTER * p_painter, int32_t * p_dpi_x, int32_t * p_dpi_y)
+{
+    *p_dpi_x = p_painter->dpi_x;
+    *p_dpi_y = p_painter->dpi_y;
+}
+
+void
+qth_screen_dpi(int32_t * p_dpi_x, int32_t * p_dpi_y)
+{
+    *p_dpi_x = *p_dpi_y = 96;
+}
+
+#define RGB_ARGS(rgb) (rgb).r, (rgb).g, (rgb).b
+#define RECT_ARGS(p) (int) (p)->left, (int) (p)->top, (int) (p)->right, (int) (p)->bottom
+
+void
+qth_paint_fill_rect(QTH_PAINTER * p_painter, const QTH_RECT * p_rect, QTH_RGB rgb)
+{
+    painter_logf(p_painter, "fill %d,%d,%d,%d #%02x%02x%02x", RECT_ARGS(p_rect), RGB_ARGS(rgb));
+}
+
+void
+qth_paint_frame_rect(QTH_PAINTER * p_painter, const QTH_RECT * p_rect, QTH_RGB rgb)
+{
+    painter_logf(p_painter, "frame %d,%d,%d,%d #%02x%02x%02x", RECT_ARGS(p_rect), RGB_ARGS(rgb));
+}
+
+void
+qth_paint_line(QTH_PAINTER * p_painter, int32_t x0, int32_t y0, int32_t x1, int32_t y1, QTH_RGB rgb, int dashed)
+{
+    painter_logf(p_painter, "%s %d,%d,%d,%d #%02x%02x%02x", dashed ? "dashed" : "line", (int) x0, (int) y0, (int) x1, (int) y1, RGB_ARGS(rgb));
+}
+
+void
+qth_paint_invert_rect(QTH_PAINTER * p_painter, const QTH_RECT * p_rect)
+{
+    painter_logf(p_painter, "invert %d,%d,%d,%d", RECT_ARGS(p_rect));
+}
+
+void
+qth_paint_set_clip(QTH_PAINTER * p_painter, const QTH_RECT * p_rect)
+{
+    painter_logf(p_painter, "clip %d,%d,%d,%d", RECT_ARGS(p_rect));
+}
+
+void
+qth_paint_text(QTH_PAINTER * p_painter, const QTH_FONT * p_font, int32_t x, int32_t y, const uint8_t * p_latin1, uint32_t n, QTH_RGB foreground, const QTH_RGB * p_background, int align)
+{
+    char text[64];
+    uint32_t i;
+
+    (void) p_font;
+
+    for(i = 0; (i < n) && (i < sizeof(text) - 1); ++i)
+        text[i] = (char) p_latin1[i];
+    text[i] = '\0';
+
+    if(NULL != p_background)
+        painter_logf(p_painter, "text %d,%d align=%d \"%s\" #%02x%02x%02x on #%02x%02x%02x", (int) x, (int) y, align, text, RGB_ARGS(foreground), RGB_ARGS(*p_background));
+    else
+        painter_logf(p_painter, "text %d,%d align=%d \"%s\" #%02x%02x%02x", (int) x, (int) y, align, text, RGB_ARGS(foreground));
+}
+
+struct QTH_IMAGE
+{
+    int32_t width, height;
+};
+
+QTH_IMAGE *
+qth_image_load(const char * p_path)
+{
+    (void) p_path;
+    return(NULL); /* the headless backend has no image codecs */
+}
+
+void
+qth_image_size(const QTH_IMAGE * p_image, int32_t * p_width, int32_t * p_height)
+{
+    *p_width = p_image->width;
+    *p_height = p_image->height;
+}
+
+void
+qth_image_destroy(QTH_IMAGE * p_image)
+{
+    free(p_image);
+}
+
+void
+qth_paint_image(QTH_PAINTER * p_painter, const QTH_IMAGE * p_image, const QTH_RECT * p_dest)
+{
+    (void) p_image;
+    painter_logf(p_painter, "image %d,%d,%d,%d", RECT_ARGS(p_dest));
+}
+
+struct QTH_WINDOW
+{
+    QTH_WINDOW_DESC desc;
+    QTH_NULL_WINDOW_STATE state;
+};
+
+static int n_windows;
+
+QTH_WINDOW *
+qth_window_create(const QTH_WINDOW_DESC * p_desc)
+{
+    QTH_WINDOW * p_window = calloc(1, sizeof(*p_window));
+
+    if(NULL == p_window)
+        return(NULL);
+
+    p_window->desc = *p_desc;
+    p_window->state.bounds = p_desc->bounds;
+    qth_window_set_title(p_window, p_desc->p_title_latin1);
+    ++n_windows;
+
+    return(p_window);
+}
+
+void
+qth_window_destroy(QTH_WINDOW * p_window)
+{
+    if(NULL != p_window)
+    {
+        --n_windows;
+        free(p_window);
+    }
+}
+
+void
+qth_window_show(QTH_WINDOW * p_window, int visible)
+{
+    p_window->state.visible = visible;
+}
+
+void
+qth_window_set_title(QTH_WINDOW * p_window, const char * p_title_latin1)
+{
+    snprintf(p_window->state.title, sizeof(p_window->state.title), "%s", (NULL != p_title_latin1) ? p_title_latin1 : "");
+}
+
+void
+qth_window_set_bounds(QTH_WINDOW * p_window, const QTH_RECT * p_bounds)
+{
+    p_window->state.bounds = *p_bounds;
+}
+
+void
+qth_window_get_bounds(const QTH_WINDOW * p_window, QTH_RECT * p_bounds)
+{
+    *p_bounds = p_window->state.bounds;
+}
+
+void
+qth_window_set_extent(QTH_WINDOW * p_window, int32_t width, int32_t height)
+{
+    p_window->state.extent_width = width;
+    p_window->state.extent_height = height;
+}
+
+void
+qth_window_scroll_to(QTH_WINDOW * p_window, int32_t x, int32_t y)
+{
+    p_window->state.scroll_x = x;
+    p_window->state.scroll_y = y;
+}
+
+void
+qth_window_invalidate(QTH_WINDOW * p_window, const QTH_RECT * p_rect_or_null)
+{
+    (void) p_rect_or_null;
+    ++p_window->state.n_invalidates;
+}
+
+void
+qth_window_update_now(QTH_WINDOW * p_window)
+{
+    QTH_EVENT event;
+    QTH_PAINTER * p_painter = qth_null_painter_new(96, 96);
+
+    memset(&event, 0, sizeof(event));
+    event.type = QTH_EVENT_PAINT;
+    event.u.paint.p_painter = p_painter;
+    event.u.paint.exposed.right = p_window->state.bounds.right - p_window->state.bounds.left;
+    event.u.paint.exposed.bottom = p_window->state.bounds.bottom - p_window->state.bounds.top;
+
+    qth_null_post_event(p_window, &event);
+
+    qth_null_painter_free(p_painter);
+}
+
+void
+qth_window_set_caret(QTH_WINDOW * p_window, const QTH_RECT * p_rect, int visible)
+{
+    p_window->state.caret = *p_rect;
+    p_window->state.caret_visible = visible;
+}
+
+void
+qth_window_set_focus(QTH_WINDOW * p_window)
+{
+    QTH_EVENT event;
+
+    memset(&event, 0, sizeof(event));
+    event.type = QTH_EVENT_FOCUS;
+    event.u.focus.gained = 1;
+
+    qth_null_post_event(p_window, &event);
+}
+
+void
+qth_window_capture_mouse(QTH_WINDOW * p_window, int capture)
+{
+    p_window->state.mouse_captured = capture;
+}
+
+void
+qth_window_set_cursor(QTH_WINDOW * p_window, int cursor)
+{
+    p_window->state.cursor = cursor;
+}
+
+static int quit_code;
+
+int
+qth_app_run(void)
+{
+    return(quit_code); /* no events to wait for */
+}
+
+void
+qth_app_quit(int exit_code)
+{
+    quit_code = exit_code;
+}
+
+void
+qth_null_post_event(QTH_WINDOW * p_window, const QTH_EVENT * p_event)
+{
+    if(NULL != p_window->desc.proc)
+        (*p_window->desc.proc)(p_window, p_event, p_window->desc.client);
+}
+
+void
+qth_null_window_state(const QTH_WINDOW * p_window, QTH_NULL_WINDOW_STATE * p_state)
+{
+    *p_state = p_window->state;
+}
+
+int
+qth_null_n_windows(void)
+{
+    return(n_windows);
+}

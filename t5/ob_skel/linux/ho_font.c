@@ -17,9 +17,9 @@
 *
 * Return a machine specific font handle for the specified font.
 *
-* TODO: when painting, scale the size from pixits to device pixels using the
-* host_xform in the REDRAW_CONTEXT, as the Windows host does. For now every font
-* is made in pixits, which is right for formatting.
+* Use the scaling info contained in the REDRAW_CONTEXT, so that the font is sized
+* in device pixels for painting, or use pixits (1:1 scaling) when there is no
+* drawing context (e.g. formatting)
 *
 ******************************************************************************/
 
@@ -31,9 +31,49 @@ host_font_find(
 {
     QTH_FONT_DESC desc;
     PIXIT size_y = p_host_font_spec->size_y;
-    PIXIT size_x = (0 == p_host_font_spec->size_x) ? size_y : p_host_font_spec->size_x;
+    PIXIT size_x = p_host_font_spec->size_x;
 
-    UNREFERENCED_PARAMETER_InRef_(p_redraw_context);
+    if(P_REDRAW_CONTEXT_NOT_NONE(p_redraw_context))
+    {
+        const HOST_XFORM * const p_host_xform = &p_redraw_context->host_xform;
+        S32 numer, denom;
+
+        /* do_x_scale=FALSE do_y_scale=FALSE use y values (unscaled, should be the same) e.g. back window */
+        /* do_x_scale=TRUE  do_y_scale=FALSE use y values (unscaled) e.g. horz ruler */
+        /* do_x_scale=FALSE do_y_scale=TRUE  use x values (unscaled) e.g. vert ruler */
+        /* do_x_scale=TRUE  do_y_scale=TRUE  use y values (scaled) e.g. panes */
+        if(p_host_xform->do_x_scale || !p_host_xform->do_y_scale)
+        {
+            numer = p_host_xform->linux_xform.divisor_of_pixels.y;
+            denom = p_host_xform->linux_xform.multiplier_of_pixels.y;
+        }
+        else
+        {
+            numer = p_host_xform->linux_xform.divisor_of_pixels.x;
+            denom = p_host_xform->linux_xform.multiplier_of_pixels.x;
+        }
+
+        size_y = (PIXIT) muldiv64_round_floor(size_y, numer, denom);
+
+        if(0 != size_x)
+        {
+            if(!p_host_xform->do_x_scale || p_host_xform->do_y_scale)
+            {
+                numer = p_host_xform->linux_xform.divisor_of_pixels.x;
+                denom = p_host_xform->linux_xform.multiplier_of_pixels.x;
+            }
+            else
+            {
+                numer = p_host_xform->linux_xform.divisor_of_pixels.y;
+                denom = p_host_xform->linux_xform.multiplier_of_pixels.y;
+            }
+
+            size_x = (PIXIT) muldiv64_round_floor(size_x, numer, denom);
+        }
+    }
+
+    if(0 == size_x)
+        size_x = size_y; /* normally select sensible aspect ratio for font */
 
     zero_struct(desc);
 

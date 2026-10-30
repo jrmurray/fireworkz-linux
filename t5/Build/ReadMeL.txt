@@ -107,16 +107,24 @@ Milestone 3 - IN PROGRESS: skeleton and the Qt interface
     host_font_find/dispose/delete and host_fonty_uchars_width.
     font_smoke tests this against the headless backend.
 
-    Still to design and add to qt_host.h, each as a handful of calls:
-      painting   begin/end, clip, filled/outlined rectangle, solid/dashed line,
-                 invert, text with a QTH_FONT and colour, bitmap
-      windows    create/destroy/show/title, extent and scroll, update/invalidate,
-                 caret, pointer shape, drag, plus the event pump delivering
-                 mouse/key/paint/close events as plain structs
-      menus and dialogs, clipboard, Save As / Open file dialogs
-    Known gaps in what exists: host_font_find ignores the redraw context's
-    scaling (so fonts are only right for formatting until painting is added),
-    and chunk widths ignore italic under/overhang.
+    Done: painting and windows (interface and C side). qt_host.h now has the
+    painter (fill/frame rectangle, line, invert, clip, text, image), the window
+    calls and the event structs. ho_xform.c and ho_paint.c turn pixit geometry
+    into device pixels with the context's host_xform and call the painter:
+    rectangles, crossed rectangles, inverted outlines, ruler and dashed lines,
+    clipping and simple text. qth_null.c records paint calls and window state
+    and can inject events; paint_smoke checks the whole path.
+
+    Libraries: fireworkz_host_linux is ob_skel/linux/ho_*.c alone (what the
+    tests link); fireworkz_skel is the rest of ob_skel.
+
+    Still to do in qt_host.h and ho_*.c: menus and dialogs, clipboard, Save As /
+    Open file dialogs, printing, the view/window functions (host_view_init and
+    friends, ho_win.c), keyboard input, bitmaps and the toolbar images, and
+    the Qt (C++) implementation of all of it.
+    Known gaps in what exists: chunk widths ignore italic under/overhang;
+    host_paint_border_line, framed boxes, bitmaps, drawfile and plain text
+    painting are not ported yet.
 
 Interim stubs (search for "TODO" near "LINUX"):
     gr_rdiag.c   text bounding boxes are estimated, not measured

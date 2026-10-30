@@ -2469,7 +2469,7 @@ typedef struct REDRAW_CONTEXT
     PIXIT_POINT thin_width_eff;
     REDRAW_CONTEXT_FLAGS flags;
 
-#if WINDOWS
+#if WINDOWS || LINUX
     GDI_SIZE pixels_per_inch; /* not yet set up or used on RISC OS */
 #endif
 
