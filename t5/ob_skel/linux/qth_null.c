@@ -401,6 +401,20 @@ qth_window_set_cursor(QTH_WINDOW * p_window, int cursor)
     p_window->state.cursor = cursor;
 }
 
+static unsigned int n_beeps;
+
+void
+qth_beep(void)
+{
+    ++n_beeps;
+}
+
+unsigned int
+qth_null_n_beeps(void)
+{
+    return(n_beeps);
+}
+
 static int quit_code;
 
 int

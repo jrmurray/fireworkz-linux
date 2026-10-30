@@ -49,6 +49,12 @@ qth_app_run(void)
 }
 
 extern "C" void
+qth_beep(void)
+{
+    app()->beep();
+}
+
+extern "C" void
 qth_app_quit(int exit_code)
 {
     app()->exit(exit_code);

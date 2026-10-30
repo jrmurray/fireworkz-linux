@@ -229,6 +229,8 @@ enum { QTH_CURSOR_ARROW = 0, QTH_CURSOR_IBEAM, QTH_CURSOR_CROSS, QTH_CURSOR_HAND
 
 void qth_window_set_cursor(QTH_WINDOW * p_window, int cursor);
 
+void qth_beep(void);
+
 /* Runs the event loop until qth_app_quit(). Returns the exit code. */
 int  qth_app_run(void);
 void qth_app_quit(int exit_code);

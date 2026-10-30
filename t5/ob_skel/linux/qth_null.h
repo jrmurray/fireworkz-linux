@@ -43,6 +43,8 @@ QTH_NULL_WINDOW_STATE;
 
 void qth_null_window_state(const QTH_WINDOW * p_window, QTH_NULL_WINDOW_STATE * p_state);
 
+unsigned int qth_null_n_beeps(void);
+
 int qth_null_n_windows(void); /* created and not yet destroyed */
 
 #ifdef __cplusplus
