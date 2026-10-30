@@ -96,15 +96,20 @@ add_custom_target(fireworkz_messages ALL DEPENDS ${FIREWORKZ_MESSAGE_FILES})
 
 # ---- Skeleton (milestone 3, in progress) --------------------------------------
 #
-# Everything in ob_skel that compiles for Linux so far. fonty.c is excluded: its
-# font metrics are GDI based and need the Qt host layer's C interface first.
-# The Windows and RISC OS host layers (ob_skel/windows, ob_skel/riscos) are not used.
+# Everything in ob_skel, plus the Linux host layer (ob_skel/linux/ho_*.c), which
+# reaches Qt only through ob_skel/linux/qt_host.h. The Windows and RISC OS host
+# layers (ob_skel/windows, ob_skel/riscos) are not used.
 
 file(GLOB FIREWORKZ_SKEL_SOURCES CONFIGURE_DEPENDS ${T5}/ob_skel/*.c)
-list(REMOVE_ITEM FIREWORKZ_SKEL_SOURCES ${T5}/ob_skel/fonty.c)
+file(GLOB FIREWORKZ_SKEL_HOST_SOURCES CONFIGURE_DEPENDS ${T5}/ob_skel/linux/ho_*.c)
+list(APPEND FIREWORKZ_SKEL_SOURCES ${FIREWORKZ_SKEL_HOST_SOURCES})
 
 add_library(fireworkz_skel STATIC ${FIREWORKZ_SKEL_SOURCES})
 target_link_libraries(fireworkz_skel PUBLIC fireworkz_core)
+
+# Headless stand-in for the Qt layer, for tests
+add_library(fireworkz_qth_null STATIC ${T5}/ob_skel/linux/qth_null.c)
+target_include_directories(fireworkz_qth_null PUBLIC ${T5})
 
 enable_testing()
 
@@ -117,3 +122,7 @@ target_link_libraries(fireworkz_core_smoke PRIVATE fireworkz_core)
 target_compile_definitions(fireworkz_core_smoke PRIVATE FIREWORKZ_TEST_RESOURCES="${FIREWORKZ_RESOURCES_DIR}")
 add_dependencies(fireworkz_core_smoke fireworkz_messages)
 add_test(NAME core_smoke COMMAND fireworkz_core_smoke)
+
+add_executable(fireworkz_font_smoke t5/Build/linux/font_smoke.c t5/Build/linux/core_smoke_host.c t5/ob_skel/sk_alpha.c)
+target_link_libraries(fireworkz_font_smoke PRIVATE fireworkz_skel fireworkz_qth_null fireworkz_core)
+add_test(NAME font_smoke COMMAND fireworkz_font_smoke)

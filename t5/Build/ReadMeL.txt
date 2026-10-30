@@ -85,14 +85,38 @@ Milestone 2 - DONE for messages: UI message text
     NOT YET DONE: toolbar bitmaps (resource_bitmap_* are still absent
     on Linux and arrive with the Qt layer in milestone 3).
 
-Milestone 3 - IN PROGRESS: skeleton
-    50 of the 51 ob_skel files now build as libfireworkz_skel (dialog
-    metrics, resource IDs, view/edge geometry follow WINDOWS; Save As is
-    declared as windows_save_as() for the Qt layer to supply).
-    Remaining in ob_skel: fonty.c, whose font enumeration and text
-    metrics use GDI (HDC/HFONT/GetTextMetrics/ABC widths). It needs a
-    C interface to Qt (QFontDatabase/QFontMetrics) designed first;
-    the same interface will serve painting, windows and menus.
+Milestone 3 - IN PROGRESS: skeleton and the Qt interface
+    All 51 ob_skel files build as libfireworkz_skel, with the dialog metrics,
+    resource IDs and view/edge geometry following WINDOWS. Save As is declared
+    as windows_save_as() for the Qt layer to supply.
+
+    The host layer is split in two:
+
+      ob_skel/linux/ho_*.c   the host_*() functions, in C (the counterpart of
+                             ob_skel/windows/ho_*.c)
+      ob_skel/linux/qt_host.h  the narrow C interface, qth_*(), to everything
+                             that needs Qt; implemented in C++ in ob_skel/linux/qt/
+                             (not yet written) and for tests by qth_null.c
+
+    qt_host.h is plain C with no Fireworkz dependencies. Sizes and font metrics
+    cross it in pixits; text is Latin-1; all calls are from the GUI thread.
+
+    Done: fonts. fonty.c enumerates host fonts through qth_font_enumerate() into
+    the same sorted table as Windows (a small LOGFONT stand-in in xp_skel.h), and
+    measures through qth_font_metrics()/qth_font_text_width(). ho_font.c has
+    host_font_find/dispose/delete and host_fonty_uchars_width.
+    font_smoke tests this against the headless backend.
+
+    Still to design and add to qt_host.h, each as a handful of calls:
+      painting   begin/end, clip, filled/outlined rectangle, solid/dashed line,
+                 invert, text with a QTH_FONT and colour, bitmap
+      windows    create/destroy/show/title, extent and scroll, update/invalidate,
+                 caret, pointer shape, drag, plus the event pump delivering
+                 mouse/key/paint/close events as plain structs
+      menus and dialogs, clipboard, Save As / Open file dialogs
+    Known gaps in what exists: host_font_find ignores the redraw context's
+    scaling (so fonts are only right for formatting until painting is added),
+    and chunk widths ignore italic under/overhang.
 
 Interim stubs (search for "TODO" near "LINUX"):
     gr_rdiag.c   text bounding boxes are estimated, not measured

@@ -1910,6 +1910,31 @@ font_spec_dispose(
     font_spec_name_dispose(p_font_spec);
 }
 
+#if LINUX
+#include "ob_skel/linux/qt_host.h"
+
+/* The host font table is shared with Windows, which keeps a LOGFONT per host font.
+ * Give Linux the few LOGFONT members and values it uses, filled from qth_font_enumerate() */
+typedef struct LOGFONT
+{
+    TCHAR lfFaceName[QTH_FACENAME_LEN];
+    S32   lfWeight;
+    U8    lfItalic;
+    U8    lfPitchAndFamily;
+}
+LOGFONT;
+
+#define FW_SEMIBOLD     QTH_WEIGHT_SEMIBOLD
+#define FW_BOLD         QTH_WEIGHT_BOLD
+
+#define FIXED_PITCH     1
+#define FF_ROMAN        (QTH_FAMILY_ROMAN << 4)
+#define FF_SWISS        (QTH_FAMILY_SWISS << 4)
+#define FF_MODERN       (QTH_FAMILY_MODERN << 4)
+#define FF_SCRIPT       (QTH_FAMILY_SCRIPT << 4)
+#define FF_DECORATIVE   (QTH_FAMILY_DECORATIVE << 4)
+#endif
+
 typedef struct HOST_FONT_SPEC /* host-specific spec */
 {
     ARRAY_HANDLE_TSTR h_host_name_tstr; /* host font name: [] of TCHAR, CH_NULL-terminated  */
@@ -1923,7 +1948,7 @@ typedef struct HOST_FONT_SPEC /* host-specific spec */
     U8 subscript;
     U8 _padding_to_stop_compiler_winge[1];
 
-#if WINDOWS
+#if WINDOWS || LINUX
     LOGFONT logfont;
 #endif
 }
@@ -2155,7 +2180,7 @@ typedef int HOST_FONT; /*font*/
 #define HOST_FONT HFONT
 #define HOST_FONT_NONE ((HOST_FONT) NULL)
 #elif LINUX
-typedef struct HOST_FONT_LINUX * HOST_FONT; /* opaque native font handle */
+typedef QTH_FONT * HOST_FONT; /* opaque native font, see ob_skel/linux/qt_host.h */
 #define HOST_FONT_NONE ((HOST_FONT) NULL)
 #endif
 

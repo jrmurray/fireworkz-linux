@@ -32,6 +32,10 @@
 #include "cmodules/gr_rdia3.h"
 #endif
 
+#if LINUX
+#include "ob_skel/linux/qt_host.h"
+#endif
+
 #if RISCOS
 #define LF_FULLFACESIZE 64
 #endif
@@ -49,7 +53,7 @@ typedef struct HOST_FONT_TAB
 {
 #if RISCOS
     PTSTR fullname;     /* e.g. Trinity.Bold.Italic */
-#elif WINDOWS
+#elif WINDOWS || LINUX
     LOGFONT logfont;    /* copy of the LOGFONT passed during enumeration */
 #endif
 
@@ -481,6 +485,39 @@ host_font_context_fill_info_windows(
     }
 }
 
+#elif LINUX
+
+static void
+host_font_context_fill_info_linux(
+    _InoutRef_  P_FONT_CONTEXT p_font_context,
+    _InRef_     P_HOST_FONT_SPEC p_host_font_spec)
+{
+    /* avoid rereading font info */
+    if(0 == p_font_context->space_width)
+    {
+        QTH_FONT_METRICS metrics;
+
+        qth_font_metrics(p_font_context->host_font_formatting, &metrics);
+
+        p_font_context->space_width = metrics.space_width;
+
+        /* super- and sub- scripts must use height/ascent of 'source' font */
+        if(p_host_font_spec->superscript || p_host_font_spec->subscript)
+        {
+            const HOST_FONT host_font_ss = host_font_find(p_host_font_spec, P_REDRAW_CONTEXT_NONE);
+            assert(HOST_FONT_NONE != host_font_ss);
+
+            if(HOST_FONT_NONE != host_font_ss)
+            {
+                qth_font_metrics(host_font_ss, &metrics);
+                qth_font_destroy(host_font_ss);
+            }
+        }
+
+        p_font_context->ascent = metrics.ascent;
+    }
+}
+
 #endif /* OS */
 
 /******************************************************************************
@@ -517,6 +554,8 @@ fonty_host_font_from_fonty_handle_formatting(
     host_font_context_fill_info_riscos(p_font_context, &host_font_spec, draft_mode);
 #elif WINDOWS
     host_font_context_fill_info_windows(p_font_context, &host_font_spec);
+#elif LINUX
+    host_font_context_fill_info_linux(p_font_context, &host_font_spec);
 #endif /* OS */
 
     host_font_spec_dispose(&host_font_spec);
@@ -768,6 +807,36 @@ fonty_chunk_index_from_pixit(
 
     return(ix);
 
+#elif LINUX
+
+    int x_stop = (int) *p_pos;
+    int term = (int) uchars_n;
+    int last_extent = 0, extent = 0, ix = 0;
+
+    while((ix < term) && (extent < x_stop))
+    {
+        ix += 1;
+
+        last_extent = extent;
+        extent = (int) qth_font_text_width(host_font, (const uint8_t *) uchars, (uint32_t) ix);
+    }
+
+    if(ix)
+    {
+        int last_diff = x_stop - last_extent;
+        int      diff = extent - x_stop;
+
+        if(diff <= last_diff)
+            *p_pos = (S32) extent;
+        else
+        {
+            ix -= 1;
+            *p_pos = (S32) last_extent;
+        }
+    }
+
+    return(ix);
+
 #endif /* OS */
 }
 
@@ -914,7 +983,16 @@ fonty_chunk_info_read_uchars(
         p_fonty_chunk->width = size.cx + p_fonty_chunk->trail_space;
     }
 
-#endif /* WINDOWS */
+#elif LINUX
+
+    {
+    const HOST_FONT host_font = fonty_host_font_from_fonty_handle_formatting(fonty_handle, p_docu->flags.draft_mode);
+
+    /* TODO: allow for the underhang of the first and overhang of the last character (italics) */
+    p_fonty_chunk->width = (PIXIT) qth_font_text_width(host_font, (const uint8_t *) uchars, (uint32_t) uchars_len_no_spaces) + p_fonty_chunk->trail_space;
+    } /*block*/
+
+#endif /* OS */
 }
 
 #if RISCOS && USTR_IS_SBSTR
@@ -1321,7 +1399,7 @@ PROC_QSORT_PROTO(static, fontmap_compare_host_fullname_qsort, HOST_FONT_TAB)
     return(tstricmp(s1, s2));
 }
 
-#elif WINDOWS
+#elif WINDOWS || LINUX
 
 PROC_BSEARCH_PROTO(static, fontmap_compare_host_logfont_bsearch, LOGFONT, HOST_FONT_TAB)
 {
@@ -1705,7 +1783,7 @@ fontmap_host_font_spec_from_font_spec(
     P_APP_FONT_TAB p_app_font_tab;
     FONTMAP_BITS fontmap_bits, try_fontmap_bits;
 
-#if WINDOWS
+#if WINDOWS || LINUX
     UNREFERENCED_PARAMETER_InVal_(for_riscos_utf8);
 #endif
 
@@ -1784,7 +1862,7 @@ fontmap_host_font_spec_from_font_spec(
     return(al_tstr_set(&p_host_font_spec->h_host_name_tstr, tstr));
 #endif
     } /*block*/
-#elif WINDOWS
+#elif WINDOWS || LINUX
     /* caller wants info to fill a LOGFONT */
     p_host_font_spec->logfont = p_host_font_tab->logfont;
 
@@ -1941,6 +2019,60 @@ fontmap_enum_faces_callback(
     return(1);
 }
 
+#elif LINUX
+
+typedef struct FONTENUM_CALLBACK
+{
+    /*IN*/
+    ARRAY_INIT_BLOCK array_init_block;
+
+    /*INOUT*/
+    STATUS status;
+}
+FONTENUM_CALLBACK, * P_FONTENUM_CALLBACK;
+
+/* Called by the host layer once per installed style of each family */
+
+static void
+fontmap_enum_linux_callback(
+    _In_        const QTH_FONT_DESC * p_desc,
+    void * client)
+{
+    P_FONTENUM_CALLBACK p = (P_FONTENUM_CALLBACK) client;
+    LOGFONT logfont;
+    P_HOST_FONT_TAB p_host_font_tab;
+    ARRAY_INDEX insert_before;
+    STATUS status;
+    BOOL hit;
+
+    if(status_fail(p->status))
+        return;
+
+    zero_struct(logfont);
+    xstrkpy(logfont.lfFaceName, elemof32(logfont.lfFaceName), p_desc->family);
+    logfont.lfWeight = p_desc->weight;
+    logfont.lfItalic = p_desc->italic;
+    logfont.lfPitchAndFamily = (U8) ((p_desc->family_class << 4) | (p_desc->fixed_pitch ? FIXED_PITCH : 0));
+
+    /* Don't insert duplicate fonts. Do insert all style variants */
+    insert_before = al_array_bfind(&logfont, &fontmap_table_host, HOST_FONT_TAB, fontmap_compare_host_logfont_bsearch, &hit);
+
+    if(hit)
+        return;
+
+    if(NULL == (p_host_font_tab = al_array_insert_before(&fontmap_table_host, HOST_FONT_TAB, 1, &p->array_init_block, &status, insert_before)))
+    {
+        p->status = status;
+        return;
+    }
+
+    p_host_font_tab->logfont = logfont;
+}
+
+#endif /* OS */
+
+#if WINDOWS || LINUX
+
 _Check_return_
 static FONTMAP_BITS
 fontmap_bits_from_logfont(
@@ -1958,7 +2090,7 @@ fontmap_bits_from_logfont(
     return(fontmap_bits);
 }
 
-#endif /* WINDOWS */
+#endif /* WINDOWS || LINUX */
 
 #if RISCOS
 
@@ -2067,6 +2199,17 @@ fontmap_table_host_create(void)
     }
 
     al_array_check_sorted(&fontmap_table_host, fontmap_compare_host_logfont_qsort);
+#elif LINUX
+    FONTENUM_CALLBACK fontenum_callback;
+
+    fontenum_callback.array_init_block = array_init_block;
+    fontenum_callback.status = STATUS_OK;
+
+    qth_font_enumerate(fontmap_enum_linux_callback, &fontenum_callback);
+
+    status = fontenum_callback.status;
+
+    al_array_check_sorted(&fontmap_table_host, fontmap_compare_host_logfont_qsort);
 #endif /* OS */
     } /*block*/
 
@@ -2094,7 +2237,7 @@ fontmap_invent_app_font_entry_for_host(
     {
 #if RISCOS
         trace_2(TRACE_APP_FONTS, TEXT("host font '%s' already used (%u times)"), report_tstr(p_host_font_tab->fullname), p_host_font_tab->uses);
-#elif WINDOWS
+#elif WINDOWS || LINUX
         trace_4(TRACE_APP_FONTS, TEXT("host font '%s' weight:%d italic:%u already used (%u times)"), report_tstr(p_host_font_tab->logfont.lfFaceName), p_host_font_tab->logfont.lfWeight, p_host_font_tab->logfont.lfItalic, p_host_font_tab->uses);
 #endif
         return(status);
@@ -2116,7 +2259,7 @@ fontmap_invent_app_font_entry_for_host(
         {
 #if RISCOS
             trace_3(TRACE_APP_FONTS, TEXT("entry set for host font '%s' in Fireworkz '%s' fontmap_bits=%d"), report_tstr(p_host_font_tab->fullname), report_tstr(p_app_font_tab->tstr_app_font_name), fontmap_bits);
-#elif WINDOWS
+#elif WINDOWS || LINUX
             trace_5(TRACE_APP_FONTS, TEXT("entry set for host font '%s' weight:%d italic:%u in Fireworkz '%s' fontmap_bits=%d"), report_tstr(p_host_font_tab->logfont.lfFaceName), p_host_font_tab->logfont.lfWeight, p_host_font_tab->logfont.lfItalic, report_tstr(p_app_font_tab->tstr_app_font_name), fontmap_bits);
 #endif
 
@@ -2127,7 +2270,7 @@ fontmap_invent_app_font_entry_for_host(
 #if RISCOS && TRACE_ALLOWED
         else
             trace_3(TRACE_APP_FONTS, TEXT("entry NOT set for host font '%s' in Fireworkz '%s' fontmap_bits=%d"), report_tstr(p_host_font_tab->fullname), report_tstr(p_app_font_tab->tstr_app_font_name), fontmap_bits);
-#elif WINDOWS && TRACE_ALLOWED
+#elif (WINDOWS || LINUX) && TRACE_ALLOWED
         else
             trace_5(TRACE_APP_FONTS, TEXT("entry NOT set for host font '%s' weight:%d italic:%u in Fireworkz '%s' fontmap_bits=%d"), report_tstr(p_host_font_tab->logfont.lfFaceName), p_host_font_tab->logfont.lfWeight, p_host_font_tab->logfont.lfItalic, report_tstr(p_app_font_tab->tstr_app_font_name), fontmap_bits);
 #endif
@@ -2144,7 +2287,7 @@ fontmap_invent_app_font_entry_for_host(
     {
     U8 rtf_class = RTF_CLASS_ROMAN;
 
-#if WINDOWS
+#if WINDOWS || LINUX
     switch(p_host_font_tab->logfont.lfPitchAndFamily & 0xF0)
     {
     default: /*DROPTHRU*/
@@ -2177,7 +2320,7 @@ fontmap_invent_app_font_entry_for_host(
 
 #if RISCOS
         trace_3(TRACE_APP_FONTS, TEXT("host font '%s' created new Fireworkz entry '%s' fontmap_bits=%d"), report_tstr(p_host_font_tab->fullname), report_tstr(p_app_font_tab->tstr_app_font_name), fontmap_bits);
-#elif WINDOWS
+#elif WINDOWS || LINUX
         trace_5(TRACE_APP_FONTS, TEXT("host font '%s' weight:%d italic:%u created new Fireworkz entry '%s' fontmap_bits=%d"), report_tstr(p_host_font_tab->logfont.lfFaceName), p_host_font_tab->logfont.lfWeight, p_host_font_tab->logfont.lfItalic, report_tstr(p_app_font_tab->tstr_app_font_name), fontmap_bits);
 #endif
     }
@@ -2264,7 +2407,7 @@ fontmap_lookup_app_font_entry(
         }
     }
 
-#elif WINDOWS
+#elif WINDOWS || LINUX
 
     { /* SKS now only allow use of base name as simple alias (must loop over all styles) */
     PCTSTR tstr = p_app_font_tab->tstr_host_base_name;
@@ -2404,7 +2547,7 @@ fontmap_invent_app_font_name(
 
     fontmap_bits = (FONTMAP_BITS) (bits & (FONTMAP_BOLD | FONTMAP_ITALIC));
 
-#elif WINDOWS
+#elif WINDOWS || LINUX
 
     /* Always use the apparently sensible LOGFONT family facename for the Fireworkz name */
     tstr_host_font_name = p_host_font_tab->logfont.lfFaceName;
