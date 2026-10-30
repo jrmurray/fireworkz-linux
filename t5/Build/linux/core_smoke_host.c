@@ -58,16 +58,6 @@ object_present(
 }
 
 _Check_return_
-_Ret_maybenull_
-extern PTSTR
-resource_lookup_tstr_no_default(
-    _InVal_     STATUS status)
-{
-    UNREFERENCED_PARAMETER_InVal_(status);
-    return(NULL); /* TODO: Linux message resources (milestone 2) */
-}
-
-_Check_return_
 extern STATUS /* size out */
 inline_quick_ublock_from_data(
     _InoutRef_  P_QUICK_UBLOCK p_quick_ublock /*appended*/,

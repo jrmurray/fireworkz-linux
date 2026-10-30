@@ -45,7 +45,7 @@ RESOURCE_BITMAP_INDEX; typedef const RESOURCE_BITMAP_INDEX * PC_RESOURCE_BITMAP_
 internal functions
 */
 
-#if RISCOS
+#if RISCOS || LINUX
 
 typedef struct RISCOS_MSGS_INDEX
 {
@@ -62,6 +62,10 @@ typedef struct RISCOS_MSGS
     U32 n_msgs;
 }
 RISCOS_MSGS, * P_RISCOS_MSGS;
+
+#endif /* RISCOS || LINUX */
+
+#if RISCOS
 
 typedef struct RISCOS_LOADED_SPRITES
 {
@@ -81,10 +85,15 @@ RISCOS_LOADED_SPRITES, * P_RISCOS_LOADED_SPRITES;
 typedef struct RESOURCES_PER_OBJECT
 {
     /* nothing host-independent here */
+#if RISCOS || LINUX
+    RISCOS_MSGS msgs; /* Latin-N tag:message pairs, preprocessed to NUL-separated */
+#endif
+#if LINUX
+    BOOL msgs_block_loaded; /* msgs.msgs_block is ours to free, rather than bound in */
+#endif
 #if RISCOS
     struct RESOURCES_PER_OBJECT_RISCOS
     {
-        RISCOS_MSGS mangled_msgs;
         RISCOS_LOADED_SPRITES sprites;
     } riscos;
 #elif WINDOWS
@@ -129,7 +138,7 @@ RESOURCE_STATICS;
 
 static RESOURCE_STATICS resource_statics;
 
-#if RISCOS
+#if RISCOS || LINUX
 
 _Check_return_
 _Ret_z_
@@ -144,7 +153,7 @@ static STATUS
 riscos_msg_init(
     _InRef_     P_RISCOS_MSGS p_msgs);
 
-#endif /* RISCOS */
+#endif /* RISCOS || LINUX */
 
 /******************************************************************************
 *
@@ -609,6 +618,17 @@ resource_close_per_object_resources(
         p_resources_per_object->riscos.sprites.loaded_c = 0;
         al_ptr_dispose(P_P_ANY_PEDANTIC(&p_resources_per_object->riscos.sprites.s_c));
     }
+#elif LINUX
+    al_ptr_dispose(P_P_ANY_PEDANTIC(&p_resources_per_object->msgs.msgs_index));
+    p_resources_per_object->msgs.n_msgs = 0;
+    p_resources_per_object->msgs.lookup_ptr = NULL;
+
+    if(p_resources_per_object->msgs_block_loaded)
+    {
+        p_resources_per_object->msgs_block_loaded = FALSE;
+        al_ptr_dispose(P_P_ANY_PEDANTIC(&p_resources_per_object->msgs.msgs_block));
+    }
+    p_resources_per_object->msgs.msgs_block = NULL;
 #elif WINDOWS
     if(collect_has_data(&p_resources_per_object->windows.bitmap_cache))
     {   /* blow away cached bitmaps or else Mr GDI gets all upset */
@@ -791,12 +811,12 @@ resource_init_riscos_msgs(
         return(STATUS_OK);
 
     PTR_ASSERT(p_resources_per_object);
-    p_resources_per_object->riscos.mangled_msgs.msgs_block = (PC_U8) p_u8_bound_msg;
+    p_resources_per_object->msgs.msgs_block = (PC_U8) p_u8_bound_msg;
 
     if(LOAD_MESSAGES_FILE == p_u8_bound_msg)
         return(resource_load_messages(object_id));
 
-    riscos_msg_init(&p_resources_per_object->riscos.mangled_msgs);
+    riscos_msg_init(&p_resources_per_object->msgs);
     return(STATUS_OK);
 }
 
@@ -831,6 +851,28 @@ resource_init_riscos_bound_resources(
         p_resources_per_object->riscos.sprites.s_24 = p_bound_resources->sprite_area_24;
 
     return(STATUS_OK);
+}
+
+#elif LINUX
+
+_Check_return_
+static STATUS
+resource_init_linux_msgs(
+    _InVal_     OBJECT_ID object_id,
+    _In_opt_    PC_U8 * const p_u8_bound_msg)
+{
+    const P_RESOURCES_PER_OBJECT p_resources_per_object = resource_statics.objects[object_id];
+
+    PTR_ASSERT(p_resources_per_object);
+
+    if(DONT_LOAD_MESSAGES_FILE == p_u8_bound_msg)
+        return(STATUS_OK);
+
+    if(LOAD_MESSAGES_FILE == p_u8_bound_msg)
+        return(resource_load_messages(object_id));
+
+    p_resources_per_object->msgs.msgs_block = (PC_U8) p_u8_bound_msg; /* preprocessed block bound in */
+    return(riscos_msg_init(&p_resources_per_object->msgs));
 }
 
 #elif WINDOWS
@@ -898,6 +940,10 @@ resource_init(
     status_return(resource_init_riscos_msgs(object_id, p_u8_bound_msg));
 
     status_return(resource_init_riscos_bound_resources(object_id, p_bound_resources));
+#elif LINUX
+    status_return(resource_init_linux_msgs(object_id, p_u8_bound_msg));
+
+    UNREFERENCED_PARAMETER_InRef_(p_bound_resources); /* bitmaps are provided by the Qt layer */
 #elif WINDOWS
     UNREFERENCED_PARAMETER_CONST(p_u8_bound_msg);
     assert(DONT_LOAD_MESSAGES_FILE == p_u8_bound_msg);
@@ -1295,7 +1341,7 @@ resource_lookup_tstr(
 
 /* NB Native lookup on Windows is TCHAR; our RISC OS message files are Latin-1 encoded i.e. TCHAR */
 
-#if RISCOS
+#if RISCOS || LINUX
 
 extern void
 resource_lookup_tstr_buffer(
@@ -1333,7 +1379,7 @@ resource_lookup_tstr_no_default(
     PC_SBSTR str;
     U32 tag_length = tstr_xsnprintf(tag_buffer, elemof32(tag_buffer), is_err ? "e%u" : "%u", (unsigned int) status_offset);
 
-    str = riscos_msg_lookup_in_without_default(tag_buffer, tag_length, &p_resources_per_object->riscos.mangled_msgs);
+    str = riscos_msg_lookup_in_without_default(tag_buffer, tag_length, &p_resources_per_object->msgs);
 
     return((PTSTR) str); /* may be NULL */
     } /*block*/
@@ -1671,6 +1717,10 @@ riscos_sprite_area_lookup(
 
 #endif /* UNUSED_KEEP_ALIVE */
 
+#endif /* RISCOS */
+
+#if RISCOS || LINUX
+
 /******************************************************************************
 *
 * compare first n characters from a and b backwards
@@ -1938,6 +1988,12 @@ riscos_msg_init(
     return(status);
 }
 
+#if LINUX
+#define MESSAGES_HOST_DIR TEXT("Linux")
+#else
+#define MESSAGES_HOST_DIR TEXT("RISC_OS")
+#endif
+
 _Check_return_
 static STATUS
 resource_find_messages(
@@ -1948,7 +2004,7 @@ resource_find_messages(
     TCHARZ name[BUF_MAX_PATHSTRING];
 
     consume_int(snprintf(name, elemof32(name),
-                         TEXT("RISC_OS") FILE_DIR_SEP_TSTR TEXT("Messages") FILE_DIR_SEP_TSTR TEXT("Ob%.2u"),
+                         MESSAGES_HOST_DIR FILE_DIR_SEP_TSTR TEXT("Messages") FILE_DIR_SEP_TSTR TEXT("Ob%.2u"),
                          (unsigned int) object_id));
 
     if(file_find_on_path(buffer, elemof_buffer, file_get_resources_path(), name) > 0)
@@ -1956,6 +2012,54 @@ resource_find_messages(
 
     return(STATUS_OK);
 }
+
+#if LINUX
+
+/* Messages/ObNN are generated at build time by MakeMess -linux, so are already preprocessed:
+ * NUL-separated tag:message pairs */
+
+_Check_return_
+static STATUS
+riscos_messages_readfile_into(
+    _In_z_      PCTSTR filename,
+    _Out_       P_P_U8 p_p_u8)
+{
+    STATUS status = STATUS_OK;
+    FILE * file = fopen(filename, "rb");
+    long file_length;
+
+    *p_p_u8 = NULL;
+
+    if(NULL == file)
+        return(status);
+
+    if( (0 == fseek(file, 0L, SEEK_END)) && ((file_length = ftell(file)) > 0) && (0 == fseek(file, 0L, SEEK_SET)) )
+    {
+        P_U8 p_u8;
+
+        /* two NULs at the end: one if the file lacks it, one for end of list */
+        if(NULL != (p_u8 = al_ptr_alloc_bytes(P_U8, (U32) file_length + 2, &status)))
+        {
+            if((size_t) file_length != fread(p_u8, 1, (size_t) file_length, file))
+            {
+                al_ptr_dispose(P_P_ANY_PEDANTIC(&p_u8));
+            }
+            else
+            {
+                p_u8[file_length] = CH_NULL;
+                p_u8[file_length + 1] = CH_NULL;
+                *p_p_u8 = p_u8;
+                status = STATUS_DONE;
+            }
+        }
+    }
+
+    fclose(file);
+
+    return(status);
+}
+
+#else /* RISCOS */
 
 _Check_return_
 static STATUS
@@ -2010,6 +2114,8 @@ riscos_messages_readfile_into(
     return(status);
 }
 
+#endif /* OS */
+
 _Check_return_
 extern STATUS
 resource_load_messages(
@@ -2024,8 +2130,11 @@ resource_load_messages(
         P_U8 msgs_block = NULL;
       /*reportf("resource_load_messages(%u): load %s", object_id, resource_file);*/
         status_return(riscos_messages_readfile_into(resource_file, &msgs_block));
-        p_resources_per_object->riscos.mangled_msgs.msgs_block = msgs_block;
-        riscos_msg_init(&p_resources_per_object->riscos.mangled_msgs);
+        p_resources_per_object->msgs.msgs_block = msgs_block;
+#if LINUX
+        p_resources_per_object->msgs_block_loaded = TRUE;
+#endif
+        riscos_msg_init(&p_resources_per_object->msgs);
         return(STATUS_DONE);
     }
 
@@ -2041,7 +2150,7 @@ string_for_object(
     _InVal_     OBJECT_ID object_id)
 {
     const P_RESOURCES_PER_OBJECT p_resources_per_object = resource_statics.objects[object_id];
-    return(riscos_msg_lookup_in_with_default(tag_and_default, &p_resources_per_object->riscos.mangled_msgs));
+    return(riscos_msg_lookup_in_with_default(tag_and_default, &p_resources_per_object->msgs));
 }
 
 extern void
@@ -2053,6 +2162,6 @@ msgs_init(void)
     assert0();
 }
 
-#endif /* RISCOS */
+#endif /* RISCOS || LINUX */
 
 /* end of resource.c */

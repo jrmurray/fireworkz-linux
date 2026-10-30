@@ -70,6 +70,21 @@ Milestone 1 - DONE: core library
     Build/linux/core_smoke_host.c is a TEST-ONLY stand-in for the
     handful of ob_skel symbols the core needs.
 
+Milestone 2 - DONE for messages: UI message text
+    cmodules/resource.c now reads Messages/ObNN (one file per OBJECT_ID)
+    from Linux/ on the resources path, reusing the RISC OS tag:message
+    index and lookup code. CMake generates the files from each module's
+    UK *-msg source with MakeMess -linux (MakeMess now builds natively;
+    -linux keeps w-prefixed lines and drops r-prefixed ones, the reverse
+    of the RISC OS build, to follow WINDOWS). Output is under
+    <build>/Resources/Linux/Messages. core_smoke checks the lookup.
+    ob_skspt's messages are appended to Ob00 (assumed: its object ID
+    is not in the OBJECT_ID enum). Only UK is generated so far.
+    Message text is 8-bit Latin-N (TSTR is SBSTR here); the Qt layer
+    must convert to UTF-16 for display.
+    NOT YET DONE: toolbar bitmaps (resource_bitmap_* are still absent
+    on Linux and arrive with the Qt layer in milestone 3).
+
 Interim stubs (search for "TODO" near "LINUX"):
     gr_rdiag.c   text bounding boxes are estimated, not measured
     im_convert.c image conversion fails (no GDI+ or RISC OS ChangeFSI)
@@ -81,9 +96,7 @@ unchanged (37 of the 51 in ob_skel).
 Next milestones
 ---------------
 
-2. Resources: UI message text and toolbar bitmaps. The RISC OS Messages
-   files are plain text and are the likely source for Linux. This replaces
-   resource_lookup_tstr_no_default() and friends in cmodules/resource.c.
+2. Resources: message text is done (see Status); toolbar bitmaps remain.
 
 3. Skeleton: the rest of ob_skel, which mostly needs the per-platform
    dialog metrics (DIALOG_STD*), plus a new ob_skel/linux host layer

@@ -188,12 +188,16 @@ resource_init(
     _In_opt_    PC_U8 * const p_u8_bound_msg,
     _InRef_opt_ PC_BOUND_RESOURCES p_bound_resources);
 
-#if RISCOS
+#if RISCOS || LINUX
 
 _Check_return_
 extern STATUS
 resource_load_messages(
     _InVal_     OBJECT_ID object_id);
+
+#endif
+
+#if RISCOS
 
 _Check_return_
 extern STATUS

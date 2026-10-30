@@ -29,7 +29,9 @@
 #include <ctype.h>
 #include <errno.h>
 
+#if !defined(__linux__)
 #include "kernel.h"
+#endif
 
 #include <assert.h>
 
@@ -76,6 +78,9 @@ static char *messages_block = NULL;
 
 static int
 g_lf_sep = 0;
+
+static int
+g_linux = 0; /* Linux follows Windows: keep w-prefixed messages, drop r-prefixed */
 
 static char
 country_string[16] = "UK";
@@ -205,7 +210,10 @@ messages_init(FILE * fin)
                 }
 
                 /* first char now conditional RISCOS/WINDOWS */
-                if(ch == 'w')
+                if(g_linux && (ch == 'w'))
+                    continue; /* strip the marker, keep the message */
+
+                if(ch == (g_linux ? 'r' : 'w'))
                 {
                     do
                         ch = (in != end) ? *in++ : LF;   
@@ -219,7 +227,7 @@ messages_init(FILE * fin)
 
                 new_line = 0;
 
-                if(ch == 'r')
+                if(!g_linux && (ch == 'r'))
                     continue;
             }
         }
@@ -312,7 +320,7 @@ static void
 give_help_on_app(void)
 {
     puts("Colton Software MakeMess vsn " VERSION " [" __DATE__ "]");
-    puts("\nMakeMess [-from] infile [-to] outfile [-lf]");
+    puts("\nMakeMess [-from] infile [-to] outfile [-lf] [-linux] [-country c]");
 }
 
 extern int
@@ -350,6 +358,12 @@ main(int argc, char *argv[])
             else if(argmatch(arg, "o") || argmatch(arg, "to"))
             {
                 outfilename = argv[++argi];
+                continue;
+            }
+
+            else if(argmatch(arg, "linux"))
+            {
+                g_linux = 1;
                 continue;
             }
 
@@ -421,7 +435,9 @@ res = EXIT_FAILURE ;
                 {
                     char command_buffer[32 + 256];
                     (void) sprintf(command_buffer, "SetType %s Text", outfilename);
+#if !defined(__linux__)
                     (void) _kernel_oscli(command_buffer);
+#endif
                 }
             }
             else
