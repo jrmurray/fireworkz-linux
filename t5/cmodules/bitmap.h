@@ -12,7 +12,7 @@
 
 /* bitmap bits per word */
 #if !defined(BITMAP_BPW)
-#if RISCOS || WINDOWS
+#if RISCOS || WINDOWS || LINUX
 #define BITMAP_BPW 32
 #define FAST_BITMAP_OPS_32 1 /* fast 32-bit aligned bitmap ops */
 #endif

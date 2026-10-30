@@ -83,6 +83,30 @@ macro definitions
 #define FILE_PATH_SEP_CH         ';'
 #define FILE_PATH_SEP_TSTR  TEXT(";")
 
+#elif LINUX
+#define FILE_DEFBUFSIZ      4096
+
+/* PATH_MAX is 4096 but these buffers often live on the stack */
+#define MAX_PATHSTRING      1023
+
+#define FILE_WILD_MULTIPLE_ALL_TSTR TEXT("*")
+
+#define FILE_WILD_MULTIPLE           '*'
+#define FILE_WILD_MULTIPLE_TSTR TEXT("*")
+#define FILE_WILD_SINGLE             '?'
+#define FILE_WILD_SINGLE_TSTR   TEXT("?")
+
+/* first is / -> rooted */
+#define FILE_ROOT_CH             '/'
+#define FILE_DIR_SEP_CH          '/'
+#define FILE_DIR_SEP_TSTR   TEXT("/")
+
+#define FILE_EXT_SEP_CH          '.'
+#define FILE_EXT_SEP_TSTR   TEXT(".")
+
+#define FILE_PATH_SEP_CH         ':'
+#define FILE_PATH_SEP_TSTR  TEXT(":")
+
 #endif
 
 #define BUF_MAX_PATHSTRING (MAX_PATHSTRING + 1)
@@ -176,6 +200,9 @@ typedef struct _FILE_HANDLE
 #elif WINDOWS
 #define _FILE_HANDLE_TYPE HANDLE
 #define _FILE_HANDLE_NULL INVALID_HANDLE_VALUE
+#elif LINUX
+#define _FILE_HANDLE_TYPE FILE * /* uses the C library paths in file.c */
+#define _FILE_HANDLE_NULL ((_FILE_HANDLE_TYPE) NULL)
 #endif
 
     _FILE_HANDLE_TYPE       handle;             /* host filing system handle */
@@ -248,6 +275,9 @@ typedef struct FILE_OBJINFO
     fileinfo;
 #elif WINDOWS
     WIN32_FIND_DATA win32_find_data;
+#elif LINUX
+    U32 size;
+    TCHARZ name[256]; /* NAME_MAX + 1 */
 #endif
 }
 FILE_OBJINFO, * P_FILE_OBJINFO; typedef const FILE_OBJINFO * PC_FILE_OBJINFO;
@@ -267,6 +297,9 @@ typedef struct FILE_OBJENUM
     int riscos_dirindex;
 #elif WINDOWS
     HANDLE win32_find_handle;
+#elif LINUX
+    void * linux_dir; /* DIR * */
+    TCHARZ linux_dirname[BUF_MAX_PATHSTRING];
 #endif
 }
 FILE_OBJENUM, * P_FILE_OBJENUM, ** P_P_FILE_OBJENUM;

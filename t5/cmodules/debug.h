@@ -31,7 +31,7 @@ designed for multiple inclusion with different TRACE_ALLOWED
 #endif
 #endif
 
-#if !RISCOS && !WINDOWS && TRACE_ALLOWED
+#if !RISCOS && !WINDOWS && !LINUX && TRACE_ALLOWED
 /* make logic cleaner */
 #undef  TRACE_ALLOWED
 #define TRACE_ALLOWED 0

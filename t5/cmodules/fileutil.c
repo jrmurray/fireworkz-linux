@@ -25,6 +25,13 @@
 
 #include <ctype.h> /* for tolower() */
 
+#if LINUX
+#include <sys/stat.h>
+#include <dirent.h>
+#include <fnmatch.h>
+#include <unistd.h>
+#endif
+
 /*
 internal functions
 */
@@ -231,6 +238,12 @@ file_find_close(
             FindClose(p->win32_find_handle);
             p->win32_find_handle = INVALID_HANDLE_VALUE;
         }
+#elif LINUX
+        if(NULL != p->linux_dir)
+        {
+            closedir((DIR *) p->linux_dir);
+            p->linux_dir = NULL;
+        }
 #endif
 
         file_path_element_close(&p->pathenum);
@@ -294,6 +307,8 @@ file_find_first_subdir(
 
 #if WINDOWS
     p->win32_find_handle = INVALID_HANDLE_VALUE;
+#elif LINUX
+    p->linux_dir = NULL;
 #endif
 
     /* have path element, requires validation */
@@ -410,6 +425,42 @@ file_find_next(
 
             if(!file_find_windows_result_convert(&p->objinfo))
                 continue;
+#elif LINUX
+            {
+            const struct dirent * p_dirent = readdir((DIR *) p->linux_dir);
+            TCHARZ tstr_path[BUF_MAX_PATHSTRING];
+            struct stat s;
+
+            if(NULL == p_dirent)
+            {
+                /* no more found (or error), restart with new path element */
+                closedir((DIR *) p->linux_dir);
+                p->linux_dir = NULL;
+
+                p->state = 0;
+                continue;
+            }
+
+            /* enumeration functions can return silly '.' and '..' (and hidden files) */
+            if(p_dirent->d_name[0] == CH_FULL_STOP)
+                continue;
+
+            if(0 != fnmatch(p->pattern, p_dirent->d_name, 0))
+                continue;
+
+            tstr_xstrkpy(p->objinfo.name, elemof32(p->objinfo.name), p_dirent->d_name);
+
+            tstr_xstrkpy(tstr_path, elemof32(tstr_path), p->linux_dirname);
+            tstr_xstrkat(tstr_path, elemof32(tstr_path), FILE_DIR_SEP_TSTR);
+            tstr_xstrkat(tstr_path, elemof32(tstr_path), p_dirent->d_name);
+
+            if(0 != stat(tstr_path, &s))
+                continue;
+
+            p->objinfo.type = S_ISDIR(s.st_mode) ? FILE_OBJECT_DIRECTORY : FILE_OBJECT_FILE;
+            p->objinfo.t5_filetype = S_ISDIR(s.st_mode) ? FILETYPE_DIRECTORY : FILETYPE_UNDETERMINED;
+            p->objinfo.size = (s.st_size > (off_t) U32_MAX) ? U32_MAX : (U32) s.st_size;
+            } /*block*/
 #endif
             } /*block*/
 
@@ -480,6 +531,21 @@ file_find_next(
                 continue;
 
             return(&p->objinfo);
+
+#elif LINUX
+            /* dirname (with any subdir) was built above */
+            tstr_xstrkpy(p->linux_dirname, elemof32(p->linux_dirname), dirname);
+
+            if(NULL == (p->linux_dir = opendir(p->linux_dirname)))
+            {
+                /* nothing found (or error), restart with new path element */
+                p->state = 0;
+                continue;
+            }
+
+            /* start hunting for files in this directory */
+            p->state = 3;
+            continue;
 
 #else
 #error file_find_next not implemented on this system
@@ -594,6 +660,8 @@ file_objinfo_name_ll(
     return(oip->fileinfo.name);
 #elif WINDOWS
     return(oip->win32_find_data.cFileName);
+#elif LINUX
+    return(oip->name);
 #endif
 }
 
@@ -614,6 +682,8 @@ file_objinfo_size(
     return((oip->type == FILE_OBJECT_DIRECTORY) ? (U32) 0 : (U32) oip->fileinfo.size);
 #elif WINDOWS
     return((oip->type == FILE_OBJECT_DIRECTORY) ? (U32) 0 : (U32) oip->win32_find_data.nFileSizeLow);
+#elif LINUX
+    return((oip->type == FILE_OBJECT_DIRECTORY) ? (U32) 0 : oip->size);
 #endif
 }
 
@@ -1006,6 +1076,11 @@ file_is_dir(
     }
     return((dword & FILE_ATTRIBUTE_DIRECTORY) != 0);
     } /*block*/
+#elif LINUX
+    struct stat s;
+    if(0 != stat(dirname, &s))
+        return(FALSE);
+    return(S_ISDIR(s.st_mode));
 #else
     return(FALSE);
 #endif
@@ -1048,6 +1123,11 @@ file_is_file(
         return(FALSE);
     }
     return((dword & FILE_ATTRIBUTE_DIRECTORY) == 0);
+#elif LINUX
+    struct stat s;
+    if(0 != stat(filename, &s))
+        return(FALSE);
+    return(!S_ISDIR(s.st_mode));
 #else
     return(FALSE);
 #endif
@@ -1092,6 +1172,8 @@ file_is_read_only(
         return(FALSE);
     }
     return((dword & FILE_ATTRIBUTE_READONLY) != 0);
+#elif LINUX
+    return(0 != access(filename, W_OK));
 #else
     return(FALSE);
 #endif
@@ -1137,6 +1219,8 @@ file_is_rooted(
         res = TRUE;
     else
         res = (file__DosDriveNumber(filename) != -1);
+#elif LINUX
+    res = (*filename == FILE_DIR_SEP_CH);
 #endif
 
     trace_2(TRACE_MODULE_FILE,
@@ -1610,6 +1694,18 @@ file_tempname_null(
     if(status_ok(status))
         status = quick_tblock_tstr_add(&quick_tblock, FILE_DIR_SEP_TSTR);
     } /*block*/
+#elif LINUX
+    {
+    PCTSTR tmpdir = getenv("TMPDIR");
+
+    if((NULL == tmpdir) || (CH_NULL == *tmpdir))
+        tmpdir = TEXT("/tmp");
+
+    status = quick_tblock_tstr_add(&quick_tblock, tmpdir);
+
+    if(status_ok(status))
+        status = quick_tblock_tstr_add(&quick_tblock, FILE_DIR_SEP_TSTR);
+    } /*block*/
 #endif
 
     if(status_ok(status))
@@ -1705,7 +1801,10 @@ file__make_usable_dir(
         /* must allow \ or c:\ */
         if(ptr != dirname)
             if((ptr != dirname + 2) || (file__DosDriveNumber(dirname) == -1))
-#endif /* WINDOWS */
+#elif LINUX
+        /* must allow / */
+        if(ptr != dirname)
+#endif /* OS */
             {   /* need to strip off that carefully placed dir sep */
                 U32 len = PtrDiffElemU32(ptr, dirname);
                 tstr_xstrnkpy(tstr_buf, elemof_buffer, dirname, len); /* no -1 ... */

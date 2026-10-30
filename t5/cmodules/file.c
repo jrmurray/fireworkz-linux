@@ -33,6 +33,12 @@ __pragma(warning(push)) __pragma(warning(disable:4820)) /* padding added after d
 __pragma(warning(pop))
 #endif
 
+#if LINUX
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <time.h>
+#endif
+
 /*
 internal functions
 */
@@ -403,6 +409,12 @@ file_create_directory(
         if(dwLastError != ERROR_ALREADY_EXISTS)
             return(file_error_set_from_last_error(dwLastError, FILE_ERR_FRAG_CREATE_DIRECTORY, dirname));
     }
+#elif LINUX
+    if(0 != mkdir(dirname, 0777))
+    {
+        if(EEXIST != errno)
+            return(file_error_set(strerror(errno)));
+    }
 #else
     _mkdir(dirname);
 #endif /* OS */
@@ -474,18 +486,17 @@ file_date(
     month = systemtime.wMonth;
     year = systemtime.wYear;
 #else
-    struct _stat s;
-    struct tm * p;
+    struct stat s;
+    struct tm tm_local;
+    const struct tm * p = &tm_local;
 
-    if(_FILE_HANDLE_NULL == file_handle->handle)
+    if( (_FILE_HANDLE_NULL == file_handle->handle)
+    ||  (0 != fstat(fileno(file_handle->handle), &s))
+    ||  (NULL == localtime_r(&s.st_mtime, &tm_local)) )
     {
         ss_date_init(p_ss_date);
         return(create_error(FILE_ERR_BADTIMESTAMP));
     }
-
-    (void) _fstat(file_handle->handle, &s);
-
-    p = localtime(&s.st_mtime);
 
     seconds = p->tm_sec;
     minutes = p->tm_min;
@@ -1286,6 +1297,9 @@ file_remove(
     {
         return(file_error_set_from_last_error(GetLastError(), FILE_ERR_FRAG_REMOVING, filename));
     }
+#else
+    if(0 != remove(filename))
+        return(file_error_set(strerror(errno)));
 #endif /*OS */
 
     return(STATUS_OK);
@@ -1308,6 +1322,11 @@ file_rename(
     {
         return(file_error_set_from_last_error(GetLastError(), FILE_ERR_FRAG_RENAMING, filename_from));
     }
+
+    return(STATUS_OK);
+#else
+    if(0 != rename(filename_from, filename_to))
+        return(file_error_set(strerror(errno)));
 
     return(STATUS_OK);
 #endif /*OS */
@@ -2150,7 +2169,7 @@ file__seek(
 
     new_pos.u.u64 = (U64) liNewFilePointer.QuadPart;
 #else
-    if(fseek(file_handle->handle, (S32) offset, origin))
+    if(fseeko(file_handle->handle, (off_t) offset64, origin))
         return(file__set_error(file_handle, create_error(FILE_ERR_CANTREAD)));
 
 #if CHECKING

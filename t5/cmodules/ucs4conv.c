@@ -46,6 +46,11 @@ get_system_codepage(void)
 
     return((U32) GetACP());
 
+#elif LINUX
+
+    /* match the Windows build so that 8-bit text in documents round-trips */
+    return(SBCHAR_CODEPAGE_WINDOWS_1252);
+
 #elif RISCOS
 
     static SBCHAR_CODEPAGE cached_system_codepage;
@@ -1033,7 +1038,7 @@ ucs4_from_sbchar_with_codepage(
 {
     switch(sbchar_codepage)
     {
-#if WINDOWS
+#if WINDOWS || LINUX
     default: default_unhandled();
 #endif
     case SBCHAR_CODEPAGE_WINDOWS_1252:
@@ -2847,7 +2852,7 @@ ucs4_to_sbchar_try_with_codepage(
     case 0: /* no mapping */
         return(ucs4);
 
-#if WINDOWS
+#if WINDOWS || LINUX
     default: default_unhandled();
 #endif
     case SBCHAR_CODEPAGE_WINDOWS_1252:

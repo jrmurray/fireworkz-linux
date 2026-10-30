@@ -25,6 +25,7 @@
 *
 * RISC OS: in centiseconds since the machine last started
 * Windows: in milliseconds since the machine last started
+* Linux:   in milliseconds from CLOCK_MONOTONIC
 *
 * clients should cater for wrapping (49 days on Windows)
 *
@@ -37,6 +38,12 @@ monotime(void)
 #if WINDOWS
     __pragma(warning(suppress: 28159))
     DWORD  now = GetTickCount();
+#elif LINUX
+    struct timespec ts;
+    U32 now = 0;
+
+    if(0 == clock_gettime(CLOCK_MONOTONIC, &ts))
+        now = (U32) ((U64) ts.tv_sec * 1000U + (U64) ts.tv_nsec / 1000000U);
 #else
     time_t now = time(NULL);
 #endif

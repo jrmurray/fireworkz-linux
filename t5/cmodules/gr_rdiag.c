@@ -1410,6 +1410,77 @@ gr_round_to_floor(
 
 #endif
 
+#if LINUX
+
+/* No Draw module here: bound the control polygon, which always contains
+ * each Bezier segment, then allow for half the line thickness.
+ */
+
+static void
+linux_draw_path_bbox(
+    _In_        PC_BYTE path_seq,
+    _InVal_     S32 thickness,
+    _OutRef_    P_DRAW_BOX p_bbox)
+{
+    PC_S32 p = (PC_S32) path_seq;
+    BOOL first = TRUE;
+    U32 n_points;
+    const S32 half_width = (thickness + 1) / 2;
+
+    p_bbox->x0 = p_bbox->y0 = 1;
+    p_bbox->x1 = p_bbox->y1 = 0; /* empty, caught by caller */
+
+    for(;;)
+    {
+        switch((U32) *p++ & 0xFFU)
+        {
+        case DRAW_PATH_TYPE_MOVE:
+        case DRAW_PATH_TYPE_LINE:
+            n_points = 1;
+            break;
+
+        case DRAW_PATH_TYPE_CURVE:
+            n_points = 3;
+            break;
+
+        case DRAW_PATH_TYPE_CLOSE_WITH_GAP:
+        case DRAW_PATH_TYPE_CLOSE_WITH_LINE:
+            continue;
+
+        default: /* DRAW_PATH_TYPE_TERM or unknown */
+            if(!first)
+            {
+                p_bbox->x0 -= half_width;
+                p_bbox->y0 -= half_width;
+                p_bbox->x1 += half_width;
+                p_bbox->y1 += half_width;
+            }
+            return;
+        }
+
+        while(0 != n_points--)
+        {
+            const S32 x = *p++;
+            const S32 y = *p++;
+
+            if(first)
+            {
+                p_bbox->x0 = p_bbox->x1 = x;
+                p_bbox->y0 = p_bbox->y1 = y;
+                first = FALSE;
+                continue;
+            }
+
+            if(p_bbox->x0 > x) p_bbox->x0 = x;
+            if(p_bbox->x1 < x) p_bbox->x1 = x;
+            if(p_bbox->y0 > y) p_bbox->y0 = y;
+            if(p_bbox->y1 < y) p_bbox->y1 = y;
+        }
+    }
+}
+
+#endif /* LINUX */
+
 /******************************************************************************
 *
 * recompute a path object's bbox
@@ -1428,7 +1499,7 @@ gr_riscdiag_path_recompute_bbox(
     DRAW_BOX bbox;
 #if RISCOS
     DRAW_MODULE_CAP_JOIN_SPEC cjspec;
-#else
+#elif WINDOWS
     DS_DRAW_CAP_JOIN_SPEC cjspec;
 #endif
 
@@ -1443,6 +1514,7 @@ gr_riscdiag_path_recompute_bbox(
                  + sizeof32(S32) * (* (P_U32) (line_dash_pattern + offsetof32(DRAW_DASH_HEADER, dashcount)));
     }
 
+#if RISCOS || WINDOWS
     {
     U32 temp; /* eliminate wierd compiler winges */
     temp = ((U32) path.pathstyle.flags & (U32) DRAW_PS_JOIN_PACK_MASK    ) >> ((U32) DRAW_PS_JOIN_PACK_SHIFT);
@@ -1465,8 +1537,10 @@ gr_riscdiag_path_recompute_bbox(
     cjspec.trailing_tricap_height   = cjspec.leading_tricap_height;
 #endif
     } /*block*/
+#endif /* RISCOS || WINDOWS */
 
     {
+#if RISCOS || WINDOWS
     int fill_style = DMFT_PATH_Reflatten | DMFT_PATH_Thicken | DMFT_PATH_Flatten | DMFT_PLOT_Bint | DMFT_PLOT_NonBint | DMFT_PLOT_Bext;
 #if RISCOS
     _kernel_swi_regs rs;
@@ -1495,6 +1569,9 @@ gr_riscdiag_path_recompute_bbox(
             (HPDRAWBOX) &bbox,
             &de));
 #endif
+#elif LINUX
+    linux_draw_path_bbox(path_seq, path.pathwidth, &bbox);
+#endif /* OS */
     } /*block*/
 
     if((bbox.x0 > bbox.x1) || (bbox.y0 > bbox.y1))
@@ -1523,7 +1600,7 @@ gr_riscdiag_path_recompute_bbox(
 *
 ******************************************************************************/
 
-#if WINDOWS
+#if WINDOWS || LINUX
 
 _Check_return_
 static int
@@ -1713,7 +1790,7 @@ gr_riscdiag_sprite_recompute_bbox(
             x1 = (rs.r[3] * GR_RISCDRAW_PER_INCH) / sprite_mode_word.u.riscos_3_5.h_dpi;
             y1 = (rs.r[4] * GR_RISCDRAW_PER_INCH) / sprite_mode_word.u.riscos_3_5.v_dpi;
         }
-#elif WINDOWS
+#elif WINDOWS || LINUX
         int bpp = windows_sprite_bpp(p_scb->mode);
         GDI_SIZE pixels, dpi;
         pixels.cx = ((p_scb->lwidth + 1) /* width in 32-bit words */ * 32) / bpp;
@@ -1874,7 +1951,25 @@ gr_riscdiag_string_recompute_bbox(
     /* move box to have its origin at string baseline origin (text.coord) */
     draw_box_translate(&text.bbox, &text.bbox, &text.coord);
 
-#else
+#elif LINUX
+
+    {
+    /* TODO: ask the host font layer for real metrics; until then assume
+     * an average glyph advance of 0.6 em and a 0.25 em descender
+     */
+    const PC_SBSTR sbstr = PtrAddBytes(PC_SBSTR, pObject, sizeof32(text));
+    const S32 n_chars = (S32) strlen(sbstr);
+
+    text.bbox.x0 = 0;
+    text.bbox.x1 = (S32) (((S64) n_chars * text.fsize_x * 6) / 10);
+    text.bbox.y0 = -(text.fsize_y / 4);
+    text.bbox.y1 = text.fsize_y;
+    } /*block*/
+
+    /* move box to have its origin at string baseline origin (text.coord) */
+    draw_box_translate(&text.bbox, &text.bbox, &text.coord);
+
+#elif WINDOWS
 
     /* zero the object's bbox (paranoid) */
     text.bbox.x0 = 0;

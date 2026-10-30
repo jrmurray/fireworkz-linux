@@ -58,7 +58,7 @@ readval_F64_from_8087(
     u.bytes[2] = PtrGetByteOff(from, 6);
     u.bytes[3] = PtrGetByteOff(from, 7);
 
-#elif WINDOWS
+#elif WINDOWS || (LINUX && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__))
 
     CODE_ANALYSIS_ONLY(zero_struct(u)); /* otherwise it winges */
 
@@ -110,7 +110,7 @@ readval_F64_from_ARM(
     u.bytes[6] = PtrGetByteOff(from, 6);
     u.bytes[7] = PtrGetByteOff(from, 7);
 
-#elif WINDOWS
+#elif WINDOWS || (LINUX && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__))
 
     CODE_ANALYSIS_ONLY(zero_struct(u)); /* otherwise it winges */
 
@@ -436,7 +436,7 @@ writeval_F64_as_8087(
     PtrPutByteOff(to, 6, u.bytes[2]);
     PtrPutByteOff(to, 7, u.bytes[3]);
 
-#elif WINDOWS
+#elif WINDOWS || (LINUX && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__))
 
     PtrPutByteOff(to, 0, u.bytes[0]);
     PtrPutByteOff(to, 1, u.bytes[1]);
@@ -486,7 +486,7 @@ writeval_F64_as_ARM(
     PtrPutByteOff(to, 6, u.bytes[6]);
     PtrPutByteOff(to, 7, u.bytes[7]);
 
-#elif WINDOWS
+#elif WINDOWS || (LINUX && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__))
 
     /* 8087 placed exp word 2nd, ARM requires exp word 1st */
 

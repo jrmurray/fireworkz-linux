@@ -204,6 +204,12 @@ image_convert_do_convert_data(
 
         GdipImage_Dispose(&gdip_image);
     }
+#elif LINUX
+    /* TODO: convert via the host image layer (Qt) */
+    UNREFERENCED_PARAMETER(p_data);
+    UNREFERENCED_PARAMETER_InVal_(n_bytes);
+    UNREFERENCED_PARAMETER_InVal_(t5_filetype);
+    status = STATUS_FAIL;
 #endif /* OS */
 
     quick_tblock_dispose(&quick_tblock);

@@ -277,7 +277,7 @@ __vmyasserted(
 
 #else /* generic */
 
-    fprintf(stderr, ASSERTION_FAILURE_PREFIX, tstr_file, line_no);
+    fprintf(stderr, ASSERTION_FAILURE_PREFIX, tstr_function, tstr_file, line_no);
 
     if(PTR_NOT_NULL_OR_NONE(format))
     {

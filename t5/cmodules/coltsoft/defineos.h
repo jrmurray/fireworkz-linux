@@ -52,7 +52,17 @@
 #define WINDOWS 0
 #endif /* WINDOWS */
 
-#if !(RISCOS || WINDOWS)
+#if defined(LINUX)
+/* set up on command line */
+#elif defined(TARGET_LINUX)
+#define LINUX 1
+#elif defined(__linux__) && !RISCOS && !WINDOWS
+#define LINUX 1
+#else
+#define LINUX 0
+#endif /* LINUX */
+
+#if !(RISCOS || WINDOWS || LINUX)
 #error Unable to compile code for this OS
 #endif /* OS */
 
@@ -80,9 +90,17 @@
 #define WINDOWS_ONLY_ARG(arg)   /* arg omitted in other targets */
 #endif
 
+#if LINUX
+#define LINUX_ONLY(stmt)        stmt
+#else
+#define LINUX_ONLY(stmt)        /* stmt omitted in other targets */
+#endif
+
 #if RISCOS
 #define RISCOS_OR_WINDOWS(r_val, w_val) (r_val)
 #elif WINDOWS
+#define RISCOS_OR_WINDOWS(r_val, w_val) (w_val)
+#elif LINUX /* follows the Windows value until reviewed for each use */
 #define RISCOS_OR_WINDOWS(r_val, w_val) (w_val)
 #endif
 
@@ -99,11 +117,20 @@
 /* First time set-up */
 #include "cmodules/coltsoft/pragma.h"
 
+#if LINUX
+/* compiler and C library already provide these */
+#if defined(__APPLE__) /* allows compile-testing the Linux target on macOS */
+#include <machine/endian.h>
+#else
+#include <endian.h>
+#endif
+#else
 #define BIG_ENDIAN      4321
 #define LITTLE_ENDIAN   1234
 
 #define __ORDER_BIG_ENDIAN__    BIG_ENDIAN
 #define __ORDER_LITTLE_ENDIAN__ LITTLE_ENDIAN
+#endif /* LINUX */
 
 #if defined(__clang__)
 //#include "cmodules/coltsoft/host_clang.h"
@@ -170,6 +197,16 @@ __pragma(message("CROSS_COMPILE: HOST_WINDOWS & TARGET_RISCOS"))
 
 #endif /* WINDOWS */
 
+#if LINUX
+
+#if !defined(__BYTE_ORDER__)
+#error __BYTE_ORDER__ must be provided by the compiler
+#endif
+
+#include "cmodules/coltsoft/target_linux.h"
+
+#endif /* LINUX */
+
 /* Nobble Microsoft extensions and definitions on sensible systems */
 
 #if RISCOS
@@ -188,6 +225,12 @@ __pragma(message("CROSS_COMPILE: HOST_WINDOWS & TARGET_RISCOS"))
 #endif
 
 #endif /* RISCOS */
+
+#if LINUX
+#define __cdecl
+#define PASCAL
+#define __forceinline inline
+#endif /* LINUX */
 
 #if !defined(_MSC_VER)
 #ifndef __assume
