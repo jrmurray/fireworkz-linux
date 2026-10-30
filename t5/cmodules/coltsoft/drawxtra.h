@@ -485,7 +485,7 @@ A Windows BMP object (DIB)
 #define DRAW_OBJECT_TYPE_DS_DIB         0x311
 #define DRAW_OBJECT_TYPE_DS_DIBROT      0x312
 
-#if RISCOS
+#if RISCOS || LINUX
 #define sizeof_BITMAPFILEHEADER 14
 
 /* Should be...

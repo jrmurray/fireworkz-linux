@@ -51,6 +51,8 @@ typedef union RESOURCE_BITMAP_HANDLE
     P_U8 p_u8;
 #elif WINDOWS
     HBITMAP i;
+#elif LINUX
+    void * i; /* opaque native image */
 #endif /* OS */
 }
 RESOURCE_BITMAP_HANDLE, * P_RESOURCE_BITMAP_HANDLE;

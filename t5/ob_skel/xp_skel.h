@@ -2114,7 +2114,7 @@ ensure_memory_froth(void);
 #define PIXITS_PER_RISCOS       ((PIXIT) 8)     /* PIXITS_PER_INCH (1440) / RISCOS_PER_INCH (180) */
 #if RISCOS
 #define PIXITS_PER_PIXEL        ((PIXIT) 16)    /* PIXITS_PER_INCH (1440) / 90 dpi */
-#elif WINDOWS
+#elif WINDOWS || LINUX
 #define PIXITS_PER_PIXEL        ((PIXIT) 15)    /* PIXITS_PER_INCH (1440) / 96 dpi */
 #endif
 #define MILLIPOINTS_PER_RISCOS  400             /* 72000 / 180 */
@@ -2126,7 +2126,7 @@ ensure_memory_froth(void);
 
 #define PIXITS_PER_PROGRAM_PIXEL_X (RISCOS_PER_PROGRAM_PIXEL_X * PIXITS_PER_RISCOS)
 #define PIXITS_PER_PROGRAM_PIXEL_Y (RISCOS_PER_PROGRAM_PIXEL_Y * PIXITS_PER_RISCOS)
-#elif WINDOWS
+#elif WINDOWS || LINUX
 #define DU_PER_PROGRAM_PIXEL_X 1 /* small units that we deal in as real machine pixels can get too small! (on screen) */
 #define DU_PER_PROGRAM_PIXEL_Y 2
 
@@ -2139,7 +2139,7 @@ ensure_memory_froth(void);
 #define T5_GDI_MIN_Y -0x7F00
 #define T5_GDI_MAX_X  0x7F00
 #define T5_GDI_MAX_Y  0x7F00
-#elif WINDOWS
+#elif WINDOWS || LINUX
 #define T5_GDI_MIN_X -0x7000
 #define T5_GDI_MIN_Y -0x7000
 #define T5_GDI_MAX_X  0x7000
@@ -2154,6 +2154,9 @@ typedef int HOST_FONT; /*font*/
 #elif WINDOWS
 #define HOST_FONT HFONT
 #define HOST_FONT_NONE ((HOST_FONT) NULL)
+#elif LINUX
+typedef struct HOST_FONT_LINUX * HOST_FONT; /* opaque native font handle */
+#define HOST_FONT_NONE ((HOST_FONT) NULL)
 #endif
 
 typedef HOST_FONT * P_HOST_FONT;
@@ -2161,7 +2164,7 @@ typedef HOST_FONT * P_HOST_FONT;
 #if RISCOS
 #define _HfontRef_ _InVal_
 #define _HfontRef_opt_ _InVal_ /* may be 0 */
-#elif WINDOWS
+#elif WINDOWS || LINUX
 #define _HfontRef_ _InRef_
 #define _HfontRef_opt_ _InRef_opt_ /* may be NULL */
 #endif
@@ -2336,6 +2339,14 @@ typedef struct HOST_XFORM
         PIXIT_POINT multiplier_of_pixels; /* pixit_point.x = point.x * multiplier_of_pixels.x / divisor_of_pixels.x using precision */
         PIXIT_POINT divisor_of_pixels;
     } windows;
+#elif LINUX
+    struct HOST_XFORM_LINUX
+    {
+        GDI_POINT pixels_per_inch; /* pixels per inch */
+        PIXIT_POINT pixels_per_metre;
+        PIXIT_POINT multiplier_of_pixels;
+        PIXIT_POINT divisor_of_pixels;
+    } linux_xform;
 #endif
 }
 HOST_XFORM, * P_HOST_XFORM; typedef const HOST_XFORM * PC_HOST_XFORM;
@@ -2405,6 +2416,13 @@ typedef struct REDRAW_CONTEXT_WINDOWS
     RECT host_machine_clip_rect;
 }
 REDRAW_CONTEXT_WINDOWS;
+#elif LINUX
+typedef struct REDRAW_CONTEXT_LINUX
+{
+    void * painter; /* native painter (e.g. QPainter *) */
+    GDI_RECT host_machine_clip_rect;
+}
+REDRAW_CONTEXT_LINUX;
 #endif /* OS */
 
 typedef struct REDRAW_CONTEXT
@@ -2438,6 +2456,8 @@ typedef struct REDRAW_CONTEXT
     REDRAW_CONTEXT_RISCOS riscos;
 #elif WINDOWS
     REDRAW_CONTEXT_WINDOWS windows;
+#elif LINUX
+    REDRAW_CONTEXT_LINUX linux_ctx;
 #endif
 
     P_REDRAW_CONTEXT_CACHE p_redraw_context_cache;
@@ -2767,7 +2787,7 @@ host_fonty_text_paint_uchars_simple(
     _InRef_     PC_RGB p_rgb_background,
 #if RISCOS
     _HfontRef_opt_ HOST_FONT host_font,
-#elif WINDOWS
+#elif WINDOWS || LINUX
     _HfontRef_  HOST_FONT host_font,
 #endif
     _InVal_     int text_align_lcr);
@@ -2792,7 +2812,7 @@ host_fonty_text_paint_uchars_in_rectangle(
     _InRef_     PC_RGB p_rgb_text,
 #if RISCOS
     _HfontRef_opt_ HOST_FONT host_font);
-#elif WINDOWS
+#elif WINDOWS || LINUX
     _HfontRef_  HOST_FONT host_font);
 #endif
 
@@ -3002,7 +3022,7 @@ host_fonty_text_paint_uchars_in_framed_box(
     _InVal_     S32 text_wimpcolour,
 #if RISCOS
     _HfontRef_opt_ HOST_FONT host_font);
-#elif WINDOWS
+#elif WINDOWS || LINUX
     _HfontRef_  HOST_FONT host_font);
 #endif
 
@@ -4246,6 +4266,8 @@ kmap_convert(
     _InVal_     int ch_code /*from Key_Pressed*/);
 #elif WINDOWS
     _InVal_     UINT vk /* from WM_KEYthing */);
+#elif LINUX
+    _InVal_     U32 host_key /* from native key event */);
 #endif
 
 extern void
@@ -9969,6 +9991,9 @@ typedef struct VIEW_OBJECT_ID_TOOLBAR /* needs to be here unfortunately */
     /* for tooltips */
     HOST_WND hwndTT;
     UI_TEXT ui_text;
+#elif LINUX
+    /* for tooltips */
+    UI_TEXT ui_text;
 #endif
 }
 VIEW_OBJECT_ID_TOOLBAR;
@@ -10109,6 +10134,9 @@ struct PANE
     PANE_LASTOPEN lastopen;
 #elif WINDOWS
     RECT rect;                      /* bounding rectangle of the pane */
+    GDI_POINT extent;               /* current pixel extent of pane */
+#elif LINUX
+    GDI_RECT rect;                  /* bounding rectangle of the pane */
     GDI_POINT extent;               /* current pixel extent of pane */
 #endif
 };

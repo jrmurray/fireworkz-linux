@@ -62,7 +62,7 @@ mathxtra_range_error(
 
 #if RISCOS
 #define F64_MIN_RECIP F64_MIN
-#elif WINDOWS
+#elif WINDOWS || LINUX
 #define F64_MIN_RECIP F64_ONE / F64_MAX
 #endif
 

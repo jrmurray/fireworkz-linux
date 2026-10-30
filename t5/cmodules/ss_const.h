@@ -33,7 +33,7 @@
 #define EV_MAX_OUT_LEN      1000        /* (compiled RPN form) */
 #define BUF_EV_MAX_OUT_LEN  (EV_MAX_OUT_LEN + 1)
 
-#if RISCOS || WINDOWS
+#if RISCOS || WINDOWS || LINUX
 
 #if defined(DOCNO_BITS)
 #define EV_DOCNO PACKED_DOCNO

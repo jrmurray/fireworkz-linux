@@ -14,7 +14,7 @@
 #ifndef COLTSOFT_H
 #define COLTSOFT_H
 
-#if RISCOS
+#if RISCOS || LINUX
 
 /*
 Stuff defined on Windows
@@ -42,7 +42,11 @@ Stuff defined on Windows
 
 typedef /*unsigned*/ char  BYTE; /* NB char IS unsigned on Norcroft - stop winges about pointer type diffs */
 typedef unsigned short WORD;
+#if LINUX
+typedef uint32_t       DWORD; /* must stay 32-bit on LP64 systems */
+#else
 typedef unsigned long  DWORD;
+#endif
 
 typedef int BOOL;
 typedef unsigned int UINT;
@@ -90,7 +94,7 @@ typedef       PCWSTR   * P_PCWSTR;
 #define   PCTSTR     PC_U8Z
 #define P_PCTSTR   P_PC_U8Z
 
-#endif /* RISCOS */
+#endif /* RISCOS || LINUX */
 
 #define PTSTR_NONE _P_DATA_NONE(PTSTR)
 
@@ -651,7 +655,7 @@ printf format strings
 #define DWORD_TFMT       TEXT("%lu")
 #define DWORD_XTFMT    TEXT("0x%lX")
 
-#if defined(_WIN64)
+#if defined(_WIN64) || (LINUX && (__SIZEOF_POINTER__ == 8))
 #define UINT3264_TFMT   U64_TFMT
 #define UINT3264_XTFMT  U64_XTFMT
 #else
@@ -872,6 +876,10 @@ typedef int HOST_WND; /* really wimp_w but don't tell everyone */
 #define HOST_WND HWND
 #define HOST_WND_XTFMT PTR_XTFMT
 #define HOST_WND_NONE ((HOST_WND) NULL)
+#elif LINUX
+typedef struct HOST_WND_LINUX * HOST_WND; /* opaque native window handle */
+#define HOST_WND_XTFMT PTR_XTFMT
+#define HOST_WND_NONE ((HOST_WND) NULL)
 #endif
 
 #if RISCOS
@@ -879,7 +887,7 @@ typedef int HOST_WND; /* really wimp_w but don't tell everyone */
 #define _HwndRef_opt_ _InVal_ /* may be 0 */
 
 #define UNREFERENCED_PARAMETER_HwndRef_ UNREFERENCED_PARAMETER_InVal_
-#elif WINDOWS
+#elif WINDOWS || LINUX
 #define _HwndRef_ _InRef_
 #define _HwndRef_opt_ _InRef_opt_ /* may be NULL */
 
@@ -1100,7 +1108,7 @@ memset32(
 
 #endif /* INTRINSIC_MEMSET */
 
-#if RISCOS
+#if RISCOS || LINUX
 
 static __forceinline void
 SecureZeroMemory(

@@ -45,6 +45,16 @@
 
 #endif /* CROSS_COMPILE */
 
+#elif LINUX
+
+/* Can't handle MSVC pragmas anyway so define out of the way */
+#ifndef __pragma_defined
+#define __pragma_defined 1
+#define __pragma(x) /* nothing */
+#endif /* __pragma_defined */
+
+#include "cmodules/coltsoft/pragmari.h"
+
 #endif /* OS */
 
 /* end of pragma.h */
