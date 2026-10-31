@@ -94,7 +94,7 @@ defbutton_ok =
     { DIALOG_CONTROL_SELF, DIALOG_MAIN_GROUP, DIALOG_MAIN_GROUP, DIALOG_CONTROL_SELF },
     { DIALOG_CONTENTS_CALC, DIALOG_STDSPACING_V, 0, DIALOG_DEFPUSHBUTTON_V },
     { DRT(RBRT, PUSHBUTTON), 1 /*tabstop*/, 1 /*logical_group*/ }
-#elif WINDOWS /* OK is to the left of Cancel */
+#elif WINDOWS || LINUX /* OK is to the left of Cancel */
     { DIALOG_CONTROL_SELF, DIALOG_MAIN_GROUP, IDCANCEL, DIALOG_CONTROL_SELF },
     { DIALOG_DEFOK_H, DIALOG_STDSPACING_V, DIALOG_STDSPACING_H, DIALOG_DEFPUSHBUTTON_V },
     { DRT(RBLT, PUSHBUTTON), 1 /*tabstop*/, 1 /*logical_group*/ }
@@ -115,7 +115,7 @@ stdbutton_cancel =
     { DIALOG_CONTROL_SELF, IDOK, IDOK, IDOK },
     { DIALOG_CONTENTS_CALC, -DIALOG_DEFPUSHEXTRA_V, DIALOG_STDSPACING_H, -DIALOG_DEFPUSHEXTRA_V },
     { DRT(RTLB, PUSHBUTTON), 1 /*tabstop*/ }
-#elif WINDOWS /* Cancel is the bottom rightmost button */
+#elif WINDOWS || LINUX /* Cancel is the bottom rightmost button */
     { DIALOG_CONTROL_SELF, IDOK, DIALOG_MAIN_GROUP, IDOK },
     { DIALOG_STDCANCEL_H, DIALOG_DEFPUSHEXTRA_V, 0, -DIALOG_DEFPUSHEXTRA_V },
     { DRT(RTRB, PUSHBUTTON), 1 /*tabstop*/ }
@@ -2550,7 +2550,7 @@ ui_width_from_tstr(
 {
     PIXIT width = ui_width_from_tstr_host(tstr);
 
-#if WINDOWS || RISCOS
+#if WINDOWS || RISCOS || LINUX
     BOOL has_hot_key = (NULL != tstrchr(tstr, CH_AMPERSAND));
 
     if(has_hot_key)

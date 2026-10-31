@@ -523,7 +523,7 @@ modified_docno_save(
     return(status);
 }
 
-#if WINDOWS
+#if WINDOWS || LINUX
 #define QUIT_QUERY_BUTTON_H     ((DIALOG_STDPUSHBUTTON_H) * 5) / 4 /* "Nicht speichern" */
 #else
 #define QUIT_QUERY_BUTTON_H     (DIALOG_PUSHBUTTONOVH_H + DIALOG_SYSCHARS_H("Discard "))
@@ -911,7 +911,7 @@ query_save_linked(
 /*#define CLOSE_QUERY_ACROSS_H     MAX(3 * CLOSE_QUERY_BUTTON_H + 2 * DIALOG_STDSPACING_H, ((MAX_FILENAME_FOR_SAVE_QUERY + sizeof32("''?")) * DIALOG_SYSCHAR_H))*/
 #if 1
 #define CLOSE_QUERY_BUTTON_H     QUIT_QUERY_BUTTON_H /* reuse these buttons */
-#elif WINDOWS
+#elif WINDOWS || LINUX
 #define CLOSE_QUERY_BUTTON_H     DIALOG_STDPUSHBUTTON_H
 #else
 #define CLOSE_QUERY_BUTTON_H     (DIALOG_PUSHBUTTONOVH_H + DIALOG_SYSCHARS_H("Discard "))

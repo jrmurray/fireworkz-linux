@@ -10,6 +10,20 @@
 #include "ob_skel/linux/qt/qth_qt.h"
 
 #include <QAbstractEventDispatcher>
+#include <QAbstractButton>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QDialog>
+#include <QFontMetrics>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QPlainTextEdit>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QStyledItemDelegate>
+#include <QToolButton>
 #include <QApplication>
 #include <QCloseEvent>
 #include <QCursor>
@@ -36,6 +50,8 @@
 #include <QWheelEvent>
 #include <QWidget>
 
+#include <cstdio>
+#include <cstring>
 #include <map>
 #include <vector>
 
@@ -64,6 +80,61 @@ app(void)
         if(!base.isEmpty())
         {
             const int delay_ms = qEnvironmentVariableIntValue("FIREWORKZ_SCREENSHOT_MS") > 0 ? qEnvironmentVariableIntValue("FIREWORKZ_SCREENSHOT_MS") : 1500;
+
+            /* FIREWORKZ_TEST_MENU="Page>Page layout..." chooses that menu item shortly before the screenshot, so
+             * that a dialog can be seen without anyone at the keyboard */
+            const QByteArray test_menu = qgetenv("FIREWORKZ_TEST_MENU");
+
+            if(!test_menu.isEmpty())
+                QTimer::singleShot(delay_ms / 3, p_app, [test_menu]()
+                {
+                    const QStringList path = QString::fromLatin1(test_menu).split(QLatin1Char('>'));
+
+                    for(QWidget * p_widget : QApplication::topLevelWidgets())
+                    {
+                        QMainWindow * p_main = qobject_cast<QMainWindow *>(p_widget);
+                        QMenuBar * p_bar = (nullptr != p_main) ? p_main->menuBar() : nullptr;
+                        if(nullptr == p_bar)
+                            continue;
+                        QList<QAction *> actions = p_bar->actions();
+                        QAction * p_found = nullptr;
+
+                        for(const QString & name : path)
+                        {
+                            p_found = nullptr;
+                            for(QAction * p_action : actions)
+                            {
+                                QString text = p_action->text();
+                                text.remove(QLatin1Char('&'));
+                                text = text.section(QLatin1Char('\t'), 0, 0);
+                                if(text == name)
+                                {
+                                    p_found = p_action;
+                                    break;
+                                }
+                            }
+                            if(nullptr == p_found)
+                            {
+                                QStringList have;
+                                for(QAction * p_action : actions)
+                                    have << p_action->text();
+                                fprintf(stderr, "FIREWORKZ_TEST_MENU: no \"%s\" among: %s\n", qPrintable(name), qPrintable(have.join(QLatin1String(" | "))));
+                                break;
+                            }
+                            if(nullptr != p_found->menu())
+                            {
+                                emit p_found->menu()->aboutToShow(); /* so that the items are brought up to date */
+                                actions = p_found->menu()->actions();
+                            }
+                        }
+
+                        if((nullptr != p_found) && (nullptr == p_found->menu()))
+                        {
+                            p_found->trigger();
+                            return;
+                        }
+                    }
+                });
 
             QTimer::singleShot(delay_ms, p_app, [base]()
             {
@@ -1179,6 +1250,687 @@ qth_menu_popup(QTH_MENU * p_menu)
 {
     if(nullptr != p_menu->p_menu)
         p_menu->p_menu->exec(QCursor::pos());
+}
+
+
+/* ---- Dialog boxes ------------------------------------------------------------------ */
+
+enum DLG_PLACE { DLG_PLACE_DEFAULT, DLG_PLACE_XY, DLG_PLACE_CENTRE_SCREEN, DLG_PLACE_CENTRE_PARENT, DLG_PLACE_POINTER };
+
+struct DLG_CTL
+{
+    int kind = 0;
+    QWidget * p_widget = nullptr;
+    QAbstractButton * p_button = nullptr;
+    QLineEdit * p_line = nullptr;
+    QPlainTextEdit * p_multi = nullptr;
+    QListWidget * p_list = nullptr;
+    QComboBox * p_combo = nullptr;
+    QLabel * p_label = nullptr;
+    QGroupBox * p_group = nullptr;
+};
+
+/* Draws a list item's text in columns, split at tabs, the second starting at a fixed distance */
+class TabDelegate : public QStyledItemDelegate
+{
+public:
+    int tab = 0;
+
+    using QStyledItemDelegate::QStyledItemDelegate;
+
+    void paint(QPainter * p_painter, const QStyleOptionViewItem & option, const QModelIndex & index) const override
+    {
+        const QString text = index.data(Qt::DisplayRole).toString();
+        const int split = text.indexOf(QLatin1Char('\t'));
+
+        if((tab <= 0) || (split < 0))
+        {
+            QStyledItemDelegate::paint(p_painter, option, index);
+            return;
+        }
+
+        QStyleOptionViewItem opt(option);
+        initStyleOption(&opt, index);
+        opt.text.clear();
+        QApplication::style()->drawControl(QStyle::CE_ItemViewItem, &opt, p_painter, opt.widget);
+
+        p_painter->save();
+        p_painter->setPen(opt.palette.color((opt.state & QStyle::State_Selected) ? QPalette::HighlightedText : QPalette::Text));
+        QRect r = opt.rect.adjusted(3, 0, 0, 0);
+        p_painter->drawText(r, Qt::AlignVCenter | Qt::AlignLeft, text.left(split));
+        r.setLeft(opt.rect.left() + tab);
+        p_painter->drawText(r, Qt::AlignVCenter | Qt::AlignLeft, text.mid(split + 1));
+        p_painter->restore();
+    }
+};
+
+struct QTH_DIALOG : public QDialog
+{
+    QTH_DIALOG(QWidget * p_parent) : QDialog(p_parent) {}
+
+    QTH_DLG_PROC proc = nullptr;
+    void * client = nullptr;
+    std::map<int, DLG_CTL> ctls;
+    std::map<int, TabDelegate *> delegates;
+    DLG_PLACE place = DLG_PLACE_DEFAULT;
+    int place_x = 0, place_y = 0;
+    bool parented = false;
+    bool updating = false;
+
+    void send(int event, int id, int arg)
+    {
+        if(nullptr != proc)
+            (*proc)(this, event, id, arg, client);
+    }
+
+    int id_of_widget(QObject * p_object)
+    {
+        for(auto & it : ctls)
+        {
+            const DLG_CTL & c = it.second;
+            if((c.p_widget == p_object) || (c.p_line == p_object) || (c.p_multi == p_object) || ((nullptr != c.p_combo) && (c.p_combo->lineEdit() == p_object)))
+                return(it.first);
+        }
+        return(0);
+    }
+
+    /* the engine decides when a dialog is over, so Enter and Escape and the close button just ask it */
+    void accept() override {}
+    void reject() override { send(QTH_DLG_EV_CLOSE, 0, 0); }
+
+protected:
+    void closeEvent(QCloseEvent * p_event) override
+    {
+        p_event->ignore();
+        send(QTH_DLG_EV_CLOSE, 0, 0);
+    }
+
+    void keyPressEvent(QKeyEvent * p_event) override
+    {
+        if(p_event->key() == Qt::Key_F1)
+        {
+            send(QTH_DLG_EV_HELP, 0, 0);
+            return;
+        }
+        QDialog::keyPressEvent(p_event);
+    }
+
+    bool eventFilter(QObject * p_object, QEvent * p_event) override
+    {
+        if(p_event->type() == QEvent::FocusIn)
+        {
+            const int id = id_of_widget(p_object);
+            if(0 != id)
+                send(QTH_DLG_EV_FOCUS, id, 0);
+        }
+        return(QDialog::eventFilter(p_object, p_event));
+    }
+};
+
+/* Static text and group captions carry & for the hot key of the control that follows them, which is
+ * not shown here; && is a real ampersand */
+static QString
+text_without_hot_key(const QString & text)
+{
+    QString out;
+
+    for(int i = 0; i < text.length(); ++i)
+    {
+        if(text[i] == QLatin1Char('&'))
+        {
+            if((i + 1 < text.length()) && (text[i + 1] == QLatin1Char('&')))
+                out += text[i++];
+            continue;
+        }
+        out += text[i];
+    }
+
+    return(out);
+}
+
+static DLG_CTL *
+dlg_ctl(QTH_DIALOG * p_dlg, int id)
+{
+    auto it = p_dlg->ctls.find(id);
+    return((it != p_dlg->ctls.end()) ? &it->second : nullptr);
+}
+
+extern "C" void
+qth_dlg_metrics(int32_t * p_four_h_du_px, int32_t * p_eight_v_du_px)
+{
+    static const QString alphabet = QStringLiteral("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+    const QFontMetrics fm(QApplication::font());
+
+    /* as the Windows dialog units are defined: the average of the alphabet, rounded */
+    *p_four_h_du_px = (int32_t) (((fm.horizontalAdvance(alphabet) / 26) + 1) / 2);
+    *p_eight_v_du_px = (int32_t) fm.height();
+}
+
+extern "C" int32_t
+qth_dlg_text_width(const uint8_t * p_text, uint32_t n)
+{
+    const QFontMetrics fm(QApplication::font());
+
+    return((int32_t) fm.horizontalAdvance(QString::fromLatin1((const char *) p_text, (int) n)));
+}
+
+extern "C" QTH_DIALOG *
+qth_dlg_create(QTH_WINDOW * p_parent, const char * p_caption, int width, int height, QTH_DLG_PROC proc, void * client)
+{
+    QWidget * p_parent_widget = (nullptr != p_parent) ? ((nullptr != p_parent->p_main) ? static_cast<QWidget *>(p_parent->p_main) : p_parent->p_widget) : nullptr;
+    QTH_DIALOG * p_dlg = new QTH_DIALOG(p_parent_widget);
+
+    p_dlg->proc = proc;
+    p_dlg->client = client;
+    p_dlg->parented = (nullptr != p_parent_widget);
+    p_dlg->setWindowTitle(text_of(p_caption));
+    p_dlg->setSizeGripEnabled(false);
+    p_dlg->setFixedSize(width, height);
+    p_dlg->setAttribute(Qt::WA_DeleteOnClose, false);
+
+    return(p_dlg);
+}
+
+extern "C" void
+qth_dlg_destroy(QTH_DIALOG * p_dlg)
+{
+    if(nullptr == p_dlg)
+        return;
+
+    p_dlg->proc = nullptr; /* nothing more to the engine from here on */
+    p_dlg->hide();
+    p_dlg->deleteLater();
+}
+
+extern "C" void
+qth_dlg_add(QTH_DIALOG * p_dlg, int kind, int id, int x, int y, int width, int height, int flags, int dropdown_height, const char * p_text)
+{
+    DLG_CTL c;
+    QWidget * p_widget = nullptr;
+    const QString text = text_of(p_text);
+    const QRect r(x, y, width, height);
+
+    (void) dropdown_height;
+
+    c.kind = kind;
+
+    switch(kind)
+    {
+    case QTH_DLG_LABEL:
+    case QTH_DLG_FRAMED_TEXT:
+        {
+        QLabel * p_label = new QLabel(text_without_hot_key(text), p_dlg);
+        Qt::Alignment align = Qt::AlignVCenter;
+        align |= (flags & QTH_DLGF_CENTRE) ? Qt::AlignHCenter : (flags & QTH_DLGF_LEFT) ? Qt::AlignLeft : Qt::AlignRight;
+        p_label->setAlignment(align);
+        p_label->setTextFormat(Qt::PlainText);
+        if(kind == QTH_DLG_FRAMED_TEXT)
+        {
+            p_label->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
+            p_label->setMargin(2);
+        }
+        c.p_label = p_label;
+        p_widget = p_label;
+        break;
+        }
+
+    case QTH_DLG_GROUP:
+        c.p_group = new QGroupBox(text_without_hot_key(text), p_dlg);
+        p_widget = c.p_group;
+        break;
+
+    case QTH_DLG_PUSH:
+        {
+        QPushButton * p_push = new QPushButton(text, p_dlg);
+        p_push->setAutoDefault(false);
+        p_push->setDefault(0 != (flags & QTH_DLGF_DEFAULT));
+        c.p_button = p_push;
+        p_widget = p_push;
+        break;
+        }
+
+    case QTH_DLG_RADIO:
+        {
+        QRadioButton * p_radio = new QRadioButton(text, p_dlg);
+        p_radio->setAutoExclusive(false); /* the engine says which one is on */
+        c.p_button = p_radio;
+        p_widget = p_radio;
+        break;
+        }
+
+    case QTH_DLG_CHECK:
+    case QTH_DLG_TRISTATE:
+        {
+        QCheckBox * p_check = new QCheckBox(text, p_dlg);
+        p_check->setTristate(kind == QTH_DLG_TRISTATE);
+        c.p_button = p_check;
+        p_widget = p_check;
+        break;
+        }
+
+    case QTH_DLG_EDIT:
+    case QTH_DLG_SPIN:
+        if((kind == QTH_DLG_EDIT) && (flags & QTH_DLGF_MULTILINE))
+        {
+            c.p_multi = new QPlainTextEdit(p_dlg);
+            c.p_multi->setReadOnly(0 != (flags & QTH_DLGF_READONLY));
+            c.p_multi->setTabChangesFocus(true);
+            p_widget = c.p_multi;
+        }
+        else
+        {
+            QWidget * p_holder = (kind == QTH_DLG_SPIN) ? new QWidget(p_dlg) : nullptr;
+            QLineEdit * p_line = new QLineEdit((nullptr != p_holder) ? p_holder : static_cast<QWidget *>(p_dlg));
+            p_line->setReadOnly(0 != (flags & QTH_DLGF_READONLY));
+            p_line->setAlignment((flags & QTH_DLGF_RIGHT) ? Qt::AlignRight : Qt::AlignLeft);
+            c.p_line = p_line;
+            p_widget = p_line;
+
+            if(nullptr != p_holder)
+            {   /* the arrows are two small buttons stacked at the right of the edit */
+                const int arrow_w = qMax(14, height * 3 / 4);
+                const int half = height / 2;
+                QToolButton * p_up = new QToolButton(p_holder);
+                QToolButton * p_down = new QToolButton(p_holder);
+                const int id_for_arrows = id;
+
+                p_up->setArrowType(Qt::UpArrow);
+                p_down->setArrowType(Qt::DownArrow);
+                p_up->setAutoRepeat(true);
+                p_down->setAutoRepeat(true);
+                p_up->setFocusPolicy(Qt::NoFocus);
+                p_down->setFocusPolicy(Qt::NoFocus);
+                p_line->setGeometry(0, 0, width - arrow_w, height);
+                p_up->setGeometry(width - arrow_w, 0, arrow_w, half);
+                p_down->setGeometry(width - arrow_w, half, arrow_w, height - half);
+
+                QObject::connect(p_up,   &QToolButton::clicked, p_dlg, [p_dlg, id_for_arrows]() { p_dlg->send(QTH_DLG_EV_SPIN, id_for_arrows,  1); });
+                QObject::connect(p_down, &QToolButton::clicked, p_dlg, [p_dlg, id_for_arrows]() { p_dlg->send(QTH_DLG_EV_SPIN, id_for_arrows, -1); });
+
+                p_widget = p_holder;
+            }
+        }
+        break;
+
+    case QTH_DLG_LIST:
+        {
+        QListWidget * p_list = new QListWidget(p_dlg);
+        TabDelegate * p_delegate = new TabDelegate(p_list);
+        p_list->setItemDelegate(p_delegate);
+        p_dlg->delegates[id] = p_delegate;
+        c.p_list = p_list;
+        p_widget = p_list;
+        break;
+        }
+
+    case QTH_DLG_COMBO:
+        c.p_combo = new QComboBox(p_dlg);
+        c.p_combo->setEditable(0 == (flags & QTH_DLGF_READONLY));
+        c.p_combo->setInsertPolicy(QComboBox::NoInsert);
+        p_widget = c.p_combo;
+        break;
+
+    default:
+    case QTH_DLG_BLANK:
+        p_widget = new QWidget(p_dlg);
+        break;
+    }
+
+    p_widget->setGeometry(r);
+    p_widget->show();
+    c.p_widget = p_widget;
+
+    /* events from the controls */
+    if(nullptr != c.p_button)
+        QObject::connect(c.p_button, &QAbstractButton::clicked, p_dlg, [p_dlg, id]() { p_dlg->send(QTH_DLG_EV_CLICK, id, 0); });
+
+    if(nullptr != c.p_line)
+        QObject::connect(c.p_line, &QLineEdit::textEdited, p_dlg, [p_dlg, id]() { p_dlg->send(QTH_DLG_EV_TEXT, id, 0); });
+
+    if(nullptr != c.p_multi)
+        QObject::connect(c.p_multi, &QPlainTextEdit::textChanged, p_dlg, [p_dlg, id]()
+        {
+            if(!p_dlg->updating)
+                p_dlg->send(QTH_DLG_EV_TEXT, id, 0);
+        });
+
+    if(nullptr != c.p_list)
+    {
+        QObject::connect(c.p_list, &QListWidget::itemClicked, p_dlg, [p_dlg, id, p_list = c.p_list](QListWidgetItem *)
+        {
+            p_dlg->send(QTH_DLG_EV_SELECT, id, p_list->currentRow());
+        });
+        QObject::connect(c.p_list, &QListWidget::currentRowChanged, p_dlg, [p_dlg, id](int row)
+        {
+            if(!p_dlg->updating)
+                p_dlg->send(QTH_DLG_EV_SELECT, id, row);
+        });
+        QObject::connect(c.p_list, &QListWidget::itemDoubleClicked, p_dlg, [p_dlg, id](QListWidgetItem *) { p_dlg->send(QTH_DLG_EV_DBLCLK, id, 0); });
+    }
+
+    if(nullptr != c.p_combo)
+    {
+        QObject::connect(c.p_combo, QOverload<int>::of(&QComboBox::activated), p_dlg, [p_dlg, id](int index) { p_dlg->send(QTH_DLG_EV_SELECT, id, index); });
+        if(nullptr != c.p_combo->lineEdit())
+        {
+            QObject::connect(c.p_combo->lineEdit(), &QLineEdit::textEdited, p_dlg, [p_dlg, id]() { p_dlg->send(QTH_DLG_EV_TEXT, id, 0); });
+            c.p_combo->lineEdit()->installEventFilter(p_dlg);
+        }
+    }
+
+    /* focus: tell the engine which one has it */
+    p_widget->installEventFilter(p_dlg);
+    if(nullptr != c.p_line)
+        c.p_line->installEventFilter(p_dlg);
+
+    p_dlg->ctls[id] = c;
+}
+
+extern "C" void
+qth_dlg_place(QTH_DIALOG * p_dlg, int x, int y)
+{
+    p_dlg->place = DLG_PLACE_XY;
+    p_dlg->place_x = x;
+    p_dlg->place_y = y;
+}
+
+extern "C" void
+qth_dlg_centre(QTH_DIALOG * p_dlg, int on_parent)
+{
+    p_dlg->place = (on_parent && p_dlg->parented) ? DLG_PLACE_CENTRE_PARENT : DLG_PLACE_CENTRE_SCREEN;
+}
+
+extern "C" void
+qth_dlg_at_pointer(QTH_DIALOG * p_dlg)
+{
+    p_dlg->place = DLG_PLACE_POINTER;
+}
+
+static void
+dlg_position(QTH_DIALOG * p_dlg)
+{
+    const QRect screen = QGuiApplication::primaryScreen()->availableGeometry();
+    QPoint tl;
+
+    switch(p_dlg->place)
+    {
+    case DLG_PLACE_XY:
+        tl = QPoint(p_dlg->place_x, p_dlg->place_y);
+        break;
+
+    case DLG_PLACE_CENTRE_PARENT:
+        tl = p_dlg->parentWidget()->window()->frameGeometry().center() - QPoint(p_dlg->width() / 2, p_dlg->height() / 2);
+        break;
+
+    case DLG_PLACE_POINTER:
+        tl = QCursor::pos() - QPoint(p_dlg->width() / 2, 16);
+        break;
+
+    default:
+        tl = screen.center() - QPoint(p_dlg->width() / 2, p_dlg->height() / 2);
+        break;
+    }
+
+    tl.setX(qMax(screen.left(), qMin(tl.x(), screen.right()  - p_dlg->width())));
+    tl.setY(qMax(screen.top(),  qMin(tl.y(), screen.bottom() - p_dlg->height())));
+    p_dlg->move(tl);
+}
+
+extern "C" void
+qth_dlg_exec(QTH_DIALOG * p_dlg)
+{
+    dlg_position(p_dlg);
+    p_dlg->setModal(true);
+    p_dlg->QDialog::open();
+    p_dlg->raise();
+    p_dlg->activateWindow();
+
+    QEventLoop loop;
+    QObject::connect(p_dlg, &QDialog::finished, &loop, &QEventLoop::quit);
+    QObject::connect(p_dlg, &QObject::destroyed, &loop, &QEventLoop::quit);
+    loop.exec();
+}
+
+extern "C" void
+qth_dlg_show(QTH_DIALOG * p_dlg)
+{
+    dlg_position(p_dlg);
+    p_dlg->setModal(false);
+    p_dlg->show();
+    p_dlg->raise();
+    p_dlg->activateWindow();
+}
+
+extern "C" void
+qth_dlg_end(QTH_DIALOG * p_dlg)
+{
+    p_dlg->QDialog::done(1);
+}
+
+extern "C" void
+qth_dlg_set_text(QTH_DIALOG * p_dlg, int id, const char * p_text)
+{
+    DLG_CTL * c = dlg_ctl(p_dlg, id);
+    const QString text = text_of(p_text);
+
+    if(nullptr == c)
+        return;
+
+    if(nullptr != c->p_label)
+        c->p_label->setText(text_without_hot_key(text));
+    else if(nullptr != c->p_group)
+        c->p_group->setTitle(text_without_hot_key(text));
+    else if(nullptr != c->p_button)
+        c->p_button->setText(text);
+    else if(nullptr != c->p_line)
+    {
+        if(c->p_line->text() != text)
+        {
+            const int cursor = c->p_line->cursorPosition();
+            c->p_line->setText(text);
+            c->p_line->setCursorPosition(qMin(cursor, (int) text.length()));
+        }
+    }
+    else if(nullptr != c->p_multi)
+    {
+        if(c->p_multi->toPlainText() != text)
+        {
+            p_dlg->updating = true;
+            c->p_multi->setPlainText(text);
+            p_dlg->updating = false;
+        }
+    }
+    else if(nullptr != c->p_combo)
+    {
+        if(c->p_combo->isEditable())
+            c->p_combo->setEditText(text);
+    }
+}
+
+extern "C" int
+qth_dlg_get_text(QTH_DIALOG * p_dlg, int id, char * p_buf, int n)
+{
+    DLG_CTL * c = dlg_ctl(p_dlg, id);
+    QString text;
+
+    if(nullptr != c)
+    {
+        if(nullptr != c->p_line)
+            text = c->p_line->text();
+        else if(nullptr != c->p_multi)
+            text = c->p_multi->toPlainText();
+        else if(nullptr != c->p_combo)
+            text = c->p_combo->currentText();
+        else if(nullptr != c->p_button)
+            text = c->p_button->text();
+        else if(nullptr != c->p_label)
+            text = c->p_label->text();
+    }
+
+    const QByteArray bytes = text.toLatin1(); /* anything not in Latin-1 becomes '?' */
+
+    if((nullptr != p_buf) && (n > 0))
+    {
+        const int copy = qMin((int) bytes.size(), n - 1);
+        memcpy(p_buf, bytes.constData(), (size_t) copy);
+        p_buf[copy] = '\0';
+    }
+
+    return((int) bytes.size());
+}
+
+extern "C" void
+qth_dlg_set_check(QTH_DIALOG * p_dlg, int id, int state)
+{
+    DLG_CTL * c = dlg_ctl(p_dlg, id);
+
+    if((nullptr == c) || (nullptr == c->p_button))
+        return;
+
+    QCheckBox * p_check = qobject_cast<QCheckBox *>(c->p_button);
+
+    if((nullptr != p_check) && p_check->isTristate())
+        p_check->setCheckState((state == 2) ? Qt::PartiallyChecked : (state ? Qt::Checked : Qt::Unchecked));
+    else
+        c->p_button->setChecked(0 != state);
+}
+
+extern "C" void
+qth_dlg_set_enabled(QTH_DIALOG * p_dlg, int id, int enabled)
+{
+    DLG_CTL * c = dlg_ctl(p_dlg, id);
+
+    if(nullptr != c)
+        c->p_widget->setEnabled(0 != enabled);
+}
+
+extern "C" void
+qth_dlg_set_focus(QTH_DIALOG * p_dlg, int id)
+{
+    DLG_CTL * c = dlg_ctl(p_dlg, id);
+
+    if(nullptr == c)
+        return;
+
+    if(nullptr != c->p_line)
+        c->p_line->setFocus();
+    else
+        c->p_widget->setFocus();
+}
+
+extern "C" void
+qth_dlg_set_default(QTH_DIALOG * p_dlg, int id)
+{
+    for(auto & it : p_dlg->ctls)
+    {
+        QPushButton * p_push = qobject_cast<QPushButton *>(it.second.p_button);
+        if(nullptr != p_push)
+            p_push->setDefault(it.first == id);
+    }
+}
+
+extern "C" void
+qth_dlg_select_all(QTH_DIALOG * p_dlg, int id)
+{
+    DLG_CTL * c = dlg_ctl(p_dlg, id);
+
+    if(nullptr == c)
+        return;
+
+    if(nullptr != c->p_line)
+        c->p_line->selectAll();
+    else if(nullptr != c->p_multi)
+        c->p_multi->selectAll();
+    else if((nullptr != c->p_combo) && (nullptr != c->p_combo->lineEdit()))
+        c->p_combo->lineEdit()->selectAll();
+}
+
+extern "C" void
+qth_dlg_list_clear(QTH_DIALOG * p_dlg, int id)
+{
+    DLG_CTL * c = dlg_ctl(p_dlg, id);
+
+    if(nullptr == c)
+        return;
+
+    p_dlg->updating = true;
+    if(nullptr != c->p_list)
+        c->p_list->clear();
+    else if(nullptr != c->p_combo)
+    {
+        const QString keep = c->p_combo->isEditable() ? c->p_combo->currentText() : QString();
+        c->p_combo->clear();
+        if(c->p_combo->isEditable())
+            c->p_combo->setEditText(keep);
+    }
+    p_dlg->updating = false;
+}
+
+extern "C" void
+qth_dlg_list_add(QTH_DIALOG * p_dlg, int id, const char * p_text)
+{
+    DLG_CTL * c = dlg_ctl(p_dlg, id);
+
+    if(nullptr == c)
+        return;
+
+    p_dlg->updating = true;
+    if(nullptr != c->p_list)
+        c->p_list->addItem(text_of(p_text));
+    else if(nullptr != c->p_combo)
+    {
+        const QString keep = c->p_combo->isEditable() ? c->p_combo->currentText() : QString();
+        c->p_combo->addItem(text_of(p_text));
+        if(c->p_combo->isEditable())
+            c->p_combo->setEditText(keep);
+    }
+    p_dlg->updating = false;
+}
+
+extern "C" void
+qth_dlg_list_set_tab(QTH_DIALOG * p_dlg, int id, int pixels)
+{
+    auto it = p_dlg->delegates.find(id);
+
+    if(it != p_dlg->delegates.end())
+        it->second->tab = pixels;
+}
+
+extern "C" void
+qth_dlg_list_set_sel(QTH_DIALOG * p_dlg, int id, int index)
+{
+    DLG_CTL * c = dlg_ctl(p_dlg, id);
+
+    if(nullptr == c)
+        return;
+
+    p_dlg->updating = true;
+    if(nullptr != c->p_list)
+        c->p_list->setCurrentRow(index, (index < 0) ? QItemSelectionModel::Clear : QItemSelectionModel::ClearAndSelect);
+    else if(nullptr != c->p_combo)
+    {
+        const QString keep = (c->p_combo->isEditable() && (index < 0)) ? c->p_combo->currentText() : QString();
+        c->p_combo->setCurrentIndex(index);
+        if(c->p_combo->isEditable() && (index < 0))
+            c->p_combo->setEditText(keep);
+    }
+    p_dlg->updating = false;
+}
+
+extern "C" int
+qth_dlg_list_get_sel(QTH_DIALOG * p_dlg, int id)
+{
+    DLG_CTL * c = dlg_ctl(p_dlg, id);
+
+    if(nullptr != c)
+    {
+        if(nullptr != c->p_list)
+            return(c->p_list->currentRow());
+        if(nullptr != c->p_combo)
+            return(c->p_combo->currentIndex());
+    }
+
+    return(-1);
 }
 
 /* end of qth_qt.cpp */

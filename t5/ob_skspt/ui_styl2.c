@@ -121,7 +121,7 @@ static const DIALOG_CONTROL
 es_ok =
 {
     IDOK, DIALOG_CONTROL_WINDOW,
-#if WINDOWS /* OK is to the left of Cancel */
+#if WINDOWS || LINUX /* OK is to the left of Cancel */
     { DIALOG_CONTROL_SELF, ES_ID_RHS_GROUP, IDCANCEL, DIALOG_CONTROL_SELF },
     { DIALOG_DEFOK_H, DIALOG_STDSPACING_V, DIALOG_STDSPACING_H, DIALOG_DEFPUSHBUTTON_V },
     { DRT(RBLT, PUSHBUTTON), 1 /*tabstop*/, 1 /*logical_group*/ }
@@ -132,7 +132,7 @@ es_ok =
 #endif
 };
 
-#if WINDOWS /* Cancel is the bottom rightmost button */
+#if WINDOWS || LINUX /* Cancel is the bottom rightmost button */
 
 const DIALOG_CONTROL
 es_cancel =

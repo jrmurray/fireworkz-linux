@@ -24,3 +24,29 @@ if(size LESS 1000)
 endif()
 
 message(STATUS "fireworkz opened a window: ${size} byte picture")
+
+# Then choose a menu item that opens a dialog (FIREWORKZ_TEST_MENU); the dialog must be on screen when the
+# picture is taken, as a second window, and the program must still exit cleanly once it is over.
+
+file(REMOVE ${SHOT}-dlg-0.png ${SHOT}-dlg-1.png)
+
+set(ENV{FIREWORKZ_SCREENSHOT} ${SHOT}-dlg)
+set(ENV{FIREWORKZ_SCREENSHOT_MS} 3000)
+set(ENV{FIREWORKZ_TEST_MENU} "Page>Paper...")
+
+execute_process(COMMAND ${APP} RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err TIMEOUT 60)
+
+if(NOT result EQUAL 0)
+    message(FATAL_ERROR "fireworkz exited with ${result} with a dialog open\n${out}\n${err}")
+endif()
+
+if(NOT EXISTS ${SHOT}-dlg-1.png)
+    message(FATAL_ERROR "the Paper dialog did not open\n${out}\n${err}")
+endif()
+
+file(SIZE ${SHOT}-dlg-1.png dlg_size)
+if(dlg_size LESS 1000)
+    message(FATAL_ERROR "the picture of the dialog is only ${dlg_size} bytes: nothing was drawn")
+endif()
+
+message(STATUS "fireworkz opened a dialog: ${dlg_size} byte picture")

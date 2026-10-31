@@ -41,6 +41,10 @@ __pragma(warning(pop))
 #include "ob_skel/xp_skeld.h"
 #endif
 
+#if LINUX
+#include "ob_skel/linux/qt_host.h"
+#endif
+
 #include "ob_file/xp_file.h"
 
 typedef H_DIALOG * P_H_DIALOG;
@@ -413,6 +417,12 @@ typedef struct DIALOG
         PTSTR help_filename;
         HTHEME hTheme_Button;
     } windows;
+#elif LINUX
+    struct DIALOG_LINUX
+    {
+        QTH_DIALOG * p_dlg; /* the Qt dialog, while it exists */
+        PIXIT_POINT offset_tl;
+    } lx;
 #endif /* OS */
 }
 DIALOG, * P_DIALOG, ** P_P_DIALOG; typedef const DIALOG * PC_DIALOG;
@@ -616,7 +626,7 @@ ui_text_from_ictl_edit_xx(
     _OutRef_    P_UI_TEXT p_ui_text,
     P_DIALOG_ICTL_EDIT_XX p_dialog_ictl_edit_xx);
 
-#elif WINDOWS
+#elif WINDOWS || LINUX
 
 _Check_return_
 extern STATUS
@@ -826,6 +836,28 @@ extern void
 dialog_windows_ui_len_init(void);
 
 #endif /* WINDOWS || LINUX */
+
+#if LINUX
+
+/* a dialog that has been built and not yet disposed of */
+#define DIALOG_IS_OPEN(p_dialog) (NULL != (p_dialog)->lx.p_dlg)
+
+extern void
+dialog_linux_ictl_encode_here(
+    _InoutRef_  P_DIALOG p_dialog,
+    P_DIALOG_ICTL p_dialog_ictl);
+
+extern void
+dialog_linux_end(
+    _InoutRef_  P_DIALOG p_dialog);
+
+extern void
+dialog_linux_dispose(
+    _InoutRef_  P_DIALOG p_dialog);
+
+#else
+#define DIALOG_IS_OPEN(p_dialog) (HOST_WND_NONE != (p_dialog)->hwnd)
+#endif /* LINUX */
 
 /*
 internally exported variables

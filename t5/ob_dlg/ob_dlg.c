@@ -136,7 +136,7 @@ dialog_cmd_ctl_encode(
     if(NULL == (p_dialog = p_dialog_from_h_dialog(p_dialog_cmd_ctl_encode->h_dialog)))
         return(create_error(DIALOG_ERR_UNKNOWN_DIALOG));
 
-    if(HOST_WND_NONE == p_dialog->hwnd)
+    if(!DIALOG_IS_OPEN(p_dialog))
         return(STATUS_OK);
 
     if(NULL == (p_dialog_ictl = p_dialog_ictl_from_control_id(p_dialog, p_dialog_cmd_ctl_encode->dialog_control_id)))
@@ -554,7 +554,7 @@ dialog_cmd_ctl_size_estimate_GROUPBOX(
         {
 #if RISCOS
             width += 8 * PIXITS_PER_RISCOS;
-#elif WINDOWS
+#elif WINDOWS || LINUX
             width += 6 * PIXITS_PER_WDU_H;
 #endif /* OS */
         }
@@ -578,7 +578,7 @@ dialog_cmd_ctl_size_estimate_TEXTxx(
     {
 #if RISCOS
         width += (4 * PIXITS_PER_RISCOS);
-#elif WINDOWS
+#elif WINDOWS || LINUX
         width += (4 * PIXITS_PER_WDU_H); /* needs some bodging too */
 
         if(DIALOG_CONTROL_TEXTLABEL == UBF_UNPACK(DIALOG_CONTROL_TYPE, p_dialog_cmd_ctl_size_estimate->p_dialog_control->bits.packed_dialog_control_type))
@@ -728,6 +728,10 @@ dialog_cmd_ctl_size_estimate_COMBO_XX(
     /* +2 is a bit hacky for Windows Classic theme on XP */ /* DPI-aware */
     add_width = idiv_ceil_u((vscroll_pixels_cx + 2 * edge_pixels_cx + 2) * PIXITS_PER_PIXEL * 96, PixelsPerInch.cx);
     } /*block*/
+#elif LINUX
+    UNREFERENCED_PARAMETER_InoutRef_(p_dialog_cmd_ctl_size_estimate);
+
+    add_width = 24 * PIXITS_PER_PIXEL; /* the drop-down arrow and the frame */
 #endif
 
     p_est_size->x = DIALOG_STDCOMBOOVH_H + add_width;
@@ -1769,7 +1773,7 @@ dialog_ictl_enable_here(
 
 #if RISCOS
     dialog_riscos_ictl_enable_here(p_dialog, p_dialog_ictl);
-#elif WINDOWS
+#elif WINDOWS || LINUX
     dialog_windows_ictl_enable_here(p_dialog, p_dialog_ictl);
 #endif
 
@@ -1922,6 +1926,11 @@ dialog_ictl_edit_xx_encode_here_SetText(
         }
     }
 
+#elif LINUX
+
+    if(DIALOG_IS_OPEN(p_dialog))
+        qth_dlg_set_text(p_dialog->lx.p_dlg, (int) p_dialog_ictl->dialog_control_id, ui_text_tstr(p_ui_text));
+
 #endif /* OS */
 
     return(status);
@@ -2034,7 +2043,7 @@ dialog_ictl_encode_here(
     P_DIALOG_ICTL p_dialog_ictl,
     _InVal_     S32 bits)
 {
-#if WINDOWS
+#if WINDOWS || LINUX
     UNREFERENCED_PARAMETER_InVal_(bits);
 #endif
 
@@ -2048,6 +2057,11 @@ dialog_ictl_encode_here(
         status_return(dialog_ictl_edit_xx_encode_here(p_dialog, p_dialog_ictl, p_dialog_ictl_edit_xx));
     }
     } /*block*/
+
+#if LINUX
+    dialog_linux_ictl_encode_here(p_dialog, p_dialog_ictl);
+    return(STATUS_OK);
+#endif
 
     {
 #if RISCOS
@@ -2440,7 +2454,7 @@ dialog_init(void)
 
     array_init_block_setup(&dialog_statics.ictls_init_block, 8, sizeof32(DIALOG_ICTL), 1);
 
-#if WINDOWS
+#if WINDOWS || LINUX
     dialog_windows_ui_len_init(); /* ensure we know all about which font to use etc. */
 #endif
 

@@ -330,6 +330,92 @@ QTH_MENU * qth_menu_get_submenu(QTH_MENU * p_menu, int index); /* NULL if the it
 /* Show a popup menu at the pointer and return when it has been dealt with */
 void qth_menu_popup(QTH_MENU * p_menu);
 
+/* ---- Dialog boxes ----------------------------------------------------------------- */
+
+/* A dialog is a window of ordinary desktop widgets, built control by control by the dialog engine
+ * (ob_dlg) from its tables. Controls are addressed by an id the caller chooses; positions and sizes
+ * are in pixels, within the dialog's client area. Texts are Latin-1; & marks a mnemonic. */
+
+typedef struct QTH_DIALOG QTH_DIALOG;
+
+enum QTH_DLG_KIND
+{
+    QTH_DLG_LABEL = 1,   /* static text; flags say how it is aligned */
+    QTH_DLG_FRAMED_TEXT, /* static text in a sunken frame */
+    QTH_DLG_GROUP,       /* captioned group box */
+    QTH_DLG_PUSH,        /* push button; QTH_DLGF_DEFAULT for the default one */
+    QTH_DLG_RADIO,
+    QTH_DLG_CHECK,
+    QTH_DLG_TRISTATE,
+    QTH_DLG_EDIT,        /* QTH_DLGF_MULTILINE, _READONLY, _RIGHT */
+    QTH_DLG_SPIN,        /* an edit with up and down arrows beside it */
+    QTH_DLG_LIST,
+    QTH_DLG_COMBO,       /* QTH_DLGF_READONLY makes it a drop-down list only; dropdown_height is the drop-down's depth */
+    QTH_DLG_BLANK        /* nothing drawn: owner-drawn controls, not yet supported */
+};
+
+enum
+{
+    QTH_DLGF_DEFAULT   = 0x01,
+    QTH_DLGF_MULTILINE = 0x02,
+    QTH_DLGF_READONLY  = 0x04,
+    QTH_DLGF_RIGHT     = 0x08,
+    QTH_DLGF_CENTRE    = 0x10,
+    QTH_DLGF_LEFT      = 0x20
+};
+
+enum
+{
+    QTH_DLG_EV_CLICK = 1,  /* push button, radio or check box pressed */
+    QTH_DLG_EV_TEXT,       /* the user changed an edit's (or editable combo's) text */
+    QTH_DLG_EV_SELECT,     /* the user chose a list or combo item: arg is its index */
+    QTH_DLG_EV_DBLCLK,     /* a list item was double clicked */
+    QTH_DLG_EV_FOCUS,      /* the control got the keyboard focus */
+    QTH_DLG_EV_SPIN,       /* arrow pressed: arg is +1 for up, -1 for down */
+    QTH_DLG_EV_HELP,       /* F1 */
+    QTH_DLG_EV_CLOSE       /* closed from the window frame (Escape, the close button): act as Cancel */
+};
+
+typedef void (* QTH_DLG_PROC)(QTH_DIALOG * p_dlg, int event, int id, int arg, void * client);
+
+/* The size in pixels of a quarter of the dialog font's average character width and an eighth of its height
+ * (a horizontal and vertical dialog unit), and the height of the title bar. */
+void qth_dlg_metrics(int32_t * p_four_h_du_px, int32_t * p_eight_v_du_px);
+
+/* The width in pixels of Latin-1 text in the dialog font */
+int32_t qth_dlg_text_width(const uint8_t * p_text, uint32_t n);
+
+/* parent may be NULL. The dialog is not shown until qth_dlg_exec or qth_dlg_show. */
+QTH_DIALOG * qth_dlg_create(QTH_WINDOW * p_parent, const char * p_caption, int width, int height, QTH_DLG_PROC proc, void * client);
+void qth_dlg_destroy(QTH_DIALOG * p_dlg);
+
+void qth_dlg_add(QTH_DIALOG * p_dlg, int kind, int id, int x, int y, int width, int height, int flags, int dropdown_height, const char * p_text);
+
+/* Where the dialog goes, in screen pixels; or at the centre of the screen or of its parent, or by the pointer */
+void qth_dlg_place(QTH_DIALOG * p_dlg, int x, int y);
+void qth_dlg_centre(QTH_DIALOG * p_dlg, int on_parent);
+void qth_dlg_at_pointer(QTH_DIALOG * p_dlg);
+
+/* Modal: shows the dialog and runs the event loop until qth_dlg_end. Modeless: shows it and returns. */
+void qth_dlg_exec(QTH_DIALOG * p_dlg);
+void qth_dlg_show(QTH_DIALOG * p_dlg);
+void qth_dlg_end(QTH_DIALOG * p_dlg);
+
+void qth_dlg_set_text(QTH_DIALOG * p_dlg, int id, const char * p_text);
+/* Returns the length of the text, which is truncated to fit if n is too small to hold it with its terminator */
+int  qth_dlg_get_text(QTH_DIALOG * p_dlg, int id, char * p_buf, int n);
+void qth_dlg_set_check(QTH_DIALOG * p_dlg, int id, int state); /* 0 off, 1 on, 2 don't care */
+void qth_dlg_set_enabled(QTH_DIALOG * p_dlg, int id, int enabled);
+void qth_dlg_set_focus(QTH_DIALOG * p_dlg, int id);
+void qth_dlg_set_default(QTH_DIALOG * p_dlg, int id);
+void qth_dlg_select_all(QTH_DIALOG * p_dlg, int id);
+
+void qth_dlg_list_clear(QTH_DIALOG * p_dlg, int id);
+void qth_dlg_list_add(QTH_DIALOG * p_dlg, int id, const char * p_text);
+void qth_dlg_list_set_tab(QTH_DIALOG * p_dlg, int id, int pixels);
+void qth_dlg_list_set_sel(QTH_DIALOG * p_dlg, int id, int index); /* -1 for none */
+int  qth_dlg_list_get_sel(QTH_DIALOG * p_dlg, int id);            /* -1 for none */
+
 /* Deliver the events that are waiting and return non-zero if there were any. If there are none, wait
  * for one for up to wait_ms milliseconds (0 is not at all, -1 is as long as it takes). */
 int qth_process_events(int wait_ms);

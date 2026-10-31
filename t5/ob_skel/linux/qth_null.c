@@ -95,6 +95,44 @@ qth_font_text_width(const QTH_FONT * p_font, const uint8_t * p_latin1, uint32_t 
     return((int32_t) ((p_font->size_x / 2) * (int32_t) n));
 }
 
+
+/* ---- Dialog boxes: nothing is shown, and a modal dialog is over as soon as it starts ---- */
+
+struct QTH_DIALOG { int dummy; };
+
+void qth_dlg_metrics(int32_t * p_four_h_du_px, int32_t * p_eight_v_du_px) { *p_four_h_du_px = 6; *p_eight_v_du_px = 13; }
+
+int32_t qth_dlg_text_width(const uint8_t * p_text, uint32_t n) { (void) p_text; return((int32_t) (n * 6)); }
+
+QTH_DIALOG * qth_dlg_create(QTH_WINDOW * p_parent, const char * p_caption, int width, int height, QTH_DLG_PROC proc, void * client)
+{
+    QTH_DIALOG * p_dlg = (QTH_DIALOG *) calloc(1, sizeof(*p_dlg));
+    (void) p_parent; (void) p_caption; (void) width; (void) height; (void) proc; (void) client;
+    return(p_dlg);
+}
+
+void qth_dlg_destroy(QTH_DIALOG * p_dlg) { free(p_dlg); }
+void qth_dlg_add(QTH_DIALOG * p_dlg, int kind, int id, int x, int y, int width, int height, int flags, int dropdown_height, const char * p_text)
+{ (void) p_dlg; (void) kind; (void) id; (void) x; (void) y; (void) width; (void) height; (void) flags; (void) dropdown_height; (void) p_text; }
+void qth_dlg_place(QTH_DIALOG * p_dlg, int x, int y) { (void) p_dlg; (void) x; (void) y; }
+void qth_dlg_centre(QTH_DIALOG * p_dlg, int on_parent) { (void) p_dlg; (void) on_parent; }
+void qth_dlg_at_pointer(QTH_DIALOG * p_dlg) { (void) p_dlg; }
+void qth_dlg_exec(QTH_DIALOG * p_dlg) { (void) p_dlg; }
+void qth_dlg_show(QTH_DIALOG * p_dlg) { (void) p_dlg; }
+void qth_dlg_end(QTH_DIALOG * p_dlg) { (void) p_dlg; }
+void qth_dlg_set_text(QTH_DIALOG * p_dlg, int id, const char * p_text) { (void) p_dlg; (void) id; (void) p_text; }
+int  qth_dlg_get_text(QTH_DIALOG * p_dlg, int id, char * p_buf, int n) { (void) p_dlg; (void) id; if(n > 0) p_buf[0] = 0; return(0); }
+void qth_dlg_set_check(QTH_DIALOG * p_dlg, int id, int state) { (void) p_dlg; (void) id; (void) state; }
+void qth_dlg_set_enabled(QTH_DIALOG * p_dlg, int id, int enabled) { (void) p_dlg; (void) id; (void) enabled; }
+void qth_dlg_set_focus(QTH_DIALOG * p_dlg, int id) { (void) p_dlg; (void) id; }
+void qth_dlg_set_default(QTH_DIALOG * p_dlg, int id) { (void) p_dlg; (void) id; }
+void qth_dlg_select_all(QTH_DIALOG * p_dlg, int id) { (void) p_dlg; (void) id; }
+void qth_dlg_list_clear(QTH_DIALOG * p_dlg, int id) { (void) p_dlg; (void) id; }
+void qth_dlg_list_add(QTH_DIALOG * p_dlg, int id, const char * p_text) { (void) p_dlg; (void) id; (void) p_text; }
+void qth_dlg_list_set_tab(QTH_DIALOG * p_dlg, int id, int pixels) { (void) p_dlg; (void) id; (void) pixels; }
+void qth_dlg_list_set_sel(QTH_DIALOG * p_dlg, int id, int index) { (void) p_dlg; (void) id; (void) index; }
+int  qth_dlg_list_get_sel(QTH_DIALOG * p_dlg, int id) { (void) p_dlg; (void) id; return(-1); }
+
 /* end of qth_null.c */
 
 /* ---- Painting, images, windows ---------------------------------------------- */

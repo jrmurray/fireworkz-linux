@@ -547,7 +547,7 @@ dialog_ss_name_intro_process_start(
     return(ui_dlg_set_list_idx(p_dialog_msg_process_start->h_dialog, SS_NAME_INTRO_ID_LIST, p_ss_name_intro_callback->selected_ss_name));
 }
 
-#if WINDOWS
+#if WINDOWS || LINUX
 
 _Check_return_
 static STATUS
@@ -623,7 +623,7 @@ PROC_DIALOG_EVENT_PROTO(static, dialog_event_ss_name_intro)
     case DIALOG_MSG_CODE_PROCESS_START:
         return(dialog_ss_name_intro_process_start((PC_DIALOG_MSG_PROCESS_START) p_data));
 
-#if WINDOWS
+#if WINDOWS || LINUX
     case DIALOG_MSG_CODE_CTL_PUSHBUTTON:
         return(dialog_ss_name_intro_ctl_pushbutton(p_docu, (P_DIALOG_MSG_CTL_PUSHBUTTON) p_data));
 #endif

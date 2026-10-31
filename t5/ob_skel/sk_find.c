@@ -309,7 +309,7 @@ static const DIALOG_CONTROL
 search_intro_from_top =
 {
     SEARCH_INTRO_ID_FROM_TOP, DIALOG_CONTROL_WINDOW,
-#if WINDOWS /* 'From top' is between 'From caret' and Cancel */
+#if WINDOWS || LINUX /* 'From top' is between 'From caret' and Cancel */
     { DIALOG_CONTROL_SELF, SEARCH_INTRO_ID_FROM_CARET, IDCANCEL, SEARCH_INTRO_ID_FROM_CARET },
     { DIALOG_CONTENTS_CALC, -DIALOG_DEFPUSHEXTRA_V, DIALOG_STDSPACING_H, -DIALOG_DEFPUSHEXTRA_V },
     { DRT(RTLB, PUSHBUTTON), 1 /*tabstop*/ }
@@ -331,7 +331,7 @@ static const DIALOG_CONTROL
 search_intro_from_caret =
 {
     SEARCH_INTRO_ID_FROM_CARET, DIALOG_CONTROL_WINDOW,
-#if WINDOWS /* 'From Caret' is the bottom leftmost button */
+#if WINDOWS || LINUX /* 'From Caret' is the bottom leftmost button */
     { DIALOG_CONTROL_SELF, DIALOG_MAIN_GROUP, SEARCH_INTRO_ID_FROM_TOP },
     { DIALOG_CONTENTS_CALC, DIALOG_STDSPACING_V, DIALOG_STDSPACING_H, DIALOG_DEFPUSHBUTTON_V },
     { DRT(RBLT, PUSHBUTTON), 1 /*tabstop*/ }
@@ -349,7 +349,7 @@ static const DIALOG_CONTROL
 search_intro_cancel =
 {
     IDCANCEL, DIALOG_CONTROL_WINDOW,
-#if WINDOWS /* Cancel is the bottom rightmost button */
+#if WINDOWS || LINUX /* Cancel is the bottom rightmost button */
     { DIALOG_CONTROL_SELF, IDOK, DIALOG_MAIN_GROUP, IDOK },
     { DIALOG_STDCANCEL_H, DIALOG_DEFPUSHEXTRA_V, 0, -DIALOG_DEFPUSHEXTRA_V },
     { DRT(RTRB, PUSHBUTTON), 1 /*tabstop*/ }

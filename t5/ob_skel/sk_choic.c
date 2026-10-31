@@ -855,6 +855,8 @@ choices_main_status_line =
     { CHOICES_MAIN_ID_KERNING, CHOICES_MAIN_ID_KERNING },
 #elif WINDOWS
     { CHOICES_MAIN_ID_DITHERING, CHOICES_MAIN_ID_DITHERING },
+#elif LINUX /* there is no dithering to choose, so follow the last control before it */
+    { CHOICES_MAIN_ID_ASCII_LOAD_AS_PARAGRAPHS, CHOICES_MAIN_ID_ASCII_LOAD_AS_PARAGRAPHS },
 #endif
     { 0, DIALOG_STDSPACING_V, DIALOG_CONTENTS_CALC, DIALOG_STDCHECK_V },
     { DRT(LBLT, CHECKBOX), 1 /*tabstop*/ }
@@ -945,7 +947,7 @@ static const DIALOG_CONTROL
 choices_apply =
 {
     IDOK, DIALOG_CONTROL_WINDOW,
-#if WINDOWS /* 'Apply' is the bottom leftmost button */
+#if WINDOWS || LINUX /* 'Apply' is the bottom leftmost button */
     { DIALOG_CONTROL_SELF, DIALOG_MAIN_GROUP, CHOICES_ID_SAVE },
     { DIALOG_STDPUSHBUTTON_H, DIALOG_STDSPACING_V, DIALOG_STDSPACING_H, DIALOG_DEFPUSHBUTTON_V },
     { DRT(RBLT, PUSHBUTTON), 1 /*tabstop*/ }
@@ -962,7 +964,7 @@ static const DIALOG_CONTROL
 choices_save =
 {
     CHOICES_ID_SAVE, DIALOG_CONTROL_WINDOW,
-#if WINDOWS /* 'Save' is between 'Apply' and Cancel */
+#if WINDOWS || LINUX /* 'Save' is between 'Apply' and Cancel */
     { DIALOG_CONTROL_SELF, IDOK, IDCANCEL, IDOK },
     { DIALOG_STDPUSHBUTTON_H, -DIALOG_DEFPUSHEXTRA_V, DIALOG_STDSPACING_H, -DIALOG_DEFPUSHEXTRA_V },
     { DRT(RTLB, PUSHBUTTON), 1 /*tabstop*/ }
@@ -982,7 +984,7 @@ static const DIALOG_CONTROL
 choices_cancel =
 {
     IDCANCEL, DIALOG_CONTROL_WINDOW,
-#if WINDOWS /* Cancel is the bottom rightmost button */
+#if WINDOWS || LINUX /* Cancel is the bottom rightmost button */
     { DIALOG_CONTROL_SELF, IDOK, DIALOG_MAIN_GROUP, IDOK },
     { DIALOG_STDCANCEL_H, DIALOG_DEFPUSHEXTRA_V, 0, -DIALOG_DEFPUSHEXTRA_V },
     { DRT(RTRB, PUSHBUTTON), 1 /*tabstop*/ }

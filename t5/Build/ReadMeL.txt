@@ -176,9 +176,23 @@ Milestone 4 - DONE (first light): the application runs
       The default Choices (which say which tools the toolbar has) are staged from the RISC OS set
       into build/Resources/Choices as ChoiceNN.txt.
 
+    Dialogs: done (first cut)
+      ob_dlg/li_dlg.c builds each dialog as a Qt dialog (qth_dlg_* in qt_host.h, implemented in
+                     qt/qth_qt.cpp) from the engine's DIALOG_CONTROL tables, as wi_dlg.c does with a
+                     Windows dialog template; the widgets' events go back to the same engine entry
+                     points the Windows messages do. Sizes use the Windows dialog units, measured in
+                     the desktop's font. A spin control is one widget (edit plus arrows).
+      Menu items are reached without a keyboard for tests with FIREWORKZ_TEST_MENU="Page>Paper..."
+      (with FIREWORKZ_SCREENSHOT): app_smoke does this and checks that the dialog appears.
+      Tables that give a layout only for RISC OS and Windows had to be widened to Linux
+      (ui_data.c, sk_choic.c, sk_find.c, ui_styl2.c, ...): a dialog that loops forever laying itself
+      out, or crashes on the first run, has probably missed one. Other dialogs have not all been
+      looked at yet.
+
     What does not work yet (each is marked TODO where it lives):
-      dialogs                       the dialog engine's Qt side (li_dlg.c) has only measuring,
-                                    so any menu item or button that opens a dialog does nothing
+      picture controls in dialogs   push, radio and check pictures and user-drawn controls
+                                    (QTH_DLG_BLANK) are not drawn yet, e.g. the Box dialog's border buttons
+      help from dialogs             dialog_windows_help() does nothing
       key shortcuts shown in menus  informational only: no QShortcut is bound (the skeleton maps keys)
       tooltips, the lower status line, the tool tip hover look
       Save As / Open / Print        windows_save_as(), file open, printing, print preview
@@ -203,8 +217,8 @@ Next milestones
 
 3. Skeleton and 4. Objects: done (see Milestone 3 and 4 above).
 
-5. Make it a usable application: the menu bar and toolbar, the dialog engine in Qt, Open and
-   Save As with KDE file dialogs, the clipboard, printing, Draw file rendering.
+5. Make it a usable application: (menu bar, toolbar and dialogs are done) picture controls in dialogs,
+   Open and Save As with KDE file dialogs, the clipboard, printing, Draw file rendering.
 
 6. Desktop integration: .desktop file, icons, MIME types for Fireworkz documents.
 

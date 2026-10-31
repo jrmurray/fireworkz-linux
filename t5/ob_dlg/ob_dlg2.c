@@ -354,7 +354,7 @@ dialog_click_pushbutton(
     }
     } /*block*/
 
-#if WINDOWS
+#if WINDOWS || LINUX
     if((NULL != p_dialog) && p_dialog_ictl->p_dialog_control_data.pushbutton->push_xx.help_id_offset)
         return(dialog_windows_help(p_dialog));
 #endif
@@ -1510,6 +1510,8 @@ dialog_cmd_complete_dbox(
 
         EndDialog(p_dialog->hwnd, TRUE);
     }
+#elif LINUX
+    dialog_linux_end(p_dialog);
 #endif
 
     return(STATUS_OK);
@@ -1579,6 +1581,8 @@ dialog_dbox_dispose(
     }
 
     al_array_dispose(&p_dialog->windows.h_windows_ctl_map);
+#elif LINUX
+    dialog_linux_dispose(p_dialog);
 #endif
 
     /* send a MSG_DISPOSE iff MSG_CREATE sent */
@@ -2173,7 +2177,7 @@ T5_MSG_PROTO(extern, dialog_dbox_process, P_DIALOG_CMD_PROCESS_DBOX p_dialog_cmd
 
 #if RISCOS
         status = dialog_dbox_process_riscos(p_dialog, p_dialog_cmd_process_dbox, &pixit_rect);
-#elif WINDOWS
+#elif WINDOWS || LINUX
         status = dialog_dbox_process_windows(p_dialog, p_dialog_cmd_process_dbox, &pixit_rect);
 #endif
 
