@@ -299,6 +299,15 @@ dialog_linux_ictl_encode_here(
         break;
 #endif
 
+    case DIALOG_CONTROL_RADIOPICTURE:
+    case DIALOG_CONTROL_CHECKPICTURE:
+#ifdef DIALOG_HAS_TRISTATE
+    case DIALOG_CONTROL_TRIPICTURE:
+#endif
+    case DIALOG_CONTROL_USER:
+        qth_dlg_invalidate(p_dlg, id);
+        break;
+
     case DIALOG_CONTROL_LIST_S32:
     case DIALOG_CONTROL_LIST_TEXT:
         qth_dlg_list_set_sel(p_dlg, id, (p_dialog_ictl->state.list_text.itemno >= 0) ? (int) p_dialog_ictl->state.list_text.itemno : -1);
@@ -309,6 +318,235 @@ dialog_linux_ictl_encode_here(
         qth_dlg_list_set_sel(p_dlg, id, (p_dialog_ictl->state.combo_text.itemno >= 0) ? (int) p_dialog_ictl->state.combo_text.itemno : -1);
         break;
     }
+}
+
+/* ---- drawing the controls the toolkit leaves to us ------------------------------------ */
+
+static const RGB dialog_face_rgb   = RGB_INIT(0xEE, 0xEE, 0xEE);
+static const RGB dialog_light_rgb  = RGB_INIT(0xFF, 0xFF, 0xFF);
+static const RGB dialog_shadow_rgb = RGB_INIT(0x80, 0x80, 0x80);
+
+static QTH_RGB
+qth_rgb_of(const RGB * p_rgb)
+{
+    QTH_RGB qth_rgb;
+    qth_rgb.r = p_rgb->r;
+    qth_rgb.g = p_rgb->g;
+    qth_rgb.b = p_rgb->b;
+    return(qth_rgb);
+}
+
+static void
+dialog_linux_paint_picture(
+    _InoutRef_  P_DIALOG p_dialog,
+    P_DIALOG_ICTL p_dialog_ictl,
+    QTH_PAINTER * p_painter,
+    _InRef_     const QTH_RECT * p_rect)
+{
+    const BOOL enabled = !p_dialog_ictl->bits.disabled;
+    const BOOL pointing = enabled && !p_dialog_ictl->bits.nobbled;
+    BOOL on = FALSE, plain_button = FALSE;
+    RESOURCE_BITMAP_ID resource_bitmap_id;
+    PC_RESOURCE_BITMAP_ID p_resource_bitmap_id = NULL;
+    BOOL sunken, raised;
+    const QTH_RGB face = qth_rgb_of(&dialog_face_rgb);
+    const QTH_RGB light = qth_rgb_of(&dialog_light_rgb);
+    const QTH_RGB shadow = qth_rgb_of(&dialog_shadow_rgb);
+    const QTH_RGB key = { 192, 192, 192 }; /* the colour the pictures use for see-through */
+
+    switch(p_dialog_ictl->dialog_control_type)
+    {
+    case DIALOG_CONTROL_PUSHPICTURE:
+        plain_button = TRUE;
+        resource_bitmap_id = p_dialog_ictl->p_dialog_control_data.pushpicture->picture_bitmap_id;
+        p_resource_bitmap_id = &resource_bitmap_id;
+        break;
+
+    case DIALOG_CONTROL_RADIOPICTURE:
+        on = p_dialog_ictl->bits.radiobutton_active;
+        p_resource_bitmap_id = p_dialog_ictl->p_dialog_control_data.radiopicture->p_bitmap_id_offon;
+        if(on && p_dialog_ictl->p_dialog_control_data.radiopicture->bits.has_n_bmp)
+            p_resource_bitmap_id++;
+        break;
+
+    case DIALOG_CONTROL_CHECKPICTURE:
+        on = (p_dialog_ictl->state.checkbox > 0);
+        p_resource_bitmap_id = p_dialog_ictl->p_dialog_control_data.checkpicture->p_bitmap_id_offon;
+        if(on && p_dialog_ictl->p_dialog_control_data.checkpicture->bits.has_n_bmp)
+            p_resource_bitmap_id++;
+        break;
+
+#ifdef DIALOG_HAS_TRISTATE
+    case DIALOG_CONTROL_TRIPICTURE:
+        on = (p_dialog_ictl->state.tristate != DIALOG_TRISTATE_OFF);
+        p_resource_bitmap_id = p_dialog_ictl->p_dialog_control_data.tripicture->p_bitmap_id_offondontcare;
+        if(p_dialog_ictl->p_dialog_control_data.tripicture->bits.has_n_bmp)
+        {
+            if(p_dialog_ictl->state.tristate == DIALOG_TRISTATE_ON)
+                p_resource_bitmap_id += 1;
+            else if(p_dialog_ictl->state.tristate == DIALOG_TRISTATE_DONT_CARE)
+                p_resource_bitmap_id += 2;
+        }
+        break;
+#endif
+
+    default:
+        break;
+    }
+
+    /* a push picture is always a button; the others are flat until pointed at, and sunken while on */
+    sunken = on || (pointing && p_dialog_ictl->bits.mouse_down);
+    raised = !sunken && (plain_button || (pointing && p_dialog_ictl->bits.mouse_over));
+
+    qth_paint_fill_rect(p_painter, p_rect, face);
+
+    if(sunken || raised)
+    {
+        const QTH_RECT top = { p_rect->left, p_rect->top, p_rect->right, p_rect->top + 1 };
+        const QTH_RECT left = { p_rect->left, p_rect->top, p_rect->left + 1, p_rect->bottom };
+        const QTH_RECT bottom = { p_rect->left, p_rect->bottom - 1, p_rect->right, p_rect->bottom };
+        const QTH_RECT right = { p_rect->right - 1, p_rect->top, p_rect->right, p_rect->bottom };
+
+        qth_paint_fill_rect(p_painter, &top, sunken ? shadow : light);
+        qth_paint_fill_rect(p_painter, &left, sunken ? shadow : light);
+        qth_paint_fill_rect(p_painter, &bottom, sunken ? light : shadow);
+        qth_paint_fill_rect(p_painter, &right, sunken ? light : shadow);
+    }
+
+    if(NULL != p_resource_bitmap_id)
+    {
+        RESOURCE_BITMAP_HANDLE resource_bitmap_handle;
+        GDI_SIZE bm_grid_size, bm_size;
+        UINT index;
+
+        resource_bitmap_id = *p_resource_bitmap_id;
+
+        if(resource_bitmap_find_new(&resource_bitmap_id, &resource_bitmap_handle, &bm_grid_size, &index))
+        {
+            resource_bitmap_gdi_size_query(resource_bitmap_handle, &bm_size);
+
+            if(0 == bm_grid_size.cx)
+                bm_grid_size.cx = bm_size.cx; /* a single picture fills its bitmap unless a strip says otherwise */
+            if(0 == bm_grid_size.cy)
+                bm_grid_size.cy = bm_size.cy;
+
+            {
+            const int shift = sunken ? 1 : 0;
+            const int x = p_rect->left + (((p_rect->right - p_rect->left) - bm_grid_size.cx) / 2) + shift;
+            const int y = p_rect->top + (((p_rect->bottom - p_rect->top) - bm_grid_size.cy) / 2) + shift;
+            const QTH_RECT src = { (int) index * bm_grid_size.cx, 0, ((int) index + 1) * bm_grid_size.cx, bm_grid_size.cy };
+            const QTH_RECT dest = { x, y, x + bm_grid_size.cx, y + bm_grid_size.cy };
+
+            qth_paint_image_part(p_painter, (const QTH_IMAGE *) resource_bitmap_handle.i, &src, &dest, &key, enabled ? 255 : 90);
+            } /*block*/
+
+            resource_bitmap_lose(&resource_bitmap_handle);
+        }
+    }
+}
+
+static void
+dialog_linux_paint_user(
+    _InoutRef_  P_DIALOG p_dialog,
+    P_DIALOG_ICTL p_dialog_ictl,
+    QTH_PAINTER * p_painter,
+    _InRef_     const QTH_RECT * p_rect)
+{
+    PC_RGB p_rgb = p_dialog_ictl->p_dialog_control_data.user->p_back_colour;
+    RGB rgb;
+    P_PROC_DIALOG_EVENT p_proc_client;
+    DIALOG_MSG_CTL_USER_REDRAW dialog_msg_ctl_user_redraw;
+    const QTH_RGB black = { 0, 0, 0 };
+
+    if(NULL != p_rgb)
+        rgb = *p_rgb;
+    else if(p_dialog_ictl->p_dialog_control_data.user->bits.state_is_rgb)
+        rgb = p_dialog_ictl->state.user.rgb;
+    else if(p_dialog_ictl->p_dialog_control_data.user->bits.state_is_rgb_stash_index)
+        rgb = rgb_stash[p_dialog_ictl->state.user.u32];
+    else
+        rgb_set(&rgb, 0xFF, 0xFF, 0xFF);
+
+    if(p_dialog_ictl->bits.disabled)
+    {   /* lighten up a bit: towards white by a third */
+        rgb.r = (U8) (rgb.r + (255 - rgb.r) / 3);
+        rgb.g = (U8) (rgb.g + (255 - rgb.g) / 3);
+        rgb.b = (U8) (rgb.b + (255 - rgb.b) / 3);
+    }
+
+    qth_paint_fill_rect(p_painter, p_rect, qth_rgb_of(&rgb));
+    qth_paint_frame_rect(p_painter, p_rect, black);
+
+    msgclr(dialog_msg_ctl_user_redraw);
+
+    if(NULL != (p_proc_client = dialog_find_handler(p_dialog, p_dialog_ictl->dialog_control_id, &dialog_msg_ctl_user_redraw.client_handle)))
+    {
+        REDRAW_CONTEXT_CACHE redraw_context_cache = { NULL };
+        const P_REDRAW_CONTEXT p_redraw_context = &dialog_msg_ctl_user_redraw.redraw_context;
+        GDI_RECT gdi_rect;
+
+        zero_struct_ptr_fn(p_redraw_context);
+        p_redraw_context->p_redraw_context_cache = &redraw_context_cache;
+
+        p_redraw_context->linux_ctx.painter = p_painter;
+        p_redraw_context->linux_ctx.paint_rect.tl.x = p_rect->left;
+        p_redraw_context->linux_ctx.paint_rect.tl.y = p_rect->top;
+        p_redraw_context->linux_ctx.paint_rect.br.x = p_rect->right;
+        p_redraw_context->linux_ctx.paint_rect.br.y = p_rect->bottom;
+
+        p_redraw_context->host_xform.scale.t.x = 1;
+        p_redraw_context->host_xform.scale.t.y = 1;
+        p_redraw_context->host_xform.scale.b.x = 1;
+        p_redraw_context->host_xform.scale.b.y = 1;
+
+        p_redraw_context->display_mode = DISPLAY_PRINT_AREA;
+
+        if(DOCNO_NONE != p_dialog->docno)
+            p_redraw_context->border_width.x = p_redraw_context->border_width.y = p_docu_from_docno(p_dialog->docno)->page_def.grid_size;
+
+        host_redraw_context_set_host_xform(p_redraw_context, &p_redraw_context->host_xform);
+        host_redraw_context_fillin(p_redraw_context);
+
+        /* no origin worries */
+        host_paint_start(p_redraw_context);
+
+        p_redraw_context->linux_ctx.host_machine_clip_rect = p_redraw_context->linux_ctx.paint_rect;
+
+        DIALOG_MSG_CTL_HDR_from_dialog_ictl(dialog_msg_ctl_user_redraw, p_dialog, p_dialog_ictl);
+
+        gdi_rect = p_redraw_context->linux_ctx.paint_rect;
+        pixit_rect_from_window_rect(&dialog_msg_ctl_user_redraw.control_inner_box, &gdi_rect, &p_redraw_context->host_xform);
+
+        dialog_msg_ctl_user_redraw.enabled = !p_dialog_ictl->bits.disabled;
+
+        status_assert(dialog_call_client(p_dialog, DIALOG_MSG_CODE_CTL_USER_REDRAW, &dialog_msg_ctl_user_redraw, p_proc_client));
+
+        host_paint_end(p_redraw_context);
+    }
+}
+
+static void
+dialog_linux_paint(
+    _InoutRef_  P_DIALOG p_dialog,
+    P_DIALOG_ICTL p_dialog_ictl)
+{
+    QTH_PAINTER * const p_painter = qth_dlg_painter(p_dialog->lx.p_dlg);
+    QTH_RECT rect;
+    int32_t width, height;
+
+    if(NULL == p_painter)
+        return;
+
+    qth_dlg_ctl_size(p_dialog->lx.p_dlg, (int) p_dialog_ictl->dialog_control_id, &width, &height);
+    rect.left = 0;
+    rect.top = 0;
+    rect.right = width;
+    rect.bottom = height;
+
+    if(p_dialog_ictl->dialog_control_type == DIALOG_CONTROL_USER)
+        dialog_linux_paint_user(p_dialog, p_dialog_ictl, p_painter, &rect);
+    else
+        dialog_linux_paint_picture(p_dialog, p_dialog_ictl, p_painter, &rect);
 }
 
 /* the text of an edit, spin or combo control */
@@ -471,6 +709,22 @@ dialog_linux_event(
     if(NULL == (p_dialog_ictl = p_dialog_ictl_from_control_id(p_dialog, (DIALOG_CONTROL_ID) id)))
         return;
 
+    if(event == QTH_DLG_EV_PAINT)
+    {
+        dialog_linux_paint(p_dialog, p_dialog_ictl);
+        return;
+    }
+
+    if((event == QTH_DLG_EV_HOVER) || (event == QTH_DLG_EV_PRESS))
+    {   /* the look of a picture button follows the pointer */
+        if(event == QTH_DLG_EV_HOVER)
+            p_dialog_ictl->bits.mouse_over = (0 != arg);
+        else
+            p_dialog_ictl->bits.mouse_down = (0 != arg);
+        qth_dlg_invalidate(p_dialog->lx.p_dlg, id);
+        return;
+    }
+
     if(event == QTH_DLG_EV_FOCUS)
     {
         p_dialog->current_dialog_control_id = p_dialog_ictl->dialog_control_id;
@@ -483,22 +737,42 @@ dialog_linux_event(
         break;
 
     case DIALOG_CONTROL_PUSHBUTTON:
+    case DIALOG_CONTROL_PUSHPICTURE:
         if((event == QTH_DLG_EV_CLICK) && !p_dialog_ictl->bits.nobbled)
             status_assert(status = dialog_click_pushbutton(p_dialog, p_dialog_ictl, 0 != (qth_keyboard_modifiers() & QTH_MOD_CTRL), 0));
         break;
 
+    case DIALOG_CONTROL_USER:
+        if(event == QTH_DLG_EV_CLICK)
+        {
+            P_PROC_DIALOG_EVENT p_proc_client;
+            DIALOG_MSG_CTL_USER_MOUSE dialog_msg_ctl_user_mouse;
+            msgclr(dialog_msg_ctl_user_mouse);
+
+            if(NULL != (p_proc_client = dialog_find_handler(p_dialog, p_dialog_ictl->dialog_control_id, &dialog_msg_ctl_user_mouse.client_handle)))
+            {
+                DIALOG_MSG_CTL_HDR_from_dialog_ictl(dialog_msg_ctl_user_mouse, p_dialog, p_dialog_ictl);
+                dialog_msg_ctl_user_mouse.click = (arg == 1) ? DIALOG_MSG_USER_MOUSE_CLICK_RIGHT_SINGLE : DIALOG_MSG_USER_MOUSE_CLICK_LEFT_SINGLE;
+                status_assert(status = dialog_call_client(p_dialog, DIALOG_MSG_CODE_CTL_USER_MOUSE, &dialog_msg_ctl_user_mouse, p_proc_client));
+            }
+        }
+        break;
+
     case DIALOG_CONTROL_RADIOBUTTON:
+    case DIALOG_CONTROL_RADIOPICTURE:
         if((event == QTH_DLG_EV_CLICK) && !p_dialog_ictl->bits.nobbled)
             status_assert(status = dialog_click_radiobutton(p_dialog, p_dialog_ictl));
         break;
 
     case DIALOG_CONTROL_CHECKBOX:
+    case DIALOG_CONTROL_CHECKPICTURE:
         if((event == QTH_DLG_EV_CLICK) && !p_dialog_ictl->bits.nobbled)
             status_assert(status = dialog_click_checkbox(p_dialog, p_dialog_ictl));
         break;
 
 #ifdef DIALOG_HAS_TRISTATE
     case DIALOG_CONTROL_TRISTATE:
+    case DIALOG_CONTROL_TRIPICTURE:
         if((event == QTH_DLG_EV_CLICK) && !p_dialog_ictl->bits.nobbled)
             status_assert(status = dialog_click_tristate(p_dialog, p_dialog_ictl));
         break;

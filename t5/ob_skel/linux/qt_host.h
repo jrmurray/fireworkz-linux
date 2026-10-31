@@ -351,7 +351,8 @@ enum QTH_DLG_KIND
     QTH_DLG_SPIN,        /* an edit with up and down arrows beside it */
     QTH_DLG_LIST,
     QTH_DLG_COMBO,       /* QTH_DLGF_READONLY makes it a drop-down list only; dropdown_height is the drop-down's depth */
-    QTH_DLG_BLANK        /* nothing drawn: owner-drawn controls, not yet supported */
+    QTH_DLG_BLANK        /* drawn by the caller on QTH_DLG_EV_PAINT; a click sends QTH_DLG_EV_CLICK, arg 0 for the
+                          * left button and 1 for the right */
 };
 
 enum
@@ -373,7 +374,10 @@ enum
     QTH_DLG_EV_FOCUS,      /* the control got the keyboard focus */
     QTH_DLG_EV_SPIN,       /* arrow pressed: arg is +1 for up, -1 for down */
     QTH_DLG_EV_HELP,       /* F1 */
-    QTH_DLG_EV_CLOSE       /* closed from the window frame (Escape, the close button): act as Cancel */
+    QTH_DLG_EV_CLOSE,      /* closed from the window frame (Escape, the close button): act as Cancel */
+    QTH_DLG_EV_PAINT,      /* a QTH_DLG_BLANK control wants drawing: use qth_dlg_painter() */
+    QTH_DLG_EV_HOVER,      /* the pointer entered (arg 1) or left (arg 0) a blank control */
+    QTH_DLG_EV_PRESS       /* a mouse button went down (arg 1) or up (arg 0) on a blank control */
 };
 
 typedef void (* QTH_DLG_PROC)(QTH_DIALOG * p_dlg, int event, int id, int arg, void * client);
@@ -409,6 +413,11 @@ void qth_dlg_set_enabled(QTH_DIALOG * p_dlg, int id, int enabled);
 void qth_dlg_set_focus(QTH_DIALOG * p_dlg, int id);
 void qth_dlg_set_default(QTH_DIALOG * p_dlg, int id);
 void qth_dlg_select_all(QTH_DIALOG * p_dlg, int id);
+
+/* The painter for the control being drawn, with the origin at its top left; only valid during QTH_DLG_EV_PAINT */
+QTH_PAINTER * qth_dlg_painter(QTH_DIALOG * p_dlg);
+void qth_dlg_ctl_size(QTH_DIALOG * p_dlg, int id, int32_t * p_width, int32_t * p_height);
+void qth_dlg_invalidate(QTH_DIALOG * p_dlg, int id);
 
 void qth_dlg_list_clear(QTH_DIALOG * p_dlg, int id);
 void qth_dlg_list_add(QTH_DIALOG * p_dlg, int id, const char * p_text);

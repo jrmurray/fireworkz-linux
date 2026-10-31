@@ -190,8 +190,9 @@ Milestone 4 - DONE (first light): the application runs
       looked at yet.
 
     What does not work yet (each is marked TODO where it lives):
-      picture controls in dialogs   push, radio and check pictures and user-drawn controls
-                                    (QTH_DLG_BLANK) are not drawn yet, e.g. the Box dialog's border buttons
+      picture controls: drawn (QTH_DLG_BLANK canvases, painted by li_dlg.c from the resource bitmaps,
+                                    colour swatches and other user controls through the redraw context)
+                                    but only looked at, not clicked: hover/press/click are wired up untested
       help from dialogs             dialog_windows_help() does nothing
       key shortcuts shown in menus  informational only: no QShortcut is bound (the skeleton maps keys)
       tooltips, the lower status line, the tool tip hover look

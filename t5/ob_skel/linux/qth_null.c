@@ -127,6 +127,9 @@ void qth_dlg_set_enabled(QTH_DIALOG * p_dlg, int id, int enabled) { (void) p_dlg
 void qth_dlg_set_focus(QTH_DIALOG * p_dlg, int id) { (void) p_dlg; (void) id; }
 void qth_dlg_set_default(QTH_DIALOG * p_dlg, int id) { (void) p_dlg; (void) id; }
 void qth_dlg_select_all(QTH_DIALOG * p_dlg, int id) { (void) p_dlg; (void) id; }
+QTH_PAINTER * qth_dlg_painter(QTH_DIALOG * p_dlg) { (void) p_dlg; return(NULL); }
+void qth_dlg_ctl_size(QTH_DIALOG * p_dlg, int id, int32_t * p_width, int32_t * p_height) { (void) p_dlg; (void) id; *p_width = 0; *p_height = 0; }
+void qth_dlg_invalidate(QTH_DIALOG * p_dlg, int id) { (void) p_dlg; (void) id; }
 void qth_dlg_list_clear(QTH_DIALOG * p_dlg, int id) { (void) p_dlg; (void) id; }
 void qth_dlg_list_add(QTH_DIALOG * p_dlg, int id, const char * p_text) { (void) p_dlg; (void) id; (void) p_text; }
 void qth_dlg_list_set_tab(QTH_DIALOG * p_dlg, int id, int pixels) { (void) p_dlg; (void) id; (void) pixels; }

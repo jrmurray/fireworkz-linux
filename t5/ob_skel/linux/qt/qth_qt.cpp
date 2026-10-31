@@ -38,6 +38,7 @@
 #include <QMainWindow>
 #include <QMenu>
 #include <QMenuBar>
+#include <QEnterEvent>
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
@@ -1312,6 +1313,7 @@ struct QTH_DIALOG : public QDialog
     void * client = nullptr;
     std::map<int, DLG_CTL> ctls;
     std::map<int, TabDelegate *> delegates;
+    QTH_PAINTER * p_painter = nullptr; /* during a blank control's paint */
     DLG_PLACE place = DLG_PLACE_DEFAULT;
     int place_x = 0, place_y = 0;
     bool parented = false;
@@ -1387,6 +1389,57 @@ text_without_hot_key(const QString & text)
 
     return(out);
 }
+
+/* A control the caller draws: it is told when to paint, when the pointer comes and goes, and about clicks */
+class CanvasWidget : public QWidget
+{
+public:
+    CanvasWidget(QTH_DIALOG * p_dlg, int id) : QWidget(p_dlg), p_dlg(p_dlg), id(id)
+    {
+        setAttribute(Qt::WA_OpaquePaintEvent);
+        setFocusPolicy(Qt::NoFocus);
+    }
+
+protected:
+    void paintEvent(QPaintEvent *) override
+    {
+        QPainter painter(this);
+        QTH_PAINTER qth_painter = { &painter };
+
+        p_dlg->p_painter = &qth_painter;
+        p_dlg->send(QTH_DLG_EV_PAINT, id, 0);
+        p_dlg->p_painter = nullptr;
+    }
+
+    void enterEvent(QEnterEvent *) override { p_dlg->send(QTH_DLG_EV_HOVER, id, 1); }
+    void leaveEvent(QEvent *) override { p_dlg->send(QTH_DLG_EV_HOVER, id, 0); }
+
+    void mousePressEvent(QMouseEvent * p_event) override
+    {
+        if((p_event->button() == Qt::LeftButton) || (p_event->button() == Qt::RightButton))
+        {
+            button = p_event->button();
+            p_dlg->send(QTH_DLG_EV_PRESS, id, 1);
+        }
+    }
+
+    void mouseReleaseEvent(QMouseEvent * p_event) override
+    {
+        if(p_event->button() != button)
+            return;
+
+        button = Qt::NoButton;
+        p_dlg->send(QTH_DLG_EV_PRESS, id, 0);
+
+        if(rect().contains(p_event->position().toPoint()))
+            p_dlg->send(QTH_DLG_EV_CLICK, id, (p_event->button() == Qt::RightButton) ? 1 : 0);
+    }
+
+private:
+    QTH_DIALOG * p_dlg;
+    int id;
+    Qt::MouseButton button = Qt::NoButton;
+};
 
 static DLG_CTL *
 dlg_ctl(QTH_DIALOG * p_dlg, int id)
@@ -1572,7 +1625,7 @@ qth_dlg_add(QTH_DIALOG * p_dlg, int kind, int id, int x, int y, int width, int h
 
     default:
     case QTH_DLG_BLANK:
-        p_widget = new QWidget(p_dlg);
+        p_widget = new CanvasWidget(p_dlg, id);
         break;
     }
 
@@ -1801,7 +1854,34 @@ qth_dlg_set_enabled(QTH_DIALOG * p_dlg, int id, int enabled)
     DLG_CTL * c = dlg_ctl(p_dlg, id);
 
     if(nullptr != c)
+    {
         c->p_widget->setEnabled(0 != enabled);
+        c->p_widget->update(); /* a blank control draws its own disabled look */
+    }
+}
+
+extern "C" QTH_PAINTER *
+qth_dlg_painter(QTH_DIALOG * p_dlg)
+{
+    return(p_dlg->p_painter);
+}
+
+extern "C" void
+qth_dlg_ctl_size(QTH_DIALOG * p_dlg, int id, int32_t * p_width, int32_t * p_height)
+{
+    DLG_CTL * c = dlg_ctl(p_dlg, id);
+
+    *p_width = (nullptr != c) ? c->p_widget->width() : 0;
+    *p_height = (nullptr != c) ? c->p_widget->height() : 0;
+}
+
+extern "C" void
+qth_dlg_invalidate(QTH_DIALOG * p_dlg, int id)
+{
+    DLG_CTL * c = dlg_ctl(p_dlg, id);
+
+    if(nullptr != c)
+        c->p_widget->update();
 }
 
 extern "C" void
