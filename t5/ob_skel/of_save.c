@@ -674,6 +674,8 @@ ownform_save_arglist(
                 break;
 
             --n_args; /* that one was trimmed */
+            if(0 == n_args) /* nothing left to look at: on 64-bit, p_args[-1] below would be 4GB out */
+                break;
         }
     }
 

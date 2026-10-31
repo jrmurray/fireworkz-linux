@@ -383,7 +383,7 @@ skel_controls_msg_init2(
     {
         USTR_TEXT("VIEW"),
         USTR_TEXT("NEW"),
-#if WINDOWS
+#if WINDOWS || LINUX
         USTR_TEXT("OPEN"),
 #endif
         USTR_TEXT("SAVE"),

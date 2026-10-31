@@ -78,13 +78,13 @@
 #define RISCOS_ONLY_ARG(arg)    /* arg omitted in other targets */
 #endif
 
-#if WINDOWS
+#if WINDOWS || LINUX
 #define WINDOWS_ONLY(stmt)      stmt
 #else
 #define WINDOWS_ONLY(stmt)      /* stmt omitted in other targets */
 #endif
 
-#if WINDOWS
+#if WINDOWS || LINUX
 #define WINDOWS_ONLY_ARG(arg)   , arg
 #else
 #define WINDOWS_ONLY_ARG(arg)   /* arg omitted in other targets */

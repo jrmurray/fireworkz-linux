@@ -23,6 +23,10 @@
 #include "ob_skel/xp_skeld.h"
 #endif
 
+#if LINUX
+#include "ob_skel/linux/qt_host.h"
+#endif
+
 #if RISCOS
 #define EXPOSE_RISCOS_SWIS 1
 
@@ -108,7 +112,7 @@ typedef struct SAVE_CALLBACK
     HWND            hdlg; /* valid after CDN_INITDONE in SaveFileHook */ /* handle to child dialog window NOT the 'Save As' window!!! */
 #endif
 
-#if WINDOWS
+#if WINDOWS || LINUX
     UI_TEXT         initial_directory;
 #endif
     UI_TEXT         initial_filename;
@@ -117,7 +121,7 @@ typedef struct SAVE_CALLBACK
     STATUS          filename_edited;
 
     ARRAY_HANDLE    h_save_filetype; /* SAVE_FILETYPE[] */
-#if WINDOWS
+#if WINDOWS || LINUX
     ARRAY_HANDLE    h_save_filetype_filters; /* SAVE_FILETYPE[] */
 #endif
 
@@ -214,23 +218,6 @@ windows_save_as(
 
 #endif /* OS */
 
-#if LINUX
-
-/* TODO: a QFileDialog whose result goes to proc_save_common(), as the Windows common dialog does */
-
-_Check_return_
-extern STATUS
-windows_save_as(
-    _DocuRef_   P_DOCU p_docu,
-    _InoutRef_  P_SAVE_CALLBACK p_save_callback)
-{
-    UNREFERENCED_PARAMETER_DocuRef_(p_docu);
-    UNREFERENCED_PARAMETER_InoutRef_(p_save_callback);
-
-    return(STATUS_FAIL);
-}
-
-#endif /* LINUX */
 
 #if RISCOS || !defined(WINDOWS_SAVE_AS)
 static
@@ -2089,7 +2076,7 @@ cmd_save_as_hybrid_draw_intro_dialog(
 
 #endif /* RISCOS */
 
-#if WINDOWS
+#if WINDOWS || LINUX
 
 static void
 cmd_save_as_intro_init_set_initial_directory(
@@ -2810,7 +2797,7 @@ cmd_save_as_foreign_intro_finalise(
     al_array_dispose(&p_save_callback->h_save_filetype);
 }
 
-#if WINDOWS
+#if WINDOWS || LINUX
 
 static void
 cmd_save_as_foreign_intro_set_initial_directory(
@@ -3126,7 +3113,7 @@ cmd_save_picture_intro_dialog(
 SAVE PICTURE - INTRO CMD
 */
 
-#if WINDOWS
+#if WINDOWS || LINUX
 
 static void
 cmd_save_picture_intro_init_set_initial_directory(
@@ -3442,7 +3429,7 @@ locate_copy_of_dir_template(
     return(status);
 }
 
-#if WINDOWS
+#if WINDOWS || LINUX
 
 /*
 WINDOWS SAVE AS - INTRO CMD HELPERS
@@ -3473,6 +3460,10 @@ default_extension_from_save_callback(
         return(TEXT("txt"));
     }
 }
+
+#endif /* WINDOWS || LINUX */
+
+#if WINDOWS
 
 static void
 windows_save_as_set_dirname(
@@ -4253,6 +4244,153 @@ windows_save_as(
 }
 
 #endif /* WINDOWS */
+
+#if LINUX
+
+/*
+LINUX SAVE AS - the desktop's file chooser, then on to proc_save_common() as the Windows common dialog does
+*/
+
+static void
+linux_save_as_set_dirname(
+    _Out_writes_z_(elemof_buffer) PTSTR szDirName,
+    _InVal_     U32 elemof_buffer,
+    _InRef_     P_SAVE_CALLBACK p_save_callback)
+{
+    if(!ui_text_is_blank(&p_save_callback->initial_directory))
+    {
+        tstr_xstrkpy(szDirName, elemof_buffer, ui_text_tstr(&p_save_callback->initial_directory));
+    }
+    else
+    {
+        const char * p_home = getenv("HOME");
+        tstr_xstrkpy(szDirName, elemof_buffer, (NULL != p_home) ? p_home : TEXT("/"));
+    }
+}
+
+_Check_return_
+extern STATUS
+windows_save_as(
+    _DocuRef_   P_DOCU p_docu,
+    _InoutRef_  P_SAVE_CALLBACK p_save_callback)
+{
+    TCHARZ szDirName[BUF_MAX_PATHSTRING];
+    TCHARZ szFile[BUF_MAX_PATHSTRING];
+    TCHARZ szDialogTitle[128];
+    const S32 filter_mask = (SAVING_PICTURE == p_save_callback->saving) ? BOUND_FILETYPE_WRITE_PICT : BOUND_FILETYPE_WRITE;
+    enum { N_FILTERS_MAX = 64 };
+    PCTSTR filter_texts[N_FILTERS_MAX];
+    PCTSTR filter_wildcards[N_FILTERS_MAX];
+    S32 n_filters = 0;
+    PCTSTR tstr_filters;
+    int filter_index;
+    char * chosen;
+    QUICK_TBLOCK_WITH_BUFFER(filter_quick_tblock, 256);
+    quick_tblock_with_buffer_setup(filter_quick_tblock);
+
+    /* build filters as description,CH_NULL,wildcard spec,CH_NULL sets */
+    status_return(windows_filter_list_create(&filter_quick_tblock, filter_mask, &p_save_callback->h_save_filetype_filters));
+
+    for(tstr_filters = quick_tblock_tstr(&filter_quick_tblock); (CH_NULL != *tstr_filters) && (n_filters < N_FILTERS_MAX); ++n_filters)
+    {
+        filter_texts[n_filters] = tstr_filters;
+        tstr_filters += tstrlen32p1(tstr_filters);
+        filter_wildcards[n_filters] = tstr_filters;
+        tstr_filters += tstrlen32p1(tstr_filters);
+    }
+
+    linux_save_as_set_dirname(szDirName, elemof32(szDirName), p_save_callback);
+
+    tstr_xstrkpy(szFile, elemof32(szFile), ui_text_tstr(&p_save_callback->initial_filename));
+
+    /* try not to suggest saving files without extensions */
+    if(NULL == file_extension(szFile))
+    {
+        tstr_xstrkat(szFile, elemof32(szFile), FILE_EXT_SEP_TSTR);
+        tstr_xstrkat(szFile, elemof32(szFile), default_extension_from_save_callback(p_save_callback));
+    }
+
+    szDialogTitle[0] = CH_NULL;
+    if(p_save_callback->save_selection)
+        resource_lookup_tstr_buffer(szDialogTitle, elemof32(szDialogTitle), MSG_DIALOG_SAVE_SELECTION_CAPTION);
+
+    filter_index = (int) windows_filter_list_get_filter_index_from_t5_filetype(p_save_callback->saving_t5_filetype, filter_mask, &p_save_callback->h_save_filetype_filters);
+
+    {
+    const P_VIEW p_view = p_view_from_viewno_caret(p_docu);
+    QTH_WINDOW * const p_parent = VIEW_NOT_NONE(p_view) ? p_view->main[WIN_BACK].hwnd : NULL;
+
+    chosen = qth_file_dialog(p_parent, 1 /*save*/, szDialogTitle, szDirName, szFile, filter_texts, filter_wildcards, (int) n_filters, &filter_index, 0);
+    } /*block*/
+
+    quick_tblock_dispose(&filter_quick_tblock);
+
+    if(NULL == chosen)
+        return(STATUS_CANCEL);
+
+    { /* only one file, and no newline */
+    char * p_end = strchr(chosen, '\n');
+    STATUS status;
+
+    if(NULL != p_end)
+        *p_end = CH_NULL;
+
+    if(strlen(chosen) >= elemof32(szFile))
+    {
+        free(chosen);
+        return(create_error(FILE_ERR_BADNAME));
+    }
+
+    tstr_xstrkpy(szFile, elemof32(szFile), chosen);
+    free(chosen);
+
+    { /* use the chosen filter to determine file type to save as */
+    T5_FILETYPE t5_filetype = windows_filter_list_get_t5_filetype_from_filter_index(filter_index, filter_mask, &p_save_callback->h_save_filetype_filters);
+
+    if(FILETYPE_UNDETERMINED == t5_filetype)
+        t5_filetype = FILETYPE_TEXT;
+
+    p_save_callback->saving_t5_filetype = t5_filetype;
+    } /*block*/
+
+    { /* NB User might have stripped the extension off - ensure we stick the default one on if so */
+    if(NULL == file_extension(szFile))
+    {
+        tstr_xstrkat(szFile, elemof32(szFile), FILE_EXT_SEP_TSTR);
+        tstr_xstrkat(szFile, elemof32(szFile), default_extension_from_save_callback(p_save_callback));
+    }
+    } /*block*/
+
+    /* may need to mutate the SAVING_XXX as we might have started out with some other intent */
+    switch(p_save_callback->saving_t5_filetype)
+    {
+    case FILETYPE_T5_FIREWORKZ:
+    case FILETYPE_T5_HYBRID_DRAW:
+        cmd_save_init_set_saving(p_save_callback);
+        p_save_callback->rename_after_save = !p_save_callback->save_selection;
+        break;
+
+    case FILETYPE_T5_TEMPLATE:
+        cmd_save_as_template_init_set_saving(p_save_callback);
+        break;
+
+    case FILETYPE_DRAW:
+    default:
+        if(SAVING_PICTURE != p_save_callback->saving)
+            status_return(cmd_save_as_foreign_init_set_saving(p_save_callback));
+        break;
+    }
+
+    status = dialog_save_common_check(p_save_callback);
+
+    if(status_fail(status))
+        return(status);
+
+    return(proc_save_common(szFile, p_save_callback->saving_t5_filetype, (CLIENT_HANDLE) p_save_callback));
+    } /*block*/
+}
+
+#endif /* LINUX */
 
 /*
 rename this document to be filename

@@ -35,6 +35,10 @@ __pragma(warning(pop))
 
 #endif /* WINDOWS */
 
+#if LINUX
+#include "ob_skel/linux/qt_host.h"
+#endif
+
 #if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_FILE)
 extern PC_U8 rb_file_msg_weak;
@@ -52,22 +56,22 @@ extern PC_U8 rb_file_msg_weak;
 internal routines
 */
 
-#if WINDOWS
+#if WINDOWS || LINUX
 static const ARG_TYPE
 args_s32[] = { ARG_TYPE_S32, ARG_TYPE_NONE };
-#endif /* WINDOWS */
+#endif /* WINDOWS || LINUX */
 
 static CONSTRUCT_TABLE
 object_construct_table[] =
 {                                                                                                   /*   fi ti mi ur up xi md mf nn cp sm ba fo */
 
-#if WINDOWS
+#if WINDOWS || LINUX
     { "OpenDocument",           NULL,                       T5_CMD_OPEN_DOCUMENT },
     { "CloseDocumentReq",       NULL,                       T5_CMD_CLOSE_DOCUMENT_REQ },
 
     { "InsertFile",             NULL,                       T5_CMD_INSERT_FILE_WINDOWS },
     { "InsertPicture",          args_s32,                   T5_CMD_INSERT_FILE_WINDOWS_PICTURE },
-#endif /* WINDOWS */
+#endif /* WINDOWS || LINUX */
 
     { NULL,                     NULL,                       T5_EVENT_NONE } /* end of table */
 };
@@ -81,11 +85,14 @@ static struct OB_FILE_STATICS
     DWORD nFilterIndex[3];
     TCHARZ szDirName[BUF_MAX_PATHSTRING];
     TCHARZ szCustomFilter[64]; /* space for GetOpenFileName to stash custom filespec */
-#endif /* WINDOWS */
+#elif LINUX
+    int nFilterIndex[3];
+    TCHARZ szDirName[BUF_MAX_PATHSTRING];
+#endif /* OS */
 }
 ob_file_statics;
 
-#if WINDOWS
+#if WINDOWS || LINUX
 
 /* build filters as descriptive text,CH_NULL,wildcard spec,CH_NULL sets */
 /* e.g. "Fireworkz (*.fwk)",CH_NULL,"*.fwk",CH_NULL */
@@ -260,6 +267,10 @@ windows_filter_list_get_t5_filetype_from_filter_index(
 
     return(FILETYPE_UNDETERMINED);
 }
+
+#endif /* WINDOWS || LINUX */
+
+#if WINDOWS
 
 #if (NTDDI_VERSION >= NTDDI_VISTA)
 
@@ -786,6 +797,222 @@ GetUserTemplatesDirectoryName(
 
 #endif /* WINDOWS */
 
+#if LINUX
+
+/* The Linux counterpart of the Windows open_document(): the desktop's file chooser with the same filters */
+
+/* split a filter list made by windows_filter_list_create() into the text and the wildcards of each */
+
+static S32
+linux_filters_split(
+    _In_z_      PCTSTR tstr_filters,
+    _Out_writes_(n_max) PCTSTR * p_texts,
+    _Out_writes_(n_max) PCTSTR * p_wildcards,
+    _InVal_     S32 n_max)
+{
+    S32 n = 0;
+
+    while((CH_NULL != *tstr_filters) && (n < n_max))
+    {
+        p_texts[n] = tstr_filters;
+        tstr_filters += tstrlen32p1(tstr_filters);
+        p_wildcards[n] = tstr_filters;
+        tstr_filters += tstrlen32p1(tstr_filters);
+        ++n;
+    }
+
+    return(n);
+}
+
+_Check_return_
+static STATUS
+insert_file_here(
+    _DocuRef_   P_DOCU p_docu,
+    _InVal_     T5_FILETYPE t5_filetype,
+    _In_z_      PCTSTR filename)
+{
+    STATUS status;
+    const OBJECT_ID object_id = object_id_from_t5_filetype(t5_filetype, TRUE);
+    MSG_INSERT_FILE msg_insert_file;
+    zero_struct_fn(msg_insert_file);
+
+    if(OBJECT_ID_NONE == object_id)
+        return(create_error(ERR_UNKNOWN_FILETYPE));
+
+    cur_change_before(p_docu);
+
+    msg_insert_file.filename = filename;
+    msg_insert_file.t5_filetype = t5_filetype;
+    msg_insert_file.insert = TRUE;
+    msg_insert_file.ctrl_pressed = FALSE;
+    msg_insert_file.position = p_docu->cur;
+    skel_point_from_slr_tl(p_docu, &msg_insert_file.skel_point, &p_docu->cur.slr);
+    status = object_call_id_load(p_docu, (OBJECT_ID_SKEL == object_id) ? T5_MSG_INSERT_OWNFORM : T5_MSG_INSERT_FOREIGN, &msg_insert_file, object_id);
+
+    cur_change_after(p_docu);
+
+    return(status);
+}
+
+_Check_return_
+static BOOL
+file_is_zip(
+    _In_z_      PCTSTR filename)
+{
+    PCTSTR tstr_extension = file_extension(filename);
+
+    if(NULL == tstr_extension)
+        return(FALSE);
+
+    return(tstr_compare_equals_nocase(tstr_extension, TEXT("zip")));
+}
+
+_Check_return_
+static STATUS
+open_document(
+    _DocuRef_   P_DOCU cur_p_docu,
+    _InVal_     BOOL insert_file,
+    _InVal_     OBJECT_ID object_id_importing_picture)
+{
+    STATUS status = STATUS_OK;
+    const BOOL importing_picture = (OBJECT_ID_NONE != object_id_importing_picture);
+    const S32 filter_mask = importing_picture ? BOUND_FILETYPE_READ_PICT : BOUND_FILETYPE_READ;
+    const ARRAY_HANDLE h_save_filetype = 0;
+    enum { N_FILTERS_MAX = 64 };
+    PCTSTR filter_texts[N_FILTERS_MAX];
+    PCTSTR filter_wildcards[N_FILTERS_MAX];
+    S32 n_filters;
+    int filter_index;
+    int * const p_filter_memory = &ob_file_statics.nFilterIndex[importing_picture ? 2 : (insert_file ? 1 : 0)];
+    char * chosen;
+    PCTSTR tstr_title = NULL;
+    T5_FILETYPE t5_filetype;
+    QUICK_TBLOCK_WITH_BUFFER(filter_quick_tblock, 256);
+    QUICK_TBLOCK_WITH_BUFFER(insert_file_title_quick_tblock, 64);
+    quick_tblock_with_buffer_setup(filter_quick_tblock);
+    quick_tblock_with_buffer_setup(insert_file_title_quick_tblock);
+
+    /* build filters as description,CH_NULL,wildcard spec,CH_NULL sets */
+    status_return(windows_filter_list_create(&filter_quick_tblock, filter_mask, &h_save_filetype));
+
+    n_filters = linux_filters_split(quick_tblock_tstr(&filter_quick_tblock), filter_texts, filter_wildcards, N_FILTERS_MAX);
+
+    /* start in the folder of the last file opened, or the home folder */
+    if(!ob_file_statics.szDirName[0])
+    {
+        const char * p_home = getenv("HOME");
+        tstr_xstrkpy(ob_file_statics.szDirName, elemof32(ob_file_statics.szDirName), (NULL != p_home) ? p_home : TEXT("/"));
+    }
+
+    if(insert_file)
+    {
+        status_assert(resource_lookup_quick_tblock(&insert_file_title_quick_tblock, FILE_MSG_INSERT_FILE_CAPTION));
+        status_assert(quick_tblock_nullch_add(&insert_file_title_quick_tblock));
+        tstr_title = quick_tblock_tstr(&insert_file_title_quick_tblock);
+    }
+
+    filter_index = *p_filter_memory;
+    if(0 == filter_index)
+        filter_index = insert_file ? 1 : 2; /* assumes Fireworkz document immediately after start */
+
+    {
+    const P_VIEW p_view = p_view_from_viewno_caret(cur_p_docu);
+    QTH_WINDOW * const p_parent = VIEW_NOT_NONE(p_view) ? p_view->main[WIN_BACK].hwnd : NULL;
+
+    chosen = qth_file_dialog(p_parent, 0 /*open*/, tstr_title, ob_file_statics.szDirName, NULL,
+                             filter_texts, filter_wildcards, (int) n_filters, &filter_index, !insert_file && !importing_picture);
+    } /*block*/
+
+    quick_tblock_dispose(&filter_quick_tblock);
+    quick_tblock_dispose(&insert_file_title_quick_tblock);
+
+    if(NULL == chosen)
+        return(STATUS_CANCEL);
+
+    *p_filter_memory = filter_index;
+
+    {
+    char * p_line = chosen;
+
+    while('\0' != *p_line)
+    {
+        TCHARZ filename[BUF_MAX_PATHSTRING];
+        char * p_end = strchr(p_line, '\n');
+        const size_t len = (NULL != p_end) ? (size_t) (p_end - p_line) : strlen(p_line);
+
+        if(len >= elemof32(filename))
+        {
+            status = create_error(FILE_ERR_BADNAME);
+            break;
+        }
+
+        memcpy(filename, p_line, len);
+        filename[len] = CH_NULL;
+        p_line += len + ((NULL != p_end) ? 1 : 0);
+
+        if(file_is_zip(filename))
+        {
+            reperr(FILE_ERR_ISAZIP, filename);
+            status = STATUS_FAIL;
+            break;
+        }
+
+        if(!importing_picture)
+            file_dirname(ob_file_statics.szDirName, filename);
+
+        t5_filetype = t5_filetype_from_filename(filename);
+
+        if(importing_picture && (OBJECT_ID_CHART == object_id_importing_picture))
+        {
+            MSG_INSERT_FOREIGN msg_insert_foreign;
+            zero_struct_fn(msg_insert_foreign);
+            msg_insert_foreign.filename = filename;
+            msg_insert_foreign.t5_filetype = t5_filetype;
+            msg_insert_foreign.insert = TRUE;
+            msg_insert_foreign.ctrl_pressed = FALSE;
+            msg_insert_foreign.position = cur_p_docu->cur; /*irrelevant, just do it*/
+            skel_point_from_slr_tl(cur_p_docu, &msg_insert_foreign.skel_point, &cur_p_docu->cur.slr);
+            status = object_call_id(OBJECT_ID_CHART, cur_p_docu, T5_MSG_CHART_EDIT_INSERT_PICTURE, &msg_insert_foreign);
+            break;
+        }
+
+        if(insert_file)
+        {
+            status = insert_file_here(cur_p_docu, t5_filetype, filename);
+            break;
+        }
+
+        switch(t5_filetype)
+        {
+        case FILETYPE_T5_FIREWORKZ:
+        case FILETYPE_T5_HYBRID_DRAW:
+            status = load_this_fireworkz_file_rl(cur_p_docu, filename, FALSE);
+            break;
+
+        case FILETYPE_T5_TEMPLATE:
+            status = load_this_template_file_rl(cur_p_docu, filename);
+            break;
+
+        case FILETYPE_T5_COMMAND:
+            status = load_this_command_file_rl(cur_p_docu, filename);
+            break;
+
+        default:
+            status = load_foreign_file_rl(cur_p_docu, filename, t5_filetype);
+            break;
+        }
+
+        status_break(status);
+    }
+    } /*block*/
+
+    free(chosen);
+
+    return(status);
+}
+
+#endif /* LINUX */
+
 /******************************************************************************
 *
 * file service module event handler
@@ -834,7 +1061,7 @@ T5_MSG_PROTO(static, file_msg_error_rq, _InoutRef_ P_MSG_ERROR_RQ p_msg_error_rq
     return(STATUS_OK);
 }
 
-#if WINDOWS
+#if WINDOWS || LINUX
 
 T5_CMD_PROTO(static, file_cmd_close_document_req)
 {
@@ -862,7 +1089,7 @@ T5_CMD_PROTO(static, file_cmd_insert_file_windows_picture)
     return(open_document(p_docu, TRUE, object_id));
 }
 
-#endif /* WINDOWS */
+#endif /* WINDOWS || LINUX */
 
 OBJECT_PROTO(extern, object_file);
 OBJECT_PROTO(extern, object_file)
@@ -875,7 +1102,7 @@ OBJECT_PROTO(extern, object_file)
     case T5_MSG_ERROR_RQ:
         return(file_msg_error_rq(p_docu, t5_message, (P_MSG_ERROR_RQ) p_data));
 
-#if WINDOWS
+#if WINDOWS || LINUX
     case T5_CMD_OPEN_DOCUMENT:
         return(open_document(p_docu, FALSE, OBJECT_ID_NONE));
 
@@ -887,7 +1114,7 @@ OBJECT_PROTO(extern, object_file)
 
     case T5_CMD_INSERT_FILE_WINDOWS_PICTURE:
         return(file_cmd_insert_file_windows_picture(p_docu, t5_message, (PC_T5_CMD) p_data));
-#endif /* WINDOWS */
+#endif /* WINDOWS || LINUX */
 
     default:
         return(STATUS_OK);

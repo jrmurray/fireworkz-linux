@@ -189,6 +189,18 @@ Milestone 4 - DONE (first light): the application runs
       out, or crashes on the first run, has probably missed one. Other dialogs have not all been
       looked at yet.
 
+    Open, Insert File, Save As: done (first cut)
+      qth_file_dialog() is a QFileDialog (the KDE one on Plasma) with the program's own file type
+      filters. ob_file.c's open_document and ui_save.c's windows_save_as have Linux versions that
+      follow the Windows ones. FIREWORKZ_TEST_FILE=path stands in for the chooser in tests;
+      app_smoke saves a document and opens it again. File names are passed as raw bytes, so names
+      outside ASCII show wrongly in the program's Latin-1 text but still work.
+      The toolbar now starts with New and Open (RISC OS has no such buttons), staged into Choice18.
+      Not done: the Save As dialog's extra "save selection" check box and page range (the Windows
+      common dialog hook), template picking from folders, "Save As Template" naming, recent files.
+      Fixed on the way: of_save.c indexed one before an arglist when all its arguments were empty
+      (harmless on 32-bit, a crash on 64-bit).
+
     What does not work yet (each is marked TODO where it lives):
       picture controls: drawn (QTH_DLG_BLANK canvases, painted by li_dlg.c from the resource bitmaps,
                                     colour swatches and other user controls through the redraw context)
@@ -219,7 +231,7 @@ Next milestones
 3. Skeleton and 4. Objects: done (see Milestone 3 and 4 above).
 
 5. Make it a usable application: (menu bar, toolbar and dialogs are done) picture controls in dialogs,
-   Open and Save As with KDE file dialogs, the clipboard, printing, Draw file rendering.
+   (Open and Save As are done)  the clipboard, printing, Draw file rendering.
 
 6. Desktop integration: .desktop file, icons, MIME types for Fireworkz documents.
 

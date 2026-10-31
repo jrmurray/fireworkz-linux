@@ -531,7 +531,7 @@ bound filetype handing
 
 typedef struct BOUND_FILETYPE
 {
-#if WINDOWS
+#if WINDOWS || LINUX
     QUICK_TBLOCK filter_text_quick_tblock;  /* NB Can't have associated static_buffer as we will get realloc()ed */
     PTSTR tstr_filter_wildcard;             /* alloc_block_tstr_set() */ /* surely language-independent? */
 #endif
@@ -545,7 +545,7 @@ BOUND_FILETYPE, * P_BOUND_FILETYPE; typedef const BOUND_FILETYPE * PC_BOUND_FILE
 extern void
 ff_load_msg_exit2(void)
 {
-#if WINDOWS
+#if WINDOWS || LINUX
     /* Ensure we dispose of all the data in the list */
     ARRAY_INDEX i;
 
@@ -636,7 +636,7 @@ description_ustr_from_t5_filetype(
     return(ustr_bptr(description_buffer));
 }
 
-#if WINDOWS
+#if WINDOWS || LINUX
 
 _Ret_z_ _Check_return_
 extern PCTSTR
@@ -730,7 +730,7 @@ T5_CMD_PROTO(extern, t5_cmd_bind_file_type)
         PTR_ASSERT(ustr_description);
         status = alloc_block_ustr_set(&p_bound_filetype->ustr_description, ustr_description, &p_docu->general_string_alloc_block);
 
-#if WINDOWS
+#if WINDOWS || LINUX
         if(arg_is_present(p_args, 3))
             tstr_filter_text_suffix = p_args[3].val.tstr;
 

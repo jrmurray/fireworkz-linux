@@ -96,6 +96,16 @@ qth_font_text_width(const QTH_FONT * p_font, const uint8_t * p_latin1, uint32_t 
 }
 
 
+/* ---- File choosers: nobody chooses ---- */
+
+char * qth_file_dialog(QTH_WINDOW * p_parent, int save, const char * p_title, const char * p_dir, const char * p_name,
+                       const char * const * p_texts, const char * const * p_wildcards, int n_filters, int * p_filter, int multi)
+{
+    (void) p_parent; (void) save; (void) p_title; (void) p_dir; (void) p_name; (void) p_texts; (void) p_wildcards;
+    (void) n_filters; (void) p_filter; (void) multi;
+    return(NULL);
+}
+
 /* ---- Dialog boxes: nothing is shown, and a modal dialog is over as soon as it starts ---- */
 
 struct QTH_DIALOG { int dummy; };

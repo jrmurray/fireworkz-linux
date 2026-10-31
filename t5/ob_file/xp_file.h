@@ -31,7 +31,7 @@ error numbers (sadly these need exposing to other modules)
 typedef struct __FILE_HANDLE * FILE_HANDLE;
 #endif
 
-#if WINDOWS
+#if WINDOWS || LINUX
 
 /*
 exports from ob_file.c

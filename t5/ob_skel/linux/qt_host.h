@@ -425,6 +425,17 @@ void qth_dlg_list_set_tab(QTH_DIALOG * p_dlg, int id, int pixels);
 void qth_dlg_list_set_sel(QTH_DIALOG * p_dlg, int id, int index); /* -1 for none */
 int  qth_dlg_list_get_sel(QTH_DIALOG * p_dlg, int id);            /* -1 for none */
 
+/* ---- File choosers ---------------------------------------------------------------- */
+
+/* The desktop's Open (save == 0) or Save As (save != 0) dialog. There are n_filters file types, each with a
+ * description and the wildcards that match it (several of them separated by ; or spaces); *p_filter is the one
+ * to start with and comes back as the one chosen, both counted from 1. p_dir and p_name (the file to suggest) may
+ * be NULL. File names are passed as the raw bytes the file system uses.
+ *
+ * Returns the names chosen, each followed by a newline, in a block that the caller free()s; or NULL if cancelled. */
+char * qth_file_dialog(QTH_WINDOW * p_parent, int save, const char * p_title, const char * p_dir, const char * p_name,
+                       const char * const * p_texts, const char * const * p_wildcards, int n_filters, int * p_filter, int multi);
+
 /* Deliver the events that are waiting and return non-zero if there were any. If there are none, wait
  * for one for up to wait_ms milliseconds (0 is not at all, -1 is as long as it takes). */
 int qth_process_events(int wait_ms);

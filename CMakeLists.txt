@@ -107,6 +107,11 @@ foreach(choice IN LISTS FIREWORKZ_CHOICE_FILES)
     configure_file(${choice} ${FIREWORKZ_RESOURCES_DIR}/Choices/${choice_name}.txt COPYONLY)
 endforeach()
 
+# RISC OS opens files by double clicking them, so its toolbar has no New or Open button, which the menus and
+# the other desktops expect: put them first
+file(READ ${FIREWORKZ_RESOURCES_DIR}/Choices/Choice18.txt choice18_tools)
+file(WRITE ${FIREWORKZ_RESOURCES_DIR}/Choices/Choice18.txt "{Tool-t:0;NEW}\n{Tool-t:0;OPEN}\n{Tool-t:0}\n${choice18_tools}")
+
 # The templates are stored with RISC OS file type suffixes (Sheet,c1d). The program looks for *.fwt
 file(GLOB FIREWORKZ_TEMPLATE_FILES ${T5}/Resources/UK/Templates/*,c1d)
 foreach(template IN LISTS FIREWORKZ_TEMPLATE_FILES)

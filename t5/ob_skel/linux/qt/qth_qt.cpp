@@ -14,6 +14,10 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialog>
+#include <QDir>
+#include <QFile>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QFontMetrics>
 #include <QGroupBox>
 #include <QLabel>
@@ -52,6 +56,7 @@
 #include <QWidget>
 
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <map>
 #include <vector>
@@ -129,6 +134,7 @@ app(void)
                             }
                         }
 
+                        if((nullptr != p_found) && !p_found->isEnabled()) fprintf(stderr, "FIREWORKZ_TEST_MENU: \"%s\" is disabled\n", qPrintable(p_found->text()));
                         if((nullptr != p_found) && (nullptr == p_found->menu()))
                         {
                             p_found->trigger();
@@ -2011,6 +2017,87 @@ qth_dlg_list_get_sel(QTH_DIALOG * p_dlg, int id)
     }
 
     return(-1);
+}
+
+/* ---- File choosers ------------------------------------------------------------------ */
+
+extern "C" char *
+qth_file_dialog(QTH_WINDOW * p_parent, int save, const char * p_title, const char * p_dir, const char * p_name,
+                const char * const * p_texts, const char * const * p_wildcards, int n_filters, int * p_filter, int multi)
+{
+    QWidget * p_parent_widget = (nullptr != p_parent) ? ((nullptr != p_parent->p_main) ? static_cast<QWidget *>(p_parent->p_main) : p_parent->p_widget) : nullptr;
+    QStringList filters;
+
+    /* For tests: FIREWORKZ_TEST_FILE=path chooses that file without showing anything */
+    const QByteArray test_file = qgetenv("FIREWORKZ_TEST_FILE");
+
+    if(!test_file.isEmpty())
+    {
+        const QByteArray name = test_file + '\n';
+        char * p_test = static_cast<char *>(malloc((size_t) name.size() + 1));
+
+        if(nullptr != p_test)
+        {
+            memcpy(p_test, name.constData(), (size_t) name.size() + 1);
+            (void) save;
+        }
+        return(p_test);
+    }
+
+    QFileDialog dialog(p_parent_widget);
+
+    for(int i = 0; i < n_filters; ++i)
+    {
+        QString text = text_of(p_texts[i]);
+        QString patterns = text_of(p_wildcards[i]);
+
+        patterns.replace(QLatin1Char(';'), QLatin1Char(' '));
+        text = text.trimmed();
+        if(text.endsWith(QLatin1Char(')')) && (text.lastIndexOf(QLatin1Char('(')) > 0))
+            text = text.left(text.lastIndexOf(QLatin1Char('('))).trimmed(); /* the wildcards are added again below */
+        filters << QStringLiteral("%1 (%2)").arg(text, patterns);
+    }
+
+    dialog.setAcceptMode(save ? QFileDialog::AcceptSave : QFileDialog::AcceptOpen);
+    dialog.setFileMode(save ? QFileDialog::AnyFile : (multi ? QFileDialog::ExistingFiles : QFileDialog::ExistingFile));
+    if((nullptr != p_title) && ('\0' != p_title[0]))
+        dialog.setWindowTitle(text_of(p_title));
+    if(!filters.isEmpty())
+    {
+        dialog.setNameFilters(filters);
+        if((nullptr != p_filter) && (*p_filter >= 1) && (*p_filter <= filters.size()))
+            dialog.selectNameFilter(filters[*p_filter - 1]);
+    }
+    if((nullptr != p_dir) && ('\0' != p_dir[0]))
+        dialog.setDirectory(QFile::decodeName(p_dir));
+    if((nullptr != p_name) && ('\0' != p_name[0]))
+        dialog.selectFile(QFile::decodeName(p_name));
+    if(save)
+        dialog.setOption(QFileDialog::DontConfirmOverwrite, false);
+
+    if(dialog.exec() != QDialog::Accepted)
+        return(nullptr);
+
+    if((nullptr != p_filter) && !filters.isEmpty())
+    {
+        const int index = filters.indexOf(dialog.selectedNameFilter());
+        if(index >= 0)
+            *p_filter = index + 1;
+    }
+
+    QByteArray names;
+    for(const QString & file : dialog.selectedFiles())
+    {
+        names += QFile::encodeName(file);
+        names += '\n';
+    }
+
+    char * p_result = static_cast<char *>(malloc((size_t) names.size() + 1));
+    if(nullptr == p_result)
+        return(nullptr);
+    memcpy(p_result, names.constData(), (size_t) names.size());
+    p_result[names.size()] = '\0';
+    return(p_result);
 }
 
 /* end of qth_qt.cpp */
