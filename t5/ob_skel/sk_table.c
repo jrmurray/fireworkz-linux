@@ -641,7 +641,7 @@ args_cmd_sort[] =
     ARG_TYPE_NONE
 };
 
-#if WINDOWS
+#if WINDOWS || LINUX
 
 static const ARG_TYPE
 args_cmd_help_search_keyword[] =
@@ -1031,7 +1031,7 @@ object_construct_table[] =
     { "FontmapRemap",           args_cmd_fontmap_remap,     T5_CMD_FONTMAP_REMAP },
 
     { "HelpContents",           args_tstr_mandorblk,        T5_CMD_HELP_CONTENTS },
-#if WINDOWS
+#if WINDOWS || LINUX
     { "HelpSearchKeyword",      args_cmd_help_search_keyword, T5_CMD_HELP_SEARCH_KEYWORD },
 #endif
     { "HelpURL",                args_tstr_mandatory,        T5_CMD_HELP_URL },

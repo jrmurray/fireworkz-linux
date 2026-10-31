@@ -533,6 +533,13 @@ QTH_PAINTER * qth_print_page_painter(void);                 /* for the current p
 int qth_print_next_page(void);                              /* finish the page and start another; non-zero if it worked */
 int qth_print_end(int abort);                               /* non-zero if it all worked */
 
+/* ---- The desktop's browser ---------------------------------------------------------- */
+
+/* Open a web address, or a file (a path, or a file: address), in whatever the desktop uses for it.
+ * Returns non-zero if the desktop took it. With FIREWORKZ_TEST_OPEN_LOG=file set, the address is added to
+ * that file instead, for tests. */
+int qth_open_url(const char * p_url);
+
 /* Deliver the events that are waiting and return non-zero if there were any. If there are none, wait
  * for one for up to wait_ms milliseconds (0 is not at all, -1 is as long as it takes). */
 int qth_process_events(int wait_ms);

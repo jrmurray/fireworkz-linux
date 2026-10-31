@@ -255,15 +255,20 @@ Milestone 4 - DONE (first light): the application runs
       script's way of typing cells did not work out, so a chart with data still wants looking at.
       Saving to a Draw file (drwprint.c's drawfile_paint_*) is separate and has not been tried.
 
+    Help: done (first cut)
+      ho_help.c hands help and web addresses to the desktop through qth_open_url() (QDesktopServices).
+      The Help menu (Contents, Search for Help On..., F1) opens the HTML help page staged into
+      Resources/Help (the RISC OS help, with a contents page written for Linux, which points at the
+      online manuals); Fireworkz on the Web... opens its address; a dialogue's Help button and F1 in one
+      open the same contents. The menus still name firewrkz.chm: there is no such file, and it is not read.
+      FIREWORKZ_TEST_OPEN_LOG=file logs what would be opened, for tests (app_smoke does).
+      Not done: per-dialogue help topics (help_topic_resource_id is ignored), searching by keyword
+      (shows the contents), the User Guide offline, the Help>About dialogue being checked on Linux.
+
     What does not work yet (each is marked TODO where it lives):
-      picture controls: drawn (QTH_DLG_BLANK canvases, painted by li_dlg.c from the resource bitmaps,
-                                    colour swatches and other user controls through the redraw context)
-                                    but only looked at, not clicked: hover/press/click are wired up untested
-      help from dialogs             dialog_windows_help() does nothing
       key shortcuts shown in menus  informational only: no QShortcut is bound (the skeleton maps keys)
       tooltips, the lower status line, the tool tip hover look
-      print preview
-            the clipboard, drag and drop, help
+      print preview, drag and drop
       row borders and rulers on the default template; italic under/overhang in text widths
       key shortcuts (Ctrl+...) are menu accelerators on Windows, so wait for menus
       packaging                     .desktop file, icon, MIME types, install rules

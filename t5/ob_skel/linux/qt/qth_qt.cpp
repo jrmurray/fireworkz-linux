@@ -15,11 +15,13 @@
 #include <QClipboard>
 #include <QColorDialog>
 #include <QComboBox>
+#include <QDesktopServices>
 #include <QDialog>
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QUrl>
 #include <QFontMetrics>
 #include <QGroupBox>
 #include <QLabel>
@@ -2763,6 +2765,30 @@ qth_print_end(int abort)
     print_state.qth_painter.p_painter = nullptr;
 
     return(ok);
+}
+
+extern "C" int
+qth_open_url(const char * p_url)
+{
+    const QString text = QFile::decodeName(p_url);
+    const QUrl url = (text.contains(QLatin1String("://")) || text.startsWith(QLatin1String("file:")) || text.startsWith(QLatin1String("mailto:")))
+                   ? QUrl(text)
+                   : QUrl::fromLocalFile(QFileInfo(text).absoluteFilePath());
+    const QByteArray log = qgetenv("FIREWORKZ_TEST_OPEN_LOG");
+
+    if(!log.isEmpty())
+    {
+        QFile file(QFile::decodeName(log));
+
+        if(file.open(QIODevice::Append))
+        {
+            file.write(url.toString().toUtf8() + '\n');
+            return(1);
+        }
+        return(0);
+    }
+
+    return(QDesktopServices::openUrl(url));
 }
 
 /* end of qth_qt.cpp */

@@ -112,6 +112,16 @@ endforeach()
 file(READ ${FIREWORKZ_RESOURCES_DIR}/Choices/Choice18.txt choice18_tools)
 file(WRITE ${FIREWORKZ_RESOURCES_DIR}/Choices/Choice18.txt "{Tool-t:0;NEW}\n{Tool-t:0;OPEN}\n{Tool-t:0}\n${choice18_tools}")
 
+# The help pages come from the RISC OS help, which is HTML
+file(GLOB FIREWORKZ_HELP_FILES ${T5}/firewrkz/Resources/RISC_OS/UK/Help/HTML/*)
+foreach(help_file IN LISTS FIREWORKZ_HELP_FILES)
+    get_filename_component(help_name ${help_file} NAME)
+    configure_file(${help_file} ${FIREWORKZ_RESOURCES_DIR}/Help/${help_name} COPYONLY)
+endforeach()
+
+# ... except the contents page, which says what is in the Linux package, not what is in the RISC OS packages
+configure_file(${T5}/firewrkz/Resources/Linux/Help/index.html ${FIREWORKZ_RESOURCES_DIR}/Help/index.html COPYONLY)
+
 # The templates are stored with RISC OS file type suffixes (Sheet,c1d). The program looks for *.fwt
 file(GLOB FIREWORKZ_TEMPLATE_FILES ${T5}/Resources/UK/Templates/*,c1d)
 foreach(template IN LISTS FIREWORKZ_TEMPLATE_FILES)

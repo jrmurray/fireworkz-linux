@@ -839,6 +839,10 @@ dialog_windows_ui_len_init(void);
 
 #if LINUX
 
+_Check_return_
+extern STATUS
+linux_help_contents(void); /* ho_help.c */
+
 /* a dialog that has been built and not yet disposed of */
 #define DIALOG_IS_OPEN(p_dialog) (NULL != (p_dialog)->lx.p_dlg)
 

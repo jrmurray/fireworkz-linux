@@ -17,16 +17,6 @@
 
 #include "ob_skel/linux/qt_host.h"
 
-/* ---- help: TODO open the user guide in the desktop's browser ---------------------------- */
-
-T5_CMD_PROTO(extern, t5_cmd_help)
-{
-    UNREFERENCED_PARAMETER_DocuRef_(p_docu);
-    UNREFERENCED_PARAMETER_InRef_(p_t5_cmd);
-
-    return(STATUS_OK);
-}
-
 /* ---- draft printing: TODO as the printing in ho_print.c but by sending text lines ------ */
 
 T5_MSG_PROTO(extern, t5_msg_draft_print, P_PRINT_CTRL p_print_ctrl)

@@ -102,6 +102,8 @@ int qth_colour_dialog(QTH_WINDOW * p_parent, uint8_t * p_r, uint8_t * p_g, uint8
     return(0);
 }
 
+int qth_open_url(const char * p_url) { (void) p_url; return(0); }
+
 /* ---- Paths: not drawn ---- */
 
 struct QTH_PATH { int dummy; };

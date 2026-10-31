@@ -1097,7 +1097,7 @@ dialog_windows_help(
 {
     UNREFERENCED_PARAMETER_InoutRef_(p_dialog);
 
-    return(STATUS_OK); /* no help yet */
+    return(linux_help_contents()); /* there is no help topic for each dialog: show the contents */
 }
 
 #endif /* LINUX */

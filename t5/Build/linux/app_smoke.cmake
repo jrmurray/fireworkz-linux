@@ -199,3 +199,32 @@ if(logo_size LESS 30000)
 endif()
 
 message(STATUS "fireworkz drew a Draw file: ${logo_size} byte picture")
+
+# Help: Help>Contents, F1, Search and Fireworkz on the Web hand the help page and the web address to the desktop
+# (FIREWORKZ_TEST_OPEN_LOG records what would have been opened).
+
+set(OPENED ${SHOT}-opened.log)
+file(REMOVE ${OPENED})
+
+set(ENV{FIREWORKZ_TEST_OPEN_LOG} ${OPENED})
+set(ENV{FIREWORKZ_TEST_SCRIPT} "wait:800;menu:Help>Contents;wait:200;key:F1;wait:200;menu:Help>Search for Help On...;wait:200;menu:Help>Fireworkz on the Web...;wait:200;quit")
+
+execute_process(COMMAND ${APP} RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err TIMEOUT 60)
+
+if(NOT result EQUAL 0)
+    message(FATAL_ERROR "fireworkz exited with ${result} asking for help\n${out}\n${err}")
+endif()
+
+file(STRINGS ${OPENED} opened_lines)
+list(LENGTH opened_lines n_opened)
+if(NOT n_opened EQUAL 4)
+    message(FATAL_ERROR "expected 4 help addresses, got ${n_opened}: ${opened_lines}")
+endif()
+
+list(GET opened_lines 0 first_opened)
+list(GET opened_lines 3 last_opened)
+if(NOT first_opened MATCHES "Help/index.html$" OR NOT last_opened MATCHES "^https://")
+    message(FATAL_ERROR "wrong help addresses: ${opened_lines}")
+endif()
+
+message(STATUS "fireworkz opened help and a web address")
