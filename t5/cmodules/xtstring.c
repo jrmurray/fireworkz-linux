@@ -813,7 +813,7 @@ _tstr_from_sbstr(
 
 /* host-specific implementation */
 
-#if WINDOWS /* seems to be no use case on RISC OS */
+#if WINDOWS || LINUX /* seems to be no use case on RISC OS */
 
 static struct tstr_from_wstr_statics
 {
@@ -903,7 +903,7 @@ _tstr_from_wstr(
 
 #endif /* OS */
 
-#if WINDOWS /* seems to be no use case on RISC OS */
+#if WINDOWS || LINUX /* seems to be no use case on RISC OS */
 
 static struct wstr_from_tstr_statics
 {

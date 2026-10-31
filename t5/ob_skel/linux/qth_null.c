@@ -563,13 +563,21 @@ qth_null_n_beeps(void)
     return(n_beeps);
 }
 
-void
-qth_process_events(int wait)
+static int quit_code;
+static int quit_requested;
+
+int
+qth_process_events(int wait_ms)
 {
-    (void) wait;
+    (void) wait_ms;
+    return(0);
 }
 
-static int quit_code;
+int
+qth_quit_requested(void)
+{
+    return(quit_requested);
+}
 
 int
 qth_app_run(void)
@@ -580,6 +588,7 @@ qth_app_run(void)
 void
 qth_app_quit(int exit_code)
 {
+    quit_requested = 1;
     quit_code = exit_code;
 }
 

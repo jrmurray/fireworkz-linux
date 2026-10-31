@@ -18,22 +18,6 @@
 
 #include "ob_skel/linux/qt_host.h"
 
-/* ---- events ----------------------------------------------------------------------------- */
-
-/* Let the windows get on while a long job (printing) waits for them */
-
-_Check_return_
-extern WM_EVENT
-wm_event_get(
-    _InVal_     BOOL fgNullEventsWanted)
-{
-    UNREFERENCED_PARAMETER_InVal_(fgNullEventsWanted);
-
-    qth_process_events(0);
-
-    return(WM_EVENT_PROCESSED);
-}
-
 /* ---- menus: TODO a QMenuBar built from the Fireworkz menu tables ------------------------- */
 
 _Check_return_

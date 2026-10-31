@@ -1184,7 +1184,7 @@ MAEVE_SERVICES_EVENT_PROTO(extern, maeve_services_event_object)
     }
 }
 
-#if WINDOWS
+#if WINDOWS || LINUX
 
 /******************************************************************************
 *
@@ -1201,6 +1201,6 @@ t5_do_exit(void)
     //atexit_services2();
 }
 
-#endif /* WINDOWS */
+#endif /* WINDOWS || LINUX */
 
 /* end of object.c */

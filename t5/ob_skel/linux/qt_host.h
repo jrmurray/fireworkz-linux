@@ -295,8 +295,12 @@ void qth_beep(void);
 /* QTH_MOD_xxx for the modifier keys held down now */
 int qth_keyboard_modifiers(void);
 
-/* Deliver whatever events are waiting; if wait is not 0, wait until there is one (or a short while) first */
-void qth_process_events(int wait);
+/* Deliver the events that are waiting and return non-zero if there were any. If there are none, wait
+ * for one for up to wait_ms milliseconds (0 is not at all, -1 is as long as it takes). */
+int qth_process_events(int wait_ms);
+
+/* Non-zero once qth_app_quit() has been called */
+int qth_quit_requested(void);
 
 /* Runs the event loop until qth_app_quit(). Returns the exit code. */
 int  qth_app_run(void);

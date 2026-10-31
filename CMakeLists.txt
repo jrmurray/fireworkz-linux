@@ -146,6 +146,10 @@ target_link_libraries(fireworkz_objects PUBLIC fireworkz_core)
 file(GLOB FIREWORKZ_HOST_SOURCES CONFIGURE_DEPENDS ${T5}/ob_skel/linux/ho_*.c)
 add_library(fireworkz_host_linux STATIC ${FIREWORKZ_HOST_SOURCES})
 target_link_libraries(fireworkz_host_linux PUBLIC fireworkz_core)
+# where the program looks for resources when it is not told (in the build tree: the generated
+# messages and bitmaps, the Unicode data and the language files)
+target_compile_definitions(fireworkz_host_linux PRIVATE
+    FIREWORKZ_DEFAULT_RESOURCES="${FIREWORKZ_RESOURCES_DIR}:${T5}/external/Unicode:${T5}/Resources/UK:${T5}/Resources/Neutral")
 
 # Headless stand-in for the Qt layer, for tests
 add_library(fireworkz_qth_null STATIC ${T5}/ob_skel/linux/qth_null.c)

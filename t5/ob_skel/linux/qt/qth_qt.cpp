@@ -9,6 +9,7 @@
 #include "ob_skel/linux/qt_host.h"
 #include "ob_skel/linux/qt/qth_qt.h"
 
+#include <QAbstractEventDispatcher>
 #include <QApplication>
 #include <QCloseEvent>
 #include <QCursor>
@@ -57,10 +58,31 @@ qth_app_run(void)
     return(app()->exec());
 }
 
-extern "C" void
-qth_process_events(int wait)
+static int g_quit_requested;
+
+extern "C" int
+qth_process_events(int wait_ms)
 {
-    app()->processEvents(wait ? QEventLoop::WaitForMoreEvents : QEventLoop::AllEvents, wait ? 50 : 0);
+    QAbstractEventDispatcher * p_dispatcher = QAbstractEventDispatcher::instance();
+
+    app();
+
+    if(nullptr == p_dispatcher)
+        return(0);
+
+    if(0 == wait_ms)
+        return(p_dispatcher->processEvents(QEventLoop::AllEvents) ? 1 : 0);
+
+    if(wait_ms > 0)
+        QTimer::singleShot(wait_ms, [](){}); /* something to wake us if no input comes */
+
+    return(p_dispatcher->processEvents(QEventLoop::WaitForMoreEvents) ? 1 : 0);
+}
+
+extern "C" int
+qth_quit_requested(void)
+{
+    return(g_quit_requested);
 }
 
 extern "C" int
@@ -78,6 +100,7 @@ qth_beep(void)
 extern "C" void
 qth_app_quit(int exit_code)
 {
+    g_quit_requested = 1;
     app()->exit(exit_code);
 }
 

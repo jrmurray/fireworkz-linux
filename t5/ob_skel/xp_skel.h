@@ -9965,7 +9965,7 @@ _Check_return_
 extern STATUS
 startup_t5_application_2(void);
 
-#if WINDOWS
+#if WINDOWS || LINUX
 
 extern void
 t5_do_exit(void);
