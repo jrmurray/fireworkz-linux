@@ -19,7 +19,7 @@
 #include "cmodules/ev_eval.h"
 #endif
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_FL_XLS)
 extern PC_U8 rb_fl_xls_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_FL_XLS &rb_fl_xls_msg_weak

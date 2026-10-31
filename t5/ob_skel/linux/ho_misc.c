@@ -49,6 +49,20 @@ host_rand_between(
     return(res);
 }
 
+_Check_return_
+extern BOOL
+host_shift_pressed(void)
+{
+    return(0 != (qth_keyboard_modifiers() & QTH_MOD_SHIFT));
+}
+
+_Check_return_
+extern BOOL
+host_ctrl_pressed(void)
+{
+    return(0 != (qth_keyboard_modifiers() & QTH_MOD_CTRL));
+}
+
 /* Nothing is held by the host layer that the Qt side does not release itself. */
 
 extern void

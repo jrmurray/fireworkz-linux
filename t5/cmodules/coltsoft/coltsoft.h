@@ -883,6 +883,7 @@ typedef HOST_WND HWND; /* much of the window code shared with Windows is written
 /* the Windows-style pairs and rectangles that the shared window code is written in terms of */
 typedef struct POINT { S32 x, y; } POINT, * PPOINT;
 typedef struct RECT { S32 left, top, right, bottom; } RECT, * PRECT;
+typedef UINT * PUINT;
 
 /* Windows virtual key codes: the host layer turns Qt keys into these, so that the key
  * conversion in keys.c is shared with Windows */

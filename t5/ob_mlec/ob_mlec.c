@@ -17,7 +17,7 @@
 
 #if RISCOS
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_MLEC)
 extern PC_U8 rb_mlec_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_MLEC &rb_mlec_msg_weak

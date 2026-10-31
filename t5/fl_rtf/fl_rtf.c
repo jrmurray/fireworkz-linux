@@ -22,7 +22,7 @@
 
 #include <ctype.h> /* for "C"isalpha and friends */
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_FL_RTF)
 extern PC_U8 rb_fl_rtf_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_FL_RTF &rb_fl_rtf_msg_weak

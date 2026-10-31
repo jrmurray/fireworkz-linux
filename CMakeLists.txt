@@ -95,6 +95,37 @@ endforeach()
 
 add_custom_target(fireworkz_messages ALL DEPENDS ${FIREWORKZ_MESSAGE_FILES})
 
+# ---- Bitmap resources ------------------------------------------------------------
+#
+# The Windows build lists its bitmaps in resource scripts (id BITMAP "file"). Index them,
+# per object, in Linux/Bitmaps/ObNN for cmodules/resource.c: lines of id, a tab and the file.
+# The paths in the scripts are relative to t5/Build/windows.
+
+set(FIREWORKZ_BITMAP_SOURCES
+    "00|ob_skel/resource/Neutral/skel-li.rci|ob_skel/resource/UK/skel-ld.rci"
+    "01|ob_ss/resource/Neutral/ss-li.rci|ob_ss/resource/UK/ss-ld.rci"
+    "06|ob_chart/resource/Neutral/chart-li.rci|ob_chart/resource/UK/chart-ld.rci")
+
+file(MAKE_DIRECTORY ${FIREWORKZ_RESOURCES_DIR}/Linux/Bitmaps)
+
+foreach(entry IN LISTS FIREWORKZ_BITMAP_SOURCES)
+    string(REPLACE "|" ";" parts "${entry}")
+    list(POP_FRONT parts object_id)
+    set(index_lines "")
+    foreach(part IN LISTS parts)
+        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${T5}/${part})
+        file(STRINGS ${T5}/${part} bitmap_lines REGEX "^[0-9]+[ \t]+BITMAP")
+        foreach(line IN LISTS bitmap_lines)
+            string(REGEX REPLACE "^([0-9]+)[ \t]+BITMAP.*\"([^\"]+)\".*$" "\\1\t\\2" entry_line "${line}")
+            string(REGEX REPLACE "\t.*$" "" bitmap_id "${entry_line}")
+            string(REGEX REPLACE "^[^\t]*\t" "" bitmap_path "${entry_line}")
+            get_filename_component(bitmap_abs "${T5}/Build/windows/${bitmap_path}" ABSOLUTE)
+            string(APPEND index_lines "${bitmap_id}\t${bitmap_abs}\n")
+        endforeach()
+    endforeach()
+    file(WRITE ${FIREWORKZ_RESOURCES_DIR}/Linux/Bitmaps/Ob${object_id} "${index_lines}")
+endforeach()
+
 # ---- Skeleton (milestone 3, in progress) --------------------------------------
 #
 # Everything in ob_skel, plus the Linux host layer (ob_skel/linux/ho_*.c), which
@@ -128,7 +159,7 @@ add_executable(fireworkz_core_smoke
     t5/Build/linux/core_smoke.c
     t5/Build/linux/core_smoke_host.c
     t5/ob_skel/sk_alpha.c)
-target_link_libraries(fireworkz_core_smoke PRIVATE fireworkz_core)
+target_link_libraries(fireworkz_core_smoke PRIVATE fireworkz_core fireworkz_qth_null)
 target_compile_definitions(fireworkz_core_smoke PRIVATE FIREWORKZ_TEST_RESOURCES="${FIREWORKZ_RESOURCES_DIR}")
 add_dependencies(fireworkz_core_smoke fireworkz_messages)
 add_test(NAME core_smoke COMMAND fireworkz_core_smoke)

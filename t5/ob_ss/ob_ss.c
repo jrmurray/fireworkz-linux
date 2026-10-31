@@ -29,7 +29,7 @@
 
 #include "cmodules/mrofmun.h"
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_SS)
 extern PC_U8 rb_ss_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_SS &rb_ss_msg_weak

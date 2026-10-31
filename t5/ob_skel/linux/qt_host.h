@@ -139,11 +139,17 @@ void qth_image_size(const QTH_IMAGE * p_image, int32_t * p_width, int32_t * p_he
 void qth_image_destroy(QTH_IMAGE * p_image);
 void qth_paint_image(QTH_PAINTER * p_painter, const QTH_IMAGE * p_image, const QTH_RECT * p_dest);
 
+/* The same, with the pixels of one colour left transparent (the way the Windows build paints markers) */
+void qth_paint_image_keyed(QTH_PAINTER * p_painter, const QTH_IMAGE * p_image, const QTH_RECT * p_dest, QTH_RGB transparent);
+
 /* ---- Application and windows ------------------------------------------------ */
 
 typedef struct QTH_WINDOW QTH_WINDOW;
 
 void qth_screen_dpi(int32_t * p_dpi_x, int32_t * p_dpi_y);
+
+/* The size of the part of the screen that windows can use, in pixels */
+void qth_screen_work_area(int32_t * p_width, int32_t * p_height);
 
 /* The event pump. Qt events are turned into these plain structs and handed to
  * the window's handler; the handler never sees Qt. */

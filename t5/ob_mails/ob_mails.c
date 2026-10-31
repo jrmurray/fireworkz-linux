@@ -25,7 +25,7 @@ callback routines
 
 MAEVE_EVENT_PROTO(static, maeve_event_ob_mails);
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_MAILSHOT)
 extern PC_U8 rb_mails_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_MAILSHOT &rb_mails_msg_weak

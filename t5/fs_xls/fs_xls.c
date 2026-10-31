@@ -14,7 +14,7 @@
 
 #include "fs_xls/fs_xls.h"
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_FS_XLS)
 extern PC_U8 rb_fs_xls_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_FS_XLS &rb_fs_xls_msg_weak

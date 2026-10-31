@@ -15,7 +15,7 @@
 
 #include "ob_note/ob_note.h"
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_NOTE)
 extern PC_U8 rb_note_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_NOTE &rb_note_msg_weak

@@ -17,7 +17,7 @@
 
 #include "ob_skel/ff_io.h"
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_FS_ASCII)
 extern PC_U8 rb_fs_ascii_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_FS_ASCII &rb_fs_ascii_msg_weak

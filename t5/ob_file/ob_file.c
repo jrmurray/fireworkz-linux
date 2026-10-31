@@ -35,7 +35,7 @@ __pragma(warning(pop))
 
 #endif /* WINDOWS */
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_FILE)
 extern PC_U8 rb_file_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_FILE &rb_file_msg_weak

@@ -77,7 +77,7 @@ typedef struct RESOURCE_BITMAP_ID
     OBJECT_ID object_id;
 #if RISCOS
     PC_SBSTR bitmap_name; /* [12] including CH_NULL terminator for RISC OS: native, can't be UTF-8 encoded */
-#elif WINDOWS
+#elif WINDOWS || LINUX
     UINT bitmap_id;
 #endif
 }
@@ -110,7 +110,7 @@ extern RESOURCE_BITMAP_HANDLE
 resource_bitmap_find(
     _InRef_     PC_RESOURCE_BITMAP_ID p_resource_bitmap_id);
 
-#if WINDOWS
+#if WINDOWS || LINUX
 
 _Check_return_
 extern BOOL
@@ -142,7 +142,7 @@ resource_bitmap_find_system(
 
 #endif /* RISCOS */
 
-#if WINDOWS
+#if WINDOWS || LINUX
 
 _Check_return_
 extern STATUS /* STATUS_DONE and size set iff found, or STATUS_OK and zero size if not */

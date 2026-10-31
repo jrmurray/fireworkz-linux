@@ -25,7 +25,7 @@
 #include "cmodules/typepack.h"
 #endif
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_FL_LOTUS123)
 extern PC_U8 rb_fl_123_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_FL_LOTUS123 &rb_fl_123_msg_weak

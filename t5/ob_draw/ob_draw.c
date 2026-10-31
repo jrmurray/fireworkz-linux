@@ -81,7 +81,7 @@ typedef struct DRAW_SAVE_MAP
 }
 DRAW_SAVE_MAP, * P_DRAW_SAVE_MAP;
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_DRAW)
 extern PC_U8 rb_draw_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_DRAW &rb_draw_msg_weak

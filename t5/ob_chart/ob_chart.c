@@ -27,7 +27,7 @@ callback routines
 
 PROC_UREF_EVENT_PROTO(static, ob_chart_uref_event);
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_CHART)
 extern PC_U8 rb_chart_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_CHART &rb_chart_msg_weak

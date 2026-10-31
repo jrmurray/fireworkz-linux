@@ -93,6 +93,15 @@ qth_screen_dpi(int32_t * p_dpi_x, int32_t * p_dpi_y)
     *p_dpi_y = (int32_t) (p_screen->logicalDotsPerInchY() + 0.5);
 }
 
+extern "C" void
+qth_screen_work_area(int32_t * p_width, int32_t * p_height)
+{
+    const QRect r = app()->primaryScreen()->availableGeometry();
+
+    *p_width = r.width();
+    *p_height = r.height();
+}
+
 /* ---- Fonts ---------------------------------------------------------------- */
 
 struct QTH_FONT
@@ -345,6 +354,24 @@ extern "C" void
 qth_paint_image(QTH_PAINTER * p_painter, const QTH_IMAGE * p_image, const QTH_RECT * p_dest)
 {
     p_painter->p_painter->drawImage(rect_of(p_dest), p_image->image);
+}
+
+extern "C" void
+qth_paint_image_keyed(QTH_PAINTER * p_painter, const QTH_IMAGE * p_image, const QTH_RECT * p_dest, QTH_RGB transparent)
+{
+    QImage image = p_image->image.convertToFormat(QImage::Format_ARGB32);
+    const QRgb key = qRgb(transparent.r, transparent.g, transparent.b);
+
+    for(int y = 0; y < image.height(); ++y)
+    {
+        QRgb * p_line = reinterpret_cast<QRgb *>(image.scanLine(y));
+
+        for(int x = 0; x < image.width(); ++x)
+            if(qRgb(qRed(p_line[x]), qGreen(p_line[x]), qBlue(p_line[x])) == key)
+                p_line[x] = 0;
+    }
+
+    p_painter->p_painter->drawImage(rect_of(p_dest), image);
 }
 
 /* ---- Windows -------------------------------------------------------------- */

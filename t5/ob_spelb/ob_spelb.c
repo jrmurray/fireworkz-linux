@@ -19,7 +19,7 @@
 #include "ob_skel/xp_skeld.h"
 #endif
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_SPELB)
 extern PC_U8 rb_spelb_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_SPELB &rb_spelb_msg_weak

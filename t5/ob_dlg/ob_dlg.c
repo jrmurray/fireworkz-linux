@@ -15,7 +15,7 @@
 
 #include "ob_dlg/ui_dlgin.h"
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_DIALOG)
 extern PC_U8 rb_dlg_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_DIALOG &rb_dlg_msg_weak

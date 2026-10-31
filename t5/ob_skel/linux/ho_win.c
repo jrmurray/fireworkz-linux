@@ -4248,4 +4248,35 @@ host_set_pointer_shape(
         qth_window_set_cursor(g_hwnd_pointer, cursor);
 }
 
+PROC_EVENT_PROTO(static, proc_event_back_window)
+{
+    switch(t5_message)
+    {
+    case T5_EVENT_POINTER_ENTERS_WINDOW:
+    case T5_EVENT_POINTER_MOVEMENT:
+        return(back_window_event_pointer((PC_VIEWEVENT_CLICK) p_data));
+
+    case T5_EVENT_CLICK_LEFT_DOUBLE:
+        return(back_window_event_click_left_double(p_docu, (PC_VIEWEVENT_CLICK) p_data));
+
+    case T5_EVENT_CLICK_LEFT_DRAG:
+        return(back_window_event_click_left_drag((PC_VIEWEVENT_CLICK) p_data));
+
+    case T5_EVENT_CLICK_DRAG_STARTED:
+        return(back_window_event_click_drag_started((PC_VIEWEVENT_CLICK) p_data));
+
+    case T5_EVENT_CLICK_DRAG_MOVEMENT:
+        return(back_window_event_click_drag_movement((PC_VIEWEVENT_CLICK) p_data));
+
+    case T5_EVENT_CLICK_DRAG_FINISHED:
+        return(back_window_event_click_drag_finished(p_docu, (PC_VIEWEVENT_CLICK) p_data));
+
+    case T5_EVENT_CLICK_DRAG_ABORTED:
+        return(back_window_event_click_drag_aborted((PC_VIEWEVENT_CLICK) p_data));
+
+    default:
+        return(view_event_back_window(p_docu, t5_message, p_data));
+    }
+}
+
 /* end of ho_win.c */

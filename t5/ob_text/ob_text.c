@@ -19,7 +19,7 @@
 
 #include "ob_text/ob_text.h"
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_TEXT)
 extern PC_U8 rb_text_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_TEXT &rb_text_msg_weak

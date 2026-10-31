@@ -34,7 +34,7 @@
 #include "direct.h"
 #endif
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_DRAW_IO)
 extern PC_U8 rb_draw_io_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_DRAW_IO &rb_draw_io_msg_weak

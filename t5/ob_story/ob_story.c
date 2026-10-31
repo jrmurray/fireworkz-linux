@@ -15,7 +15,7 @@
 
 #include "ob_story/ob_story.h"
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_STORY)
 extern PC_U8 rb_story_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_STORY &rb_story_msg_weak

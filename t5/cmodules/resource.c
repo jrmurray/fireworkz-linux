@@ -21,6 +21,10 @@
 #include "ob_skel/xp_skelr.h"
 #endif
 
+#if LINUX
+#include "ob_skel/linux/qt_host.h"
+#endif
+
 #if WINDOWS
 #include "cmodules/collect.h"
 
@@ -90,6 +94,14 @@ typedef struct RESOURCES_PER_OBJECT
 #endif
 #if LINUX
     BOOL msgs_block_loaded; /* msgs.msgs_block is ours to free, rather than bound in */
+
+    struct RESOURCES_PER_OBJECT_BITMAP /* the object's bitmaps: id, file and, once used, the image */
+    {
+        U32 id;
+        PTSTR path;
+        QTH_IMAGE * p_image;
+    } * p_bitmaps;
+    U32 n_bitmaps;
 #endif
 #if RISCOS
     struct RESOURCES_PER_OBJECT_RISCOS
@@ -284,6 +296,22 @@ resource_bitmap_find(
     sprite_areas[3] = p_resources_per_object->riscos.sprites.s_c;
 
     resource_bitmap_handle.i = spriteop_select_sprite_in_areas(sprite_areas, 4, p_resource_bitmap_id->bitmap_name);
+    } /*block*/
+#elif LINUX
+    {
+    U32 i;
+
+    for(i = 0; i < p_resources_per_object->n_bitmaps; ++i)
+    {
+        if(p_resources_per_object->p_bitmaps[i].id == p_resource_bitmap_id->bitmap_id)
+        {
+            if(NULL == p_resources_per_object->p_bitmaps[i].p_image)
+                p_resources_per_object->p_bitmaps[i].p_image = qth_image_load(p_resources_per_object->p_bitmaps[i].path);
+
+            resource_bitmap_handle.i = p_resources_per_object->p_bitmaps[i].p_image;
+            break;
+        }
+    }
     } /*block*/
 #elif WINDOWS
     { /* scan this object's cache for bitmap */
@@ -539,6 +567,8 @@ resource_bitmap_lose(
         /* Don't need to throw away on RISC OS */
 #elif WINDOWS
         /* Decrement cache ref count if we can be bothered */
+#elif LINUX
+        /* the object's bitmap cache owns the image */
 #endif
         p_resource_bitmap_handle->i = 0;
     }
@@ -619,6 +649,21 @@ resource_close_per_object_resources(
         al_ptr_dispose(P_P_ANY_PEDANTIC(&p_resources_per_object->riscos.sprites.s_c));
     }
 #elif LINUX
+    {
+    U32 i;
+
+    for(i = 0; i < p_resources_per_object->n_bitmaps; ++i)
+    {
+        if(NULL != p_resources_per_object->p_bitmaps[i].p_image)
+            qth_image_destroy(p_resources_per_object->p_bitmaps[i].p_image);
+        free(p_resources_per_object->p_bitmaps[i].path);
+    }
+
+    free(p_resources_per_object->p_bitmaps);
+    p_resources_per_object->p_bitmaps = NULL;
+    p_resources_per_object->n_bitmaps = 0;
+    } /*block*/
+
     al_ptr_dispose(P_P_ANY_PEDANTIC(&p_resources_per_object->msgs.msgs_index));
     p_resources_per_object->msgs.n_msgs = 0;
     p_resources_per_object->msgs.lookup_ptr = NULL;
@@ -875,6 +920,70 @@ resource_init_linux_msgs(
     return(riscos_msg_init(&p_resources_per_object->msgs));
 }
 
+/* Load the index of an object's bitmaps: lines of 'id<TAB>file', generated at build time
+ * into Linux/Bitmaps/ObNN from the Windows resource scripts. The images themselves are only read
+ * when they are first wanted. */
+
+_Check_return_
+static STATUS
+resource_init_linux_bitmaps(
+    _InVal_     OBJECT_ID object_id)
+{
+    const P_RESOURCES_PER_OBJECT p_resources_per_object = resource_statics.objects[object_id];
+    TCHARZ name[BUF_MAX_PATHSTRING];
+    TCHARZ index_file[BUF_MAX_PATHSTRING];
+    FILE * file;
+    char line[BUF_MAX_PATHSTRING + 32];
+
+    PTR_ASSERT(p_resources_per_object);
+
+    consume_int(snprintf(name, elemof32(name), TEXT("Linux") FILE_DIR_SEP_TSTR TEXT("Bitmaps") FILE_DIR_SEP_TSTR TEXT("Ob%.2u"), (unsigned int) object_id));
+
+    if(file_find_on_path(index_file, elemof32(index_file), file_get_resources_path(), name) <= 0)
+        return(STATUS_OK); /* this object has no bitmaps */
+
+    if(NULL == (file = fopen(index_file, "r")))
+        return(STATUS_OK);
+
+    while(NULL != fgets(line, elemof32(line), file))
+    {
+        char * p_tab = strchr(line, '\t');
+        U32 length;
+
+        if(NULL == p_tab)
+            continue;
+
+        *p_tab++ = CH_NULL;
+
+        length = (U32) strlen(p_tab);
+        while((length > 0) && (p_tab[length - 1] < CH_SPACE))
+            p_tab[--length] = CH_NULL;
+
+        {
+        struct RESOURCES_PER_OBJECT_BITMAP * p_new =
+            realloc(p_resources_per_object->p_bitmaps, (p_resources_per_object->n_bitmaps + 1) * sizeof(*p_new));
+
+        if(NULL == p_new)
+            break;
+
+        p_resources_per_object->p_bitmaps = p_new;
+        p_new += p_resources_per_object->n_bitmaps;
+        p_new->id = (U32) strtoul(line, NULL, 10);
+        p_new->path = strdup(p_tab);
+        p_new->p_image = NULL;
+
+        if(NULL == p_new->path)
+            break;
+
+        ++p_resources_per_object->n_bitmaps;
+        } /*block*/
+    }
+
+    fclose(file);
+
+    return(STATUS_OK);
+}
+
 #elif WINDOWS
 
 _Check_return_
@@ -943,7 +1052,8 @@ resource_init(
 #elif LINUX
     status_return(resource_init_linux_msgs(object_id, p_u8_bound_msg));
 
-    UNREFERENCED_PARAMETER_InRef_(p_bound_resources); /* bitmaps are provided by the Qt layer */
+    if(LOAD_RESOURCES == p_bound_resources)
+        status_return(resource_init_linux_bitmaps(object_id));
 #elif WINDOWS
     UNREFERENCED_PARAMETER_CONST(p_u8_bound_msg);
     assert(DONT_LOAD_MESSAGES_FILE == p_u8_bound_msg);
@@ -2163,5 +2273,122 @@ msgs_init(void)
 }
 
 #endif /* RISCOS || LINUX */
+
+#if LINUX
+
+/* A multi-image store has its images in a grid: its entry in the index gives a size for one of them,
+ * and the bitmap id says which, as on Windows */
+
+_Check_return_
+extern STATUS /* STATUS_DONE and size set iff found, or STATUS_OK and zero size if not */
+resource_bitmap_tool_size_query(
+    _InRef_     PC_RESOURCE_BITMAP_ID p_resource_bitmap_id,
+    _OutRef_    P_GDI_SIZE p_size)
+{
+    ARRAY_INDEX i;
+
+    p_size->cx = p_size->cy = 0;
+
+    for(i = 0; i < array_elements(&resource_statics.bitmap_index); ++i)
+    {
+        PC_RESOURCE_BITMAP_INDEX p_resource_bitmap_index = array_ptrc(&resource_statics.bitmap_index, RESOURCE_BITMAP_INDEX, i);
+
+        if(p_resource_bitmap_index->bitmap_id.object_id != p_resource_bitmap_id->object_id)
+            continue;
+
+        if(p_resource_bitmap_index->bitmap_id.bitmap_id != p_resource_bitmap_id->bitmap_id)
+            continue;
+
+        *p_size = p_resource_bitmap_index->size;
+        return(STATUS_DONE);
+    }
+
+    return(STATUS_OK);
+}
+
+extern void
+resource_bitmap_gdi_size_query(
+    RESOURCE_BITMAP_HANDLE resource_bitmap_handle,
+    _OutRef_    P_GDI_SIZE p_size)
+{
+    int32_t width, height;
+
+    if(NULL == resource_bitmap_handle.i)
+    {
+        p_size->cx = p_size->cy = 0;
+        return;
+    }
+
+    qth_image_size((const QTH_IMAGE *) resource_bitmap_handle.i, &width, &height);
+
+    p_size->cx = width;
+    p_size->cy = height;
+}
+
+_Check_return_
+extern BOOL /*found*/
+resource_bitmap_find_new(
+    _InRef_     PC_RESOURCE_BITMAP_ID p_resource_bitmap_id,
+    _OutRef_    P_RESOURCE_BITMAP_HANDLE p_resource_bitmap_handle,
+    _OutRef_    P_GDI_SIZE p_bm_grid_size,
+    _OutRef_    PUINT p_index)
+{
+    RESOURCE_BITMAP_ID resource_bitmap_id;
+
+    resource_bitmap_id.object_id = p_resource_bitmap_id->object_id;
+    resource_bitmap_id.bitmap_id = p_resource_bitmap_id->bitmap_id & ~(T5_RESOURCE_COMMON_BMP_BIT);
+
+    p_bm_grid_size->cx = 0;
+    p_bm_grid_size->cy = 0;
+    *p_index = 0;
+
+    if(p_resource_bitmap_id->bitmap_id & T5_RESOURCE_COMMON_BMP_BIT) /* index into one of our multi-image stores? */
+    {
+        int32_t dpi_x, dpi_y;
+
+        *p_index = resource_bitmap_id.bitmap_id >> 8;
+        resource_bitmap_id.bitmap_id &= 0xFF;
+
+        qth_screen_dpi(&dpi_x, &dpi_y);
+
+        if(dpi_x >= 120)
+        {   /* try for high-dpi variant (at id+1) */
+            RESOURCE_BITMAP_ID high_dpi_resource_bitmap_id;
+
+            high_dpi_resource_bitmap_id.object_id = resource_bitmap_id.object_id;
+            high_dpi_resource_bitmap_id.bitmap_id = resource_bitmap_id.bitmap_id + 1;
+
+            *p_resource_bitmap_handle = resource_bitmap_find(&high_dpi_resource_bitmap_id);
+
+            if(0 != p_resource_bitmap_handle->i)
+            {
+                status_assert(resource_bitmap_tool_size_query(&high_dpi_resource_bitmap_id, p_bm_grid_size));
+                return(TRUE);
+            }
+        }
+
+        *p_resource_bitmap_handle = resource_bitmap_find(&resource_bitmap_id);
+
+        if(0 != p_resource_bitmap_handle->i)
+        {
+            status_assert(resource_bitmap_tool_size_query(&resource_bitmap_id, p_bm_grid_size));
+            return(TRUE);
+        }
+
+        return(FALSE);
+    }
+
+    *p_resource_bitmap_handle = resource_bitmap_find(&resource_bitmap_id);
+
+    if(0 != p_resource_bitmap_handle->i)
+    {
+        resource_bitmap_gdi_size_query(*p_resource_bitmap_handle, p_bm_grid_size);
+        return(TRUE);
+    }
+
+    return(FALSE);
+}
+
+#endif /* LINUX */
 
 /* end of resource.c */

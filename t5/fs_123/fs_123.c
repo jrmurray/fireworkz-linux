@@ -27,7 +27,7 @@
 
 #include <ctype.h> /* for "C"isalpha and friends */
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_FS_LOTUS123)
 extern PC_U8 rb_fs_123_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_FS_LOTUS123 &rb_fs_123_msg_weak

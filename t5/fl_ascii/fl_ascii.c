@@ -19,7 +19,7 @@
 
 #include "cmodules/unicode/u2000.h" /* 2000..206F General Punctuation */
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_FL_ASCII)
 extern PC_U8 rb_fl_ascii_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_FL_ASCII &rb_fl_ascii_msg_weak

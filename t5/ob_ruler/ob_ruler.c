@@ -24,7 +24,7 @@
 #include "ob_skel/xp_skelr.h"
 #endif
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_RULER)
 extern PC_U8 rb_ruler_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_RULER &rb_ruler_msg_weak

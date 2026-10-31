@@ -191,6 +191,13 @@ qth_screen_dpi(int32_t * p_dpi_x, int32_t * p_dpi_y)
     *p_dpi_x = *p_dpi_y = 96;
 }
 
+void
+qth_screen_work_area(int32_t * p_width, int32_t * p_height)
+{
+    *p_width = 1024;
+    *p_height = 768;
+}
+
 #define RGB_ARGS(rgb) (rgb).r, (rgb).g, (rgb).b
 #define RECT_ARGS(p) (int) (p)->left, (int) (p)->top, (int) (p)->right, (int) (p)->bottom
 
@@ -272,6 +279,13 @@ qth_paint_image(QTH_PAINTER * p_painter, const QTH_IMAGE * p_image, const QTH_RE
 {
     (void) p_image;
     painter_logf(p_painter, "image %d,%d,%d,%d", RECT_ARGS(p_dest));
+}
+
+void
+qth_paint_image_keyed(QTH_PAINTER * p_painter, const QTH_IMAGE * p_image, const QTH_RECT * p_dest, QTH_RGB transparent)
+{
+    (void) p_image;
+    painter_logf(p_painter, "image-keyed %d,%d,%d,%d #%02x%02x%02x", RECT_ARGS(p_dest), RGB_ARGS(transparent));
 }
 
 struct QTH_WINDOW

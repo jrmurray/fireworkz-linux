@@ -399,4 +399,211 @@ host_fonty_text_paint_uchars_simple(
                    text_align_lcr);
 }
 
+/* A line underneath text: always a filled rectangle, as we can see fine pixels */
+
+extern void
+host_paint_underline(
+    _InRef_     PC_REDRAW_CONTEXT p_redraw_context,
+    _InRef_     PC_PIXIT_LINE p_pixit_line,
+    _InRef_     PC_RGB p_rgb,
+    _InVal_     PIXIT line_thickness)
+{
+    PIXIT line_width;
+    PIXIT_RECT pixit_rect;
+    QTH_RECT rect;
+
+    if(p_rgb->transparent)
+        return;
+
+    line_width = MAX(line_thickness, p_redraw_context->one_real_pixel.y);
+    if(p_redraw_context->flags.printer || p_redraw_context->flags.drawfile)
+        line_width = line_thickness;
+
+    pixit_rect.tl = p_pixit_line->tl;
+    pixit_rect.br = p_pixit_line->br;
+
+    /* line is horizontal */
+    pixit_rect.br.y = pixit_rect.tl.y + line_width;
+
+    if(!status_done(device_rect_from_pixit_rect(&rect, &pixit_rect, p_redraw_context)))
+        return;
+
+    qth_paint_fill_rect(painter_of(p_redraw_context), &rect, qth_rgb(p_rgb));
+}
+
+/* The lines of borders and rulers: horizontal or vertical rectangles, never less than a pixel */
+
+extern void
+host_paint_border_line(
+    _InRef_     PC_REDRAW_CONTEXT p_redraw_context,
+    _InRef_     PC_PIXIT_LINE p_pixit_line,
+    _InRef_     PC_RGB p_rgb,
+    _In_        BORDER_LINE_FLAGS flags)
+{
+    PIXIT_LINE pixit_line;
+    PIXIT_POINT line_width, line_width_eff, line_width_select;
+    PIXIT_RECT pixit_rect;
+    GDI_RECT gdi_rect;
+
+    if(p_rgb->transparent)
+        return;
+
+    pixit_line = *p_pixit_line;
+
+    switch(flags.border_style)
+    {
+    case SF_BORDER_NONE:
+        return;
+
+    case SF_BORDER_THIN:
+        line_width     = p_redraw_context->thin_width;
+        line_width_eff = p_redraw_context->thin_width_eff;
+        break;
+
+    default: default_unhandled();
+#if CHECKING
+    case SF_BORDER_STANDARD:
+    case SF_BORDER_BROKEN:
+#endif
+        line_width     = p_redraw_context->line_width;
+        line_width_eff = p_redraw_context->line_width_eff;
+        break;
+
+    case SF_BORDER_THICK:
+        line_width     = p_redraw_context->border_width;
+        line_width_eff = p_redraw_context->border_width;
+        break;
+    }
+
+    line_width_select = line_width_eff;
+    if(p_redraw_context->flags.printer || p_redraw_context->flags.metafile || p_redraw_context->flags.drawfile)
+        line_width_select = line_width;
+
+    if(flags.add_lw_to_l)
+        pixit_line.tl.x += line_width_select.x;
+    if(flags.add_lw_to_t)
+        pixit_line.tl.y += line_width_select.y;
+    if(flags.add_lw_to_r)
+        pixit_line.br.x += line_width_select.x;
+    if(flags.add_lw_to_b)
+        pixit_line.br.y += line_width_select.y;
+
+    pixit_rect.tl = pixit_line.tl;
+    pixit_rect.br = pixit_line.br;
+
+    if(pixit_line.horizontal)
+        pixit_rect.br.y = pixit_rect.tl.y + line_width_select.y;
+    else
+        pixit_rect.br.x = pixit_rect.tl.x + line_width_select.x;
+
+    status_consume(gdi_rect_from_pixit_rect_and_context(&gdi_rect, &pixit_rect, p_redraw_context));
+
+    /* too small to plot as a rectangle, so make it one pixel thick */
+    if(gdi_rect.tl.x >= gdi_rect.br.x)
+        gdi_rect.br.x = gdi_rect.tl.x + 1;
+    if(gdi_rect.tl.y >= gdi_rect.br.y)
+        gdi_rect.br.y = gdi_rect.tl.y + 1;
+
+    {
+    const QTH_RECT rect = qth_rect(&gdi_rect);
+    qth_paint_fill_rect(painter_of(p_redraw_context), &rect, qth_rgb(p_rgb));
+    } /*block*/
+}
+
+/* Text centred in a rectangle, as in a cell with borders, filled and outlined in the given colours */
+
+extern void
+host_fonty_text_paint_uchars_in_rectangle(
+    _InRef_     PC_REDRAW_CONTEXT p_redraw_context,
+    _InRef_     PC_PIXIT_RECT p_pixit_rect,
+    _In_reads_(uchars_n) PC_UCHARS uchars,
+    _InVal_     U32 uchars_n,
+    _InRef_     PC_BORDER_FLAGS p_border_flags,
+    _InRef_     PC_RGB p_rgb_fill,
+    _InRef_     PC_RGB p_rgb_line,
+    _InRef_     PC_RGB p_rgb_text,
+    _HfontRef_  HOST_FONT host_font)
+{
+    QTH_PAINTER * const p_painter = painter_of(p_redraw_context);
+    QTH_RECT rect;
+
+    if(!status_done(device_rect_from_pixit_rect(&rect, p_pixit_rect, p_redraw_context)))
+        return;
+
+    qth_paint_fill_rect(p_painter, &rect, qth_rgb(p_rgb_fill));
+
+    if(0 != uchars_n)
+    {
+        QTH_FONT_METRICS metrics;
+        const int32_t width = qth_font_text_width(host_font, (const uint8_t *) uchars, uchars_n);
+        QTH_RECT clip = rect;
+
+        qth_font_metrics(host_font, &metrics);
+
+        /* the host_xform maps pixits to pixels, so the font was made in pixels and so are these */
+        qth_paint_set_clip(p_painter, &clip);
+        qth_paint_text(p_painter, host_font,
+                       rect.left + (((rect.right - rect.left) - width) / 2),
+                       rect.top + (((rect.bottom - rect.top) - (metrics.ascent + metrics.descent)) / 2) + metrics.ascent,
+                       (const uint8_t *) uchars, uchars_n, qth_rgb(p_rgb_text), NULL, QTH_ALIGN_LEFT);
+        host_restore_clip_rectangle(p_redraw_context);
+    }
+
+    if(p_border_flags->left.show || p_border_flags->right.show || p_border_flags->top.show || p_border_flags->bottom.show)
+    {
+        const QTH_RGB line = qth_rgb(p_rgb_line);
+
+        if(p_border_flags->left.show && p_border_flags->right.show && p_border_flags->top.show && p_border_flags->bottom.show)
+        {
+            qth_paint_frame_rect(p_painter, &rect, line);
+            return;
+        }
+
+        if(p_border_flags->left.show)
+        {
+            QTH_RECT r = rect; r.right = r.left + 1;
+            qth_paint_fill_rect(p_painter, &r, line);
+        }
+
+        if(p_border_flags->right.show)
+        {
+            QTH_RECT r = rect; r.left = r.right - 1;
+            qth_paint_fill_rect(p_painter, &r, line);
+        }
+
+        if(p_border_flags->top.show)
+        {
+            QTH_RECT r = rect; r.bottom = r.top + 1;
+            qth_paint_fill_rect(p_painter, &r, line);
+        }
+
+        if(p_border_flags->bottom.show)
+        {
+            QTH_RECT r = rect; r.top = r.bottom - 1;
+            qth_paint_fill_rect(p_painter, &r, line);
+        }
+    }
+}
+
+/* Where a drag starts relative to the click: the cursors have no hot spot offset here */
+
+extern void
+host_modify_click_point(
+    _InoutRef_  P_GDI_POINT p_gdi_point)
+{
+    UNREFERENCED_PARAMETER_InoutRef_(p_gdi_point);
+}
+
+extern void
+host_work_area_gdi_size_query(
+    _OutRef_    P_GDI_SIZE p_gdi_size)
+{
+    int32_t width, height;
+
+    qth_screen_work_area(&width, &height);
+
+    p_gdi_size->cx = width;
+    p_gdi_size->cy = height;
+}
+
 /* end of ho_paint.c */

@@ -23,7 +23,7 @@
 #include "ob_skel/xp_skelr.h"
 #endif
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_CELLS)
 extern PC_U8 rb_cells_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_CELLS &rb_cells_msg_weak

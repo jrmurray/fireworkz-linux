@@ -20,7 +20,7 @@
 #include "cmodules/unicode/u2000.h" /* 2000..206F General Punctuation */
 #include "cmodules/utf16.h"
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_FS_RTF)
 extern PC_U8 rb_fs_rtf_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_FS_RTF &rb_fs_rtf_msg_weak

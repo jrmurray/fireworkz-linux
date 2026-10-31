@@ -23,7 +23,7 @@
 #include "ob_skel/xp_skeld.h"
 #endif
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_FL_CSV)
 extern PC_U8 rb_fl_csv_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_FL_CSV &rb_fl_csv_msg_weak

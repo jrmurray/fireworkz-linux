@@ -19,7 +19,7 @@
 callback routines
 */
 
-#if RISCOS
+#if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_FL_FWP)
 extern PC_U8 rb_fl_fwp_msg_weak;
 #define P_BOUND_MESSAGES_OBJECT_ID_FL_FWP &rb_fl_fwp_msg_weak
