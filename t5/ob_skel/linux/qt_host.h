@@ -34,6 +34,7 @@
 #ifndef QT_HOST_H
 #define QT_HOST_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -438,6 +439,20 @@ char * qth_file_dialog(QTH_WINDOW * p_parent, int save, const char * p_title, co
 
 /* The desktop's colour chooser, starting from *p_r,*p_g,*p_b (0..255). Returns non-zero, with the new colour, if one was chosen. */
 int qth_colour_dialog(QTH_WINDOW * p_parent, uint8_t * p_r, uint8_t * p_g, uint8_t * p_b);
+
+/* ---- The desktop clipboard --------------------------------------------------------- */
+
+/* Put a copy of the selection on the clipboard: the program's own format (so that another copy of it, or
+ * this one, can paste it with its styles) and plain text, in Latin-1 with any line ends. Either may be NULL. */
+void qth_clipboard_set(const void * p_own, size_t own_n, const void * p_text, size_t text_n);
+
+/* The program's own format, or the text as Latin-1 (anything else becomes ?), from the clipboard, as a block
+ * for the caller to free() and its length; zero if there is none. */
+int qth_clipboard_get_own(void ** pp_data, size_t * p_n);
+int qth_clipboard_get_text(void ** pp_data, size_t * p_n);
+
+/* Non-zero if there is anything on the clipboard that could be pasted */
+int qth_clipboard_has_data(void);
 
 /* Deliver the events that are waiting and return non-zero if there were any. If there are none, wait
  * for one for up to wait_ms milliseconds (0 is not at all, -1 is as long as it takes). */

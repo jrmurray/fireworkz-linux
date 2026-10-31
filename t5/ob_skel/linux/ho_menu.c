@@ -54,8 +54,8 @@ host_initmenu_for_docu(
     /* can only paste to certain target objects */
     paste_valid = ((OBJECT_ID_CELLS == p_docu->focus_owner) || (OBJECT_ID_NOTE == p_docu->focus_owner));
 
-    if(paste_valid && (0 == local_clip_data_query()))
-        paste_valid = FALSE; /* TODO: ask the desktop clipboard whether it has anything we can paste */
+    if(paste_valid && (0 == local_clip_data_query()) && !qth_clipboard_has_data())
+        paste_valid = FALSE; /* nothing we kept, and nothing on the desktop's clipboard */
 
     /* now setup the disable array so that items can be enabled and disabled */
     disable[MENU_PASTE] = (!paste_valid);

@@ -23,6 +23,10 @@
 #include "ob_skel/xp_skelr.h"
 #endif
 
+#if LINUX
+#include "ob_skel/linux/qt_host.h"
+#endif
+
 #if RISCOS || LINUX
 #if defined(BOUND_MESSAGES_OBJECT_ID_CELLS)
 extern PC_U8 rb_cells_msg_weak;
@@ -3212,6 +3216,130 @@ cells_cmd_selection_clear(
     return(STATUS_OK);
 }
 
+#if LINUX
+
+/******************************************************************************
+*
+* the desktop's clipboard: what is copied is kept here as before, and also put on the desktop's
+* clipboard in the program's own format and as plain text; paste takes from the desktop's clipboard,
+* so that it works from other programs, and between copies of this one
+*
+******************************************************************************/
+
+static void
+linux_clipboard_publish(
+    _DocuRef_   P_DOCU p_docu,
+    _InRef_     PC_DOCU_AREA p_docu_area)
+{
+    const ARRAY_HANDLE h_own = local_clip_data_query();
+    ARRAY_HANDLE h_text = 0;
+    SC_ARRAY_INIT_BLOCK array_init_block = aib_init(1024, sizeof32(BYTE), FALSE);
+    const U32 own_n = array_elements32(&h_own);
+    PC_BYTE p_own = (0 != own_n) ? array_rangec(&h_own, BYTE, 0, own_n) : NULL;
+    PC_BYTE p_text = NULL;
+    U32 text_n = 0;
+
+    /* the plain text version is made now, from the selection as it is, as a cut is about to remove it */
+    if(status_ok(al_array_alloc_zero(&h_text, &array_init_block)))
+    {
+        if(status_ok(save_foreign_to_array_from_docu_area(p_docu, &h_text, FILETYPE_TEXT, p_docu_area)))
+        {
+            text_n = array_elements32(&h_text);
+            p_text = (0 != text_n) ? array_rangec(&h_text, BYTE, 0, text_n) : NULL;
+        }
+    }
+
+    qth_clipboard_set(p_own, own_n, p_text, text_n);
+
+    al_array_dispose(&h_text);
+}
+
+_Check_return_
+static STATUS
+linux_clipboard_load_block(
+    _DocuRef_   P_DOCU p_docu,
+    _In_reads_(n) const void * p_data,
+    _InVal_     U32 n,
+    _InVal_     BOOL own_format,
+    _InVal_     BOOL clip_data_from_cut_operation)
+{
+    STATUS status = STATUS_OK;
+    ARRAY_HANDLE array_handle = 0;
+    SC_ARRAY_INIT_BLOCK array_init_block = aib_init(1, sizeof32(BYTE), FALSE);
+    P_BYTE core;
+
+    if(NULL == (core = al_array_alloc_BYTE(&array_handle, n, &array_init_block, &status)))
+        return(status);
+
+    memcpy32(core, p_data, n);
+
+    if(own_format)
+        status = load_ownform_from_array_handle(p_docu, &array_handle, P_POSITION_NONE, clip_data_from_cut_operation);
+    else
+    {
+        const OBJECT_ID object_id = object_id_from_t5_filetype(FILETYPE_TEXT, TRUE);
+        MSG_INSERT_FOREIGN msg_insert_foreign;
+        zero_struct_fn(msg_insert_foreign);
+
+        if(OBJECT_ID_NONE == object_id)
+            status = create_error(ERR_UNKNOWN_FILETYPE);
+        else
+        {
+            cur_change_before(p_docu);
+
+            msg_insert_foreign.filename = NULL;
+            msg_insert_foreign.t5_filetype = FILETYPE_TEXT;
+            msg_insert_foreign.scrap_file = TRUE;
+            msg_insert_foreign.insert = TRUE;
+            msg_insert_foreign.ctrl_pressed = FALSE;
+            msg_insert_foreign.position = p_docu->cur;
+            msg_insert_foreign.array_handle = array_handle;
+            status = object_call_id_load(p_docu, T5_MSG_INSERT_FOREIGN, &msg_insert_foreign, object_id);
+
+            cur_change_after(p_docu);
+        }
+    }
+
+    al_array_dispose(&array_handle);
+
+    return(status);
+}
+
+_Check_return_
+static STATUS
+linux_clipboard_paste(
+    _DocuRef_   P_DOCU p_docu)
+{
+    STATUS status = STATUS_OK;
+    void * p_data = NULL;
+    size_t n = 0;
+
+    if(qth_clipboard_get_own(&p_data, &n))
+    {   /* if it is the very data we last copied, we know whether that was a cut */
+        const ARRAY_HANDLE h_local = local_clip_data_query();
+        const BOOL ours = (array_elements32(&h_local) == (U32) n) && (0 == memcmp(array_rangec(&h_local, BYTE, 0, (U32) n), p_data, n));
+
+        status = linux_clipboard_load_block(p_docu, p_data, (U32) n, TRUE, ours ? g_clip_data_from_cut_operation : FALSE);
+        free(p_data);
+        return(status);
+    }
+
+    if(qth_clipboard_get_text(&p_data, &n))
+    {
+        status = linux_clipboard_load_block(p_docu, p_data, (U32) n, FALSE, FALSE);
+        free(p_data);
+        return(status);
+    }
+
+    { /* nothing on the desktop's clipboard: use what we have kept */
+    ARRAY_HANDLE h_clip_data = local_clip_data_query();
+
+    return(load_ownform_from_array_handle(p_docu, &h_clip_data, P_POSITION_NONE, g_clip_data_from_cut_operation));
+    } /*block*/
+}
+
+#endif /* LINUX */
+
 _Check_return_
 static STATUS
 cells_cmd_selection_copy_or_cut(
@@ -3238,6 +3366,9 @@ cells_cmd_selection_copy_or_cut(
         {
             clip_data_set(p_docu, f_local_clip_data, h_clip_data, clip_data_from_cut_operation, OBJECT_ID_CELLS); /* handle donated */
             g_clip_data_docu_area = docu_area;
+#if LINUX
+            linux_clipboard_publish(p_docu, &docu_area);
+#endif
         }
         else
         {
@@ -3446,6 +3577,8 @@ cells_cmd_paste_at_cursor(
 #elif WINDOWS
         status = load_from_windows_clipboard(p_docu, g_clip_data_from_cut_operation);
 #endif /* USE_GLOBAL_CLIPBOARD */
+#elif LINUX
+        status = linux_clipboard_paste(p_docu);
 #else
         ARRAY_HANDLE h_clip_data = local_clip_data_query();
         status = load_ownform_from_array_handle(p_docu, &h_clip_data, P_POSITION_NONE, g_clip_data_from_cut_operation);

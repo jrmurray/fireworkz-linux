@@ -218,6 +218,18 @@ Milestone 4 - DONE (first light): the application runs
       (Lotus and Excel number import, probably a byte-order branch not done for Linux), and
       sle_ss.c:958 uses hwnd uninitialised.
 
+    Clipboard: done (first cut), for text in cells
+      Copy and Cut keep the selection as before and also put it on the desktop's clipboard, in the
+      program's own format (application/x-fireworkz) and as plain text; Paste takes the program's own
+      format if the clipboard has it (so styles and cells survive, even between two copies of the
+      program), else plain text, else what the program kept. Edit>Paste is greyed only when there is
+      nothing anywhere. The pieces: qth_clipboard_* in qt_host.h, linux_clipboard_* in ob_cells.c.
+      Tested offscreen: copy, cut, paste, repeated paste, and text set by "another program"
+      (script step clip:text); app_smoke does one of each.
+      Not done: pasting other formats (RTF, CSV, spreadsheets, pictures), copying pictures, notes and
+      other objects' selections (only cells' Copy/Cut publish), a "clipboard changed" refresh of the
+      Paste menu while the menu is already open, and a primary selection (middle click) paste.
+
     What does not work yet (each is marked TODO where it lives):
       picture controls: drawn (QTH_DLG_BLANK canvases, painted by li_dlg.c from the resource bitmaps,
                                     colour swatches and other user controls through the redraw context)

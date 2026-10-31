@@ -12,6 +12,7 @@
 #include <QAbstractEventDispatcher>
 #include <QAbstractButton>
 #include <QCheckBox>
+#include <QClipboard>
 #include <QColorDialog>
 #include <QComboBox>
 #include <QDialog>
@@ -22,6 +23,7 @@
 #include <QFontMetrics>
 #include <QGroupBox>
 #include <QLabel>
+#include <QMimeData>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QPlainTextEdit>
@@ -342,6 +344,8 @@ test_script_step(QApplication * p_app, QStringList steps, int index)
                 if(p_widget->isVisible() && !qobject_cast<QMenu *>(p_widget))
                     p_widget->grab().save(arg + QStringLiteral("-") + QString::number(n++) + QStringLiteral(".png"));
         }
+        else if(verb == QLatin1String("clip"))
+            QApplication::clipboard()->setText(arg); /* as if another program had copied this */
         else if(verb == QLatin1String("menu"))
         {
             /* a menu item that opens a dialog does not return until it is over, so go on from here first */
@@ -2430,6 +2434,79 @@ qth_colour_dialog(QTH_WINDOW * p_parent, uint8_t * p_r, uint8_t * p_g, uint8_t *
     *p_g = (uint8_t) colour.green();
     *p_b = (uint8_t) colour.blue();
     return(1);
+}
+
+/* ---- The desktop clipboard ------------------------------------------------------------ */
+
+static const char * const own_mime = "application/x-fireworkz";
+
+extern "C" void
+qth_clipboard_set(const void * p_own, size_t own_n, const void * p_text, size_t text_n)
+{
+    QMimeData * p_mime = new QMimeData();
+
+    if(nullptr != p_own)
+        p_mime->setData(QLatin1String(own_mime), QByteArray(static_cast<const char *>(p_own), (qsizetype) own_n));
+
+    if(nullptr != p_text)
+    {
+        QString text = QString::fromLatin1(static_cast<const char *>(p_text), (qsizetype) text_n);
+
+        text.replace(QLatin1String("\r\n"), QLatin1String("\n"));
+        text.replace(QLatin1Char('\r'), QLatin1Char('\n'));
+        p_mime->setText(text);
+    }
+
+    QApplication::clipboard()->setMimeData(p_mime); /* the clipboard owns it now */
+}
+
+static int
+clipboard_block(const QByteArray & bytes, void ** pp_data, size_t * p_n)
+{
+    void * p_block;
+
+    if(bytes.isEmpty())
+        return(0);
+
+    p_block = malloc((size_t) bytes.size() + 1);
+    if(nullptr == p_block)
+        return(0);
+
+    memcpy(p_block, bytes.constData(), (size_t) bytes.size());
+    static_cast<char *>(p_block)[bytes.size()] = '\0';
+    *pp_data = p_block;
+    *p_n = (size_t) bytes.size();
+    return(1);
+}
+
+extern "C" int
+qth_clipboard_get_own(void ** pp_data, size_t * p_n)
+{
+    const QMimeData * p_mime = QApplication::clipboard()->mimeData();
+
+    if((nullptr == p_mime) || !p_mime->hasFormat(QLatin1String(own_mime)))
+        return(0);
+
+    return(clipboard_block(p_mime->data(QLatin1String(own_mime)), pp_data, p_n));
+}
+
+extern "C" int
+qth_clipboard_get_text(void ** pp_data, size_t * p_n)
+{
+    const QMimeData * p_mime = QApplication::clipboard()->mimeData();
+
+    if((nullptr == p_mime) || !p_mime->hasText())
+        return(0);
+
+    return(clipboard_block(p_mime->text().toLatin1(), pp_data, p_n));
+}
+
+extern "C" int
+qth_clipboard_has_data(void)
+{
+    const QMimeData * p_mime = QApplication::clipboard()->mimeData();
+
+    return((nullptr != p_mime) && (p_mime->hasFormat(QLatin1String(own_mime)) || p_mime->hasText()));
 }
 
 /* end of qth_qt.cpp */

@@ -102,6 +102,43 @@ int qth_colour_dialog(QTH_WINDOW * p_parent, uint8_t * p_r, uint8_t * p_g, uint8
     return(0);
 }
 
+/* ---- The clipboard: kept in a block here ---- */
+
+static void * clipboard_own;
+static size_t clipboard_own_n;
+static void * clipboard_text;
+static size_t clipboard_text_n;
+
+static void * clipboard_copy(const void * p, size_t n)
+{
+    void * p_copy = (NULL != p) ? malloc(n + 1) : NULL;
+    if(NULL != p_copy) { memcpy(p_copy, p, n); ((char *) p_copy)[n] = 0; }
+    return(p_copy);
+}
+
+void qth_clipboard_set(const void * p_own, size_t own_n, const void * p_text, size_t text_n)
+{
+    free(clipboard_own); free(clipboard_text);
+    clipboard_own = clipboard_copy(p_own, own_n); clipboard_own_n = own_n;
+    clipboard_text = clipboard_copy(p_text, text_n); clipboard_text_n = text_n;
+}
+
+int qth_clipboard_get_own(void ** pp_data, size_t * p_n)
+{
+    if(NULL == clipboard_own) return(0);
+    *pp_data = clipboard_copy(clipboard_own, clipboard_own_n); *p_n = clipboard_own_n;
+    return(NULL != *pp_data);
+}
+
+int qth_clipboard_get_text(void ** pp_data, size_t * p_n)
+{
+    if(NULL == clipboard_text) return(0);
+    *pp_data = clipboard_copy(clipboard_text, clipboard_text_n); *p_n = clipboard_text_n;
+    return(NULL != *pp_data);
+}
+
+int qth_clipboard_has_data(void) { return((NULL != clipboard_own) || (NULL != clipboard_text)); }
+
 /* ---- File choosers: nobody chooses ---- */
 
 char * qth_file_dialog(QTH_WINDOW * p_parent, int save, const char * p_title, const char * p_dir, const char * p_name,

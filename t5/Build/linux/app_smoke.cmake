@@ -118,3 +118,26 @@ if(typed_text MATCHES "bravo")
 endif()
 
 message(STATUS "fireworkz took typing, a dialog and Delete")
+
+# The clipboard: copy a word and paste it (the program's own format, through the desktop's clipboard), then
+# paste text that another program put there.
+
+set(CLIPPED ${SHOT}-clipped.fwk)
+file(REMOVE ${CLIPPED})
+
+set(ENV{FIREWORKZ_TEST_FILE} ${CLIPPED})
+set(ENV{FIREWORKZ_TEST_SCRIPT} "wait:800;click:100,150;type:ab;key:Home;key:shift+End;menu:Edit>Copy;key:End;menu:Edit>Paste;clip:xyz;menu:Edit>Paste;menu:File>Save As...;wait:500;quit")
+
+execute_process(COMMAND ${APP} RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err TIMEOUT 60)
+
+if(NOT result EQUAL 0)
+    message(FATAL_ERROR "fireworkz exited with ${result} using the clipboard\n${out}\n${err}")
+endif()
+
+file(READ ${CLIPPED} clipped_text)
+# the caret stays where a pasted fragment began, so the text from outside lands between the two ab
+if(NOT clipped_text MATCHES "abxyzab")
+    message(FATAL_ERROR "copy and paste did not give abxyzab in ${CLIPPED}:\n${clipped_text}")
+endif()
+
+message(STATUS "fireworkz copied and pasted")
