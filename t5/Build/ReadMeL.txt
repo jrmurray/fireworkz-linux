@@ -136,33 +136,47 @@ Milestone 3 - IN PROGRESS: skeleton and the Qt interface
     host_paint_border_line, framed boxes, bitmaps, drawfile and plain text
     painting are not ported yet.
 
-Milestone 4 - IN PROGRESS: objects and the application
-    Every .c file in ob_*, fl_*, fs_* and firewrkz now compiles for Linux and
-    builds as libfireworkz_objects. (Mostly this was widening "#elif WINDOWS"
-    to "#elif WINDOWS || LINUX" for dialog, toolbar, resource-ID and geometry
-    constants; the toolbar tool and status line have Linux stubs.)
+Milestone 4 - DONE (first light): the application runs
+    The fireworkz program links, starts, loads the default template and shows a
+    document window; a spreadsheet template shows column headers, grid lines,
+    the selected cell and scroll bars. app_smoke runs it on a virtual display
+    and checks it opens a window and draws something.
 
-    The executable does not link yet. -DFIREWORKZ_BUILD_APP=ON builds target
-    "fireworkz" and shows what is missing, about 50 symbols, all host layer:
-      views and windows   host_view_init/show/destroy/minimize/maximize/reopen/
-                          query_posn, host_settitle, host_scroll_pane,
-                          host_set_extent_this_view, host_work_area_gdi_size_query,
-                          host_recache_visible_row_range, host_reenter_window
-      updating            host_update, host_update_all, host_update_fast_start/
-                          continue, host_all_update_later
-      caret and pointer   host_main_show_caret, host_main_scroll_caret,
-                          host_set_pointer_shape, host_drag_start/in_progress
-      painting            host_paint_underline, host_paint_border_line,
-                          host_paint_marker, host_over_marker, host_marker_rect_flags,
-                          host_paint_drawfile, host_read_drawfile_pixit_size,
-                          host_fonty_text_paint_uchars_in_rectangle,
-                          fonty_text_paint_simple_uchars, text_segment_paint
-      colour and misc     rgb_stash, host_bleep, host_rand_between, host_shutdown,
-                          ui_list_size_estimate, ui_width_from_tstr_host
-      menus and dialogs   ho_menu_popup/dispose, dialog_windows_build_list
-      printing            host_print_document, host_printer_name_query,
-                          host_read_printer_paper_details, t5_msg_draft_print
-      other               windows_save_as, t5_cmd_help, wm_event_get, main
+    To run it (the build tree finds its own resources):
+
+        cmake -S . -B build -G Ninja && cmake --build build
+        build/fireworkz                                  # on the desktop
+        QT_QPA_PLATFORM=offscreen FIREWORKZ_SCREENSHOT=/tmp/fw build/fireworkz
+                                                         # no display: writes /tmp/fw-0.png
+
+    Choosing the first document: FIREWORKZ_TEMPLATES=<dir> uses the first template in that
+    directory, FIREWORKZ_RESOURCES=<path> overrides where resources are looked for.
+    The build stages what the program looks for into build/Resources: Linux/Messages/ObNN
+    (UI text), Linux/Bitmaps/ObNN (id to image file), Config.txt, Templates/*.fwt.
+
+    How it fits together
+      ob_skel/linux/ho_main.c    main(): startup, first document, event loop
+      ho_event.c                 wm_event_get(): input, then scheduled and null events when idle
+      ho_win.c                   views, panes, rulers, scroll bars, clicks, keys, drag, caret
+                                 (from windows/ho_win.c, Win32 calls shimmed over qt_host.h)
+      ho_paint.c ho_text.c       painting through the redraw context; document text via fonty
+      ho_marker.c ho_font.c ho_xform.c ho_misc.c ho_color.c
+      ho_stubs.c                 clearly marked stand-ins (below)
+      qt/qth_qt.cpp              the Qt 6 implementation of qt_host.h
+    Resources: cmodules/resource.c loads messages and bitmaps; ob_dlg/li_dlg.c measures text
+    in the dialog font.
+
+    What does not work yet (each is marked TODO where it lives):
+      menus and the toolbar         no menu bar; the toolbar and status line are not shown
+                                    (ho_stubs.c ho_menu_*, ob_toolb stubs)
+      dialogs                       the dialog engine's Qt side (li_dlg.c) has only measuring,
+                                    so any command that opens a dialog does nothing
+      Save As / Open / Print        windows_save_as(), file open, printing, print preview
+      Draw files                    drawings and charts are blank (host_paint_drawfile)
+      the clipboard, drag and drop, help
+      row borders and rulers on the default template; italic under/overhang in text widths
+      key shortcuts (Ctrl+...) are menu accelerators on Windows, so wait for menus
+      packaging                     .desktop file, icon, MIME types, install rules
 
 Interim stubs (search for "TODO" near "LINUX"):
     gr_rdiag.c   text bounding boxes are estimated, not measured
@@ -175,19 +189,14 @@ unchanged (37 of the 51 in ob_skel).
 Next milestones
 ---------------
 
-2. Resources: message text is done (see Status); toolbar bitmaps remain.
+2. Resources: messages and bitmaps (loaded by id): done.
 
-3. Skeleton: the rest of ob_skel, which mostly needs the per-platform
-   dialog metrics (DIALOG_STD*), plus a new ob_skel/linux host layer
-   (the counterpart of ob_skel/windows/ho_*.c) written in C++ against
-   Qt 6 behind a C interface: windows, events, painting, fonts, menus,
-   dialogs, clipboard and printing (QPrinter).
+3. Skeleton and 4. Objects: done (see Milestone 3 and 4 above).
 
-4. Objects and converters: the remaining ob_* and fl_*/fs_* modules,
-   then firewrkz/firewrkz.c as the application entry point.
+5. Make it a usable application: the menu bar and toolbar, the dialog engine in Qt, Open and
+   Save As with KDE file dialogs, the clipboard, printing, Draw file rendering.
 
-5. Desktop integration: .desktop file, icons, MIME types for Fireworkz
-   documents, KDE file dialogs.
+6. Desktop integration: .desktop file, icons, MIME types for Fireworkz documents.
 
 
 Known upstream issue

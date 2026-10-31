@@ -190,6 +190,8 @@ fallout:
 
     t5_do_exit();
 
+    (void) qth_process_events(0); /* let Qt delete the windows that have been closed */
+
     return(EXIT_SUCCESS);
 }
 

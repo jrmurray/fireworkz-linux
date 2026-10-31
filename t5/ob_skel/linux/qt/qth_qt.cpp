@@ -96,7 +96,14 @@ qth_process_events(int wait_ms)
         return(0);
 
     if(0 == wait_ms)
-        return(p_dispatcher->processEvents(QEventLoop::AllEvents) ? 1 : 0);
+    {
+        const int processed = p_dispatcher->processEvents(QEventLoop::AllEvents) ? 1 : 0;
+
+        /* windows closed with deleteLater() are only deleted by an event loop that is running */
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+
+        return(processed);
+    }
 
     if(wait_ms > 0)
         QTimer::singleShot(wait_ms, [](){}); /* something to wake us if no input comes */

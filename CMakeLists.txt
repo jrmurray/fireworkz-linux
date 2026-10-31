@@ -218,8 +218,8 @@ elseif(FIREWORKZ_BUILD_QT)
     message(WARNING "Qt 6 Widgets not found: the Qt backend is not built (-DFIREWORKZ_BUILD_QT=OFF to silence)")
 endif()
 
-# ---- The application (milestone 4, in progress) -----------------------------------
-option(FIREWORKZ_BUILD_APP "Try to build the fireworkz executable (does not link yet)" OFF)
+# ---- The application ------------------------------------------------------------------
+option(FIREWORKZ_BUILD_APP "Build the fireworkz executable" ON)
 
 if(FIREWORKZ_BUILD_APP AND TARGET fireworkz_qth_qt)
     add_executable(fireworkz ${T5}/firewrkz/firewrkz.c)
@@ -227,4 +227,9 @@ if(FIREWORKZ_BUILD_APP AND TARGET fireworkz_qth_qt)
     target_link_libraries(fireworkz PRIVATE
         -Wl,--start-group fireworkz_objects fireworkz_skel fireworkz_host_linux fireworkz_core -Wl,--end-group
         fireworkz_qth_qt)
+
+    # starts the program on a virtual display, lets it open its first document and save a picture of it
+    add_test(NAME app_smoke COMMAND ${CMAKE_COMMAND}
+        -DAPP=$<TARGET_FILE:fireworkz> -DSHOT=${CMAKE_CURRENT_BINARY_DIR}/app_smoke
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/t5/Build/linux/app_smoke.cmake)
 endif()
