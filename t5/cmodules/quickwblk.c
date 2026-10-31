@@ -36,7 +36,7 @@
 *
 ******************************************************************************/
 
-#if WINDOWS /* seems to be no use case on RISC OS */
+#if WINDOWS || LINUX /* seems to be no use case on RISC OS */
 
 /* dispose of a quick_wblock is inline */
 
@@ -314,7 +314,7 @@ quick_wblock_nullch_strip(
 *
 ******************************************************************************/
 
-#if WINDOWS /* seems to be no use case on RISC OS */
+#if WINDOWS || LINUX /* seems to be no use case on RISC OS */
 
 _Check_return_
 extern STATUS __cdecl
@@ -343,7 +343,7 @@ quick_wblock_printf(
 *
 ******************************************************************************/
 
-#if WINDOWS /* seems to be no use case on RISC OS */
+#if WINDOWS || LINUX /* seems to be no use case on RISC OS */
 
 _Check_return_
 extern STATUS

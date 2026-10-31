@@ -1279,7 +1279,7 @@ text_segment_paint(
     } /*block*/
 }
 
-#elif WINDOWS
+#elif WINDOWS || LINUX
 
 static void
 text_segment_paint(

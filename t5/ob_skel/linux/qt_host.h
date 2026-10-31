@@ -96,6 +96,9 @@ void qth_font_metrics(const QTH_FONT * p_font, QTH_FONT_METRICS * p_metrics);
 /* Advance width in font units of n Latin-1 characters, kerning included. */
 int32_t qth_font_text_width(const QTH_FONT * p_font, const uint8_t * p_latin1, uint32_t n);
 
+/* The same for UTF-16, for text that Latin-1 cannot hold */
+int32_t qth_font_text_width16(const QTH_FONT * p_font, const uint16_t * p_utf16, uint32_t n);
+
 /* ---- Painting ------------------------------------------------------------- */
 
 typedef struct QTH_RECT { int32_t left, top, right, bottom; } QTH_RECT;
@@ -129,6 +132,8 @@ void qth_paint_set_clip(QTH_PAINTER * p_painter, const QTH_RECT * p_rect);
 /* Latin-1 text with its baseline at y and, as the alignment says, x at its left,
  * right or middle. If p_background is not NULL the text's box is filled with it first. */
 void qth_paint_text(QTH_PAINTER * p_painter, const QTH_FONT * p_font, int32_t x, int32_t y, const uint8_t * p_latin1, uint32_t n, QTH_RGB foreground, const QTH_RGB * p_background, int align);
+
+void qth_paint_text16(QTH_PAINTER * p_painter, const QTH_FONT * p_font, int32_t x, int32_t y, const uint16_t * p_utf16, uint32_t n, QTH_RGB foreground, const QTH_RGB * p_background, int align);
 
 /* ---- Images (toolbar bitmaps and the like) ---------------------------------- */
 
@@ -289,6 +294,9 @@ void qth_beep(void);
 
 /* QTH_MOD_xxx for the modifier keys held down now */
 int qth_keyboard_modifiers(void);
+
+/* Deliver whatever events are waiting; if wait is not 0, wait until there is one (or a short while) first */
+void qth_process_events(int wait);
 
 /* Runs the event loop until qth_app_quit(). Returns the exit code. */
 int  qth_app_run(void);

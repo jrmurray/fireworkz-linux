@@ -249,6 +249,27 @@ qth_paint_text(QTH_PAINTER * p_painter, const QTH_FONT * p_font, int32_t x, int3
         painter_logf(p_painter, "text %d,%d align=%d \"%s\" #%02x%02x%02x", (int) x, (int) y, align, text, RGB_ARGS(foreground));
 }
 
+int32_t
+qth_font_text_width16(const QTH_FONT * p_font, const uint16_t * p_utf16, uint32_t n)
+{
+    (void) p_utf16;
+
+    return((int32_t) ((p_font->size_x / 2) * (int32_t) n));
+}
+
+void
+qth_paint_text16(QTH_PAINTER * p_painter, const QTH_FONT * p_font, int32_t x, int32_t y, const uint16_t * p_utf16, uint32_t n, QTH_RGB foreground, const QTH_RGB * p_background, int align)
+{
+    char text[64];
+    uint32_t i;
+
+    for(i = 0; (i < n) && (i < sizeof(text) - 1); ++i)
+        text[i] = (p_utf16[i] < 0x80) ? (char) p_utf16[i] : '?';
+    text[i] = '\0';
+
+    qth_paint_text(p_painter, p_font, x, y, (const uint8_t *) text, i, foreground, p_background, align);
+}
+
 struct QTH_IMAGE
 {
     int32_t width, height;
@@ -540,6 +561,12 @@ unsigned int
 qth_null_n_beeps(void)
 {
     return(n_beeps);
+}
+
+void
+qth_process_events(int wait)
+{
+    (void) wait;
 }
 
 static int quit_code;

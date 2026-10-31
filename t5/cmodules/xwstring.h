@@ -18,7 +18,7 @@
 exported functions
 */
 
-#if WINDOWS /* seems to be no use case on RISC OS */
+#if WINDOWS || LINUX /* seems to be no use case on RISC OS */
 
 _Check_return_
 extern STATUS
@@ -39,7 +39,7 @@ al_wstr_alloc(
 
 #endif /* OS */
 
-#if WINDOWS /* seems to be no use case on RISC OS */
+#if WINDOWS || LINUX /* seems to be no use case on RISC OS */
 
 static inline void
 wstr_clr(
@@ -63,7 +63,7 @@ wstr_set_n(
 
 #endif /* OS */
 
-#if WINDOWS /* seems to be no use case on RISC OS */
+#if WINDOWS || LINUX /* seems to be no use case on RISC OS */
 
 _Check_return_
 extern int /* 0:EQ, +ve:arg1>arg2, -ve:arg1<arg2 */
@@ -111,7 +111,7 @@ wstr_compare_n2_nocase(
 strcpy / _s() etc. replacements that ensure CH_NULL-termination
 */
 
-#if WINDOWS /* seems to be no use case on RISC OS */
+#if WINDOWS || LINUX /* seems to be no use case on RISC OS */
 
 /*ncr*/
 extern U32 /* WCHARs currently in output */
@@ -183,7 +183,7 @@ wstr_xvsnprintf(
 
 #else /* OS */
 
-#if WINDOWS /* seems to be no use case on RISC OS */
+#if WINDOWS || LINUX /* seems to be no use case on RISC OS */
 
 _Check_return_
 extern size_t
@@ -215,7 +215,7 @@ wstrpbrk(
 
 #endif /* OS */
 
-#if WINDOWS /* seems to be no use case on RISC OS */
+#if WINDOWS || LINUX /* seems to be no use case on RISC OS */
 
 #define wstrcmp(s1, s2)             wstr_compare(s1, s2)
 #define wstrncmp(s1, s2, n)         wstr_compare_n2(s1, n, s2, n)

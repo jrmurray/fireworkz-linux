@@ -1094,6 +1094,32 @@ fonty_chunk_info_read_wchars(
 
 #endif /* WINDOWS && TSTR_IS_SBSTR */
 
+#if LINUX && TSTR_IS_SBSTR
+
+extern void
+fonty_chunk_info_read_wchars(
+    _DocuRef_   P_DOCU p_docu,
+    _OutRef_    P_FONTY_CHUNK p_fonty_chunk,
+    _InVal_     FONTY_HANDLE fonty_handle,
+    _In_reads_(wchars_len_no_spaces) PCWCH wchars,
+    _InVal_     S32 wchars_len_no_spaces,
+    _InVal_     S32 trail_spaces)
+{
+    const PC_FONT_CONTEXT p_font_context = p_font_context_from_fonty_handle(fonty_handle);
+    const HOST_FONT host_font = fonty_host_font_from_fonty_handle_formatting(fonty_handle, p_docu->flags.draft_mode);
+
+    p_fonty_chunk->fonty_handle = fonty_handle;
+    p_fonty_chunk->trail_space = p_font_context->space_width * trail_spaces;
+    p_fonty_chunk->ascent = p_font_context->ascent;
+    p_fonty_chunk->underline = p_font_context->font_spec.underline;
+    CODE_ANALYSIS_ONLY(p_fonty_chunk->_spare[0] = p_fonty_chunk->_spare[1] = p_fonty_chunk->_spare[2] = 0);
+
+    /* TODO: allow for the underhang of the first and overhang of the last character (italics) */
+    p_fonty_chunk->width = (PIXIT) qth_font_text_width16(host_font, (const uint16_t *) wchars, (uint32_t) wchars_len_no_spaces) + p_fonty_chunk->trail_space;
+}
+
+#endif /* LINUX && TSTR_IS_SBSTR */
+
 /******************************************************************************
 *
 * initialise a fonty chunk

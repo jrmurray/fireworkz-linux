@@ -214,6 +214,24 @@ windows_save_as(
 
 #endif /* OS */
 
+#if LINUX
+
+/* TODO: a QFileDialog whose result goes to proc_save_common(), as the Windows common dialog does */
+
+_Check_return_
+extern STATUS
+windows_save_as(
+    _DocuRef_   P_DOCU p_docu,
+    _InoutRef_  P_SAVE_CALLBACK p_save_callback)
+{
+    UNREFERENCED_PARAMETER_DocuRef_(p_docu);
+    UNREFERENCED_PARAMETER_InoutRef_(p_save_callback);
+
+    return(STATUS_FAIL);
+}
+
+#endif /* LINUX */
+
 #if RISCOS || !defined(WINDOWS_SAVE_AS)
 static
 BITMAP(save_name_validation, 256);

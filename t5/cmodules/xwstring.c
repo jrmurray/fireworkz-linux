@@ -27,7 +27,7 @@
 *
 ******************************************************************************/
 
-#if WINDOWS /* seems to be no use case on RISC OS */
+#if WINDOWS || LINUX /* seems to be no use case on RISC OS */
 
 _Check_return_
 extern STATUS
@@ -63,7 +63,7 @@ al_wstr_realloc(
 *
 ******************************************************************************/
 
-#if WINDOWS /* seems to be no use case on RISC OS */
+#if WINDOWS || LINUX /* seems to be no use case on RISC OS */
 
 _Check_return_
 extern STATUS
@@ -133,7 +133,7 @@ wstr_set_n(
 *
 ******************************************************************************/
 
-#if WINDOWS /* seems to be no use case on RISC OS */
+#if WINDOWS || LINUX /* seems to be no use case on RISC OS */
 
 _Check_return_
 extern int /* 0:EQ, +ve:arg1>arg2, -ve:arg1<arg2 */
@@ -222,7 +222,7 @@ wstr_compare_n2(
 *
 ******************************************************************************/
 
-#if WINDOWS /* seems to be no use case on RISC OS */
+#if WINDOWS || LINUX /* seems to be no use case on RISC OS */
 
 _Check_return_
 extern int /* 0:EQ, +ve:arg1>arg2, -ve:arg1<arg2 */
@@ -328,7 +328,7 @@ dst buffer is always then CH_NULL-terminated within dst_n characters limit
 append up characters from src (until CH_NULL found) to dst (subject to dst limit)
 */
 
-#if WINDOWS /* seems to be no use case on RISC OS */
+#if WINDOWS || LINUX /* seems to be no use case on RISC OS */
 
 /*ncr*/
 extern U32 /* WCHARs currently in output */
@@ -564,7 +564,7 @@ wstr_xstrnkpy(
 
 #endif /* OS */
 
-#if WINDOWS /* seems to be no use case on RISC OS */
+#if WINDOWS || LINUX /* seems to be no use case on RISC OS */
 
 /*
 a portable but inexact replacement for (v)snprintf(), which Microsoft CRT doesn't have... also ensures CH_NULL termination
@@ -590,7 +590,7 @@ wstr_xsnprintf(
 
 #endif /* OS */
 
-#if WINDOWS /* seems to be no use case on RISC OS */
+#if WINDOWS || LINUX /* seems to be no use case on RISC OS */
 
 _Check_return_
 extern int __cdecl
@@ -668,7 +668,7 @@ wstr_xvsnprintf(
 
 #include <ctype.h> /* for "C"isalpha and friends */
 
-#if WINDOWS /* seems to be no use case on RISC OS */
+#if WINDOWS || LINUX /* seems to be no use case on RISC OS */
 
 /******************************************************************************
 *

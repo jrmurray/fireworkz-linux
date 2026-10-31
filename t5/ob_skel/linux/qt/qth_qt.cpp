@@ -12,6 +12,7 @@
 #include <QApplication>
 #include <QCloseEvent>
 #include <QCursor>
+#include <QEventLoop>
 #include <QFont>
 #include <QFontDatabase>
 #include <QFontMetricsF>
@@ -54,6 +55,12 @@ extern "C" int
 qth_app_run(void)
 {
     return(app()->exec());
+}
+
+extern "C" void
+qth_process_events(int wait)
+{
+    app()->processEvents(wait ? QEventLoop::WaitForMoreEvents : QEventLoop::AllEvents, wait ? 50 : 0);
 }
 
 extern "C" int
@@ -214,6 +221,14 @@ qth_font_text_width(const QTH_FONT * p_font, const uint8_t * p_latin1, uint32_t 
     return((int32_t) (metrics.horizontalAdvance(QString::fromLatin1(reinterpret_cast<const char *>(p_latin1), (qsizetype) n)) + 0.5));
 }
 
+extern "C" int32_t
+qth_font_text_width16(const QTH_FONT * p_font, const uint16_t * p_utf16, uint32_t n)
+{
+    const QFontMetricsF metrics(p_font->font);
+
+    return((int32_t) (metrics.horizontalAdvance(QString::fromUtf16(reinterpret_cast<const char16_t *>(p_utf16), (qsizetype) n)) + 0.5));
+}
+
 /* ---- Painting ------------------------------------------------------------- */
 
 struct QTH_PAINTER
@@ -298,6 +313,29 @@ qth_paint_text(QTH_PAINTER * p_painter, const QTH_FONT * p_font, int32_t x, int3
 {
     QPainter & painter = *p_painter->p_painter;
     const QString text = QString::fromLatin1(reinterpret_cast<const char *>(p_latin1), (qsizetype) n);
+    const QFontMetricsF metrics(p_font->font);
+    const qreal width = metrics.horizontalAdvance(text);
+
+    if(QTH_ALIGN_CENTRE == align)
+        x -= (int32_t) (width / 2 + 0.5);
+    else if(QTH_ALIGN_RIGHT == align)
+        x -= (int32_t) (width + 0.5);
+
+    if(nullptr != p_background)
+        painter.fillRect(QRectF(x, y - metrics.ascent(), width, metrics.ascent() + metrics.descent()), colour_of(*p_background));
+
+    painter.save();
+    painter.setFont(p_font->font);
+    painter.setPen(colour_of(foreground));
+    painter.drawText(QPointF(x, y), text);
+    painter.restore();
+}
+
+extern "C" void
+qth_paint_text16(QTH_PAINTER * p_painter, const QTH_FONT * p_font, int32_t x, int32_t y, const uint16_t * p_utf16, uint32_t n, QTH_RGB foreground, const QTH_RGB * p_background, int align)
+{
+    QPainter & painter = *p_painter->p_painter;
+    const QString text = QString::fromUtf16(reinterpret_cast<const char16_t *>(p_utf16), (qsizetype) n);
     const QFontMetricsF metrics(p_font->font);
     const qreal width = metrics.horizontalAdvance(text);
 
