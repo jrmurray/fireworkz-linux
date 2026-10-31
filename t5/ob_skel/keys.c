@@ -553,7 +553,7 @@ kmap_convert(
     return(kmap_code);
 }
 
-#elif WINDOWS
+#elif WINDOWS || LINUX
 
 _Check_return_
 extern KMAP_CODE

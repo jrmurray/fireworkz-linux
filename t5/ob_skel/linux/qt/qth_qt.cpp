@@ -22,9 +22,17 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QResizeEvent>
+#include <QScrollBar>
+#include <QStyle>
+#include <QTimer>
 #include <QScreen>
 #include <QString>
+#include <QWheelEvent>
 #include <QWidget>
+
+#include <map>
+
+static int modifiers_of(Qt::KeyboardModifiers modifiers);
 
 /* ---- Application ---------------------------------------------------------- */
 
@@ -46,6 +54,12 @@ extern "C" int
 qth_app_run(void)
 {
     return(app()->exec());
+}
+
+extern "C" int
+qth_keyboard_modifiers(void)
+{
+    return(modifiers_of(QGuiApplication::keyboardModifiers()));
 }
 
 extern "C" void
@@ -371,6 +385,9 @@ public:
     bool caret_visible = false;
     QRect caret;
 
+    bool marker_visible[QTH_N_MARKERS] = { false, false, false, false };
+    QRect marker[QTH_N_MARKERS];
+
 protected:
     void send(const QTH_EVENT & event)
     {
@@ -395,12 +412,15 @@ protected:
         painter.setClipRect(r);
         send(event);
 
+        painter.setClipping(false);
+        painter.setCompositionMode(QPainter::RasterOp_NotDestination);
+
         if(caret_visible)
-        {
-            painter.setClipping(false);
-            painter.setCompositionMode(QPainter::RasterOp_NotDestination);
             painter.fillRect(caret, Qt::black);
-        }
+
+        for(int i = 0; i < QTH_N_MARKERS; ++i)
+            if(marker_visible[i])
+                painter.fillRect(marker[i], Qt::black);
     }
 
     void mouse(int action, QMouseEvent * p_event)
@@ -457,6 +477,29 @@ protected:
         send(event);
     }
 
+    void wheelEvent(QWheelEvent * p_event) override
+    {
+        QTH_EVENT event;
+
+        memset(&event, 0, sizeof(event));
+        event.type = QTH_EVENT_WHEEL;
+        event.u.wheel.x = p_event->position().toPoint().x();
+        event.u.wheel.y = p_event->position().toPoint().y();
+        event.u.wheel.delta_x = p_event->angleDelta().x();
+        event.u.wheel.delta_y = p_event->angleDelta().y();
+        event.u.wheel.modifiers = modifiers_of(p_event->modifiers());
+        send(event);
+    }
+
+    void leaveEvent(QEvent *) override
+    {
+        QTH_EVENT event;
+
+        memset(&event, 0, sizeof(event));
+        event.type = QTH_EVENT_LEAVE;
+        send(event);
+    }
+
     void focusInEvent(QFocusEvent *) override { focus(1); }
     void focusOutEvent(QFocusEvent *) override { focus(0); }
 
@@ -474,7 +517,12 @@ protected:
 
 struct QTH_WINDOW
 {
-    HostWidget * p_widget;
+    QWidget * p_widget;       /* the HostWidget for panes and documents, the QScrollBar for scroll bars */
+    HostWidget * p_host;      /* NULL for scroll bars */
+    QScrollBar * p_scroll;    /* NULL unless a scroll bar */
+    QTH_EVENT_PROC proc;
+    void * client;
+    std::map<int, QTimer *> timers;
     int32_t extent_width, extent_height;
     int32_t scroll_x, scroll_y;
 };
@@ -493,15 +541,52 @@ qth_window_create(const QTH_WINDOW_DESC * p_desc)
     QTH_WINDOW * p_window = new QTH_WINDOW();
     QWidget * p_parent = (nullptr != p_desc->p_parent) ? p_desc->p_parent->p_widget : nullptr;
 
-    p_window->p_widget = new HostWidget(p_parent, p_window, p_desc->proc, p_desc->client);
-    p_window->p_widget->setGeometry(rect_from(p_desc->bounds));
+    p_window->proc = p_desc->proc;
+    p_window->client = p_desc->client;
+    p_window->p_host = nullptr;
+    p_window->p_scroll = nullptr;
 
-    if(QTH_WINDOW_DOCUMENT == p_desc->kind)
-        p_window->p_widget->setWindowFlag(Qt::Window, true);
+    if((QTH_WINDOW_HSCROLL == p_desc->kind) || (QTH_WINDOW_VSCROLL == p_desc->kind))
+    {
+        QScrollBar * p_scroll = new QScrollBar((QTH_WINDOW_HSCROLL == p_desc->kind) ? Qt::Horizontal : Qt::Vertical, p_parent);
+        const bool vertical = (QTH_WINDOW_VSCROLL == p_desc->kind);
+
+        QObject::connect(p_scroll, &QScrollBar::valueChanged, p_scroll, [p_window, vertical](int value)
+        {
+            QTH_EVENT event;
+
+            if(nullptr == p_window->proc)
+                return;
+            memset(&event, 0, sizeof(event));
+            event.type = QTH_EVENT_SCROLL;
+            event.u.scroll.vertical = vertical;
+            event.u.scroll.value = value;
+            (*p_window->proc)(p_window, &event, p_window->client);
+        });
+
+        p_window->p_scroll = p_scroll;
+        p_window->p_widget = p_scroll;
+    }
+    else
+    {
+        p_window->p_host = new HostWidget(p_parent, p_window, p_desc->proc, p_desc->client);
+        p_window->p_widget = p_window->p_host;
+
+        if(QTH_WINDOW_DOCUMENT == p_desc->kind)
+            p_window->p_widget->setWindowFlag(Qt::Window, true);
+    }
+
+    p_window->p_widget->setGeometry(rect_from(p_desc->bounds));
 
     qth_window_set_title(p_window, p_desc->p_title_latin1);
 
     return(p_window);
+}
+
+extern "C" void *
+qth_window_get_client(const QTH_WINDOW * p_window)
+{
+    return(p_window->client);
 }
 
 extern "C" void
@@ -511,7 +596,9 @@ qth_window_destroy(QTH_WINDOW * p_window)
         return;
 
     /* we may be inside one of the widget's own events (a close), so delete later */
-    p_window->p_widget->proc = nullptr; /* no more events for the handler */
+    p_window->proc = nullptr; /* no more events for the handler */
+    if(nullptr != p_window->p_host)
+        p_window->p_host->proc = nullptr;
     p_window->p_widget->hide();
     p_window->p_widget->deleteLater();
     delete p_window;
@@ -581,12 +668,155 @@ qth_window_update_now(QTH_WINDOW * p_window)
 extern "C" void
 qth_window_set_caret(QTH_WINDOW * p_window, const QTH_RECT * p_rect, int visible)
 {
-    HostWidget * p_widget = p_window->p_widget;
+    HostWidget * p_widget = p_window->p_host;
+
+    if(nullptr == p_widget)
+        return;
 
     p_widget->update(p_widget->caret); /* where it was */
     p_widget->caret = rect_from(*p_rect);
     p_widget->caret_visible = (0 != visible);
     p_widget->update(p_widget->caret);
+}
+
+extern "C" void
+qth_window_set_scroll_range(QTH_WINDOW * p_window, int32_t min, int32_t max, int32_t page)
+{
+    if(nullptr != p_window->p_scroll)
+    {
+        p_window->p_scroll->setRange(min, max);
+        p_window->p_scroll->setPageStep(page);
+        p_window->p_scroll->setSingleStep((page > 4) ? page / 4 : 1);
+    }
+}
+
+extern "C" void
+qth_window_set_scroll_value(QTH_WINDOW * p_window, int32_t value)
+{
+    if(nullptr != p_window->p_scroll)
+    {
+        const QSignalBlocker blocker(p_window->p_scroll); /* setting from here does not send an event */
+        p_window->p_scroll->setValue(value);
+    }
+}
+
+extern "C" int32_t
+qth_window_get_scroll_value(const QTH_WINDOW * p_window)
+{
+    return((nullptr != p_window->p_scroll) ? p_window->p_scroll->value() : 0);
+}
+
+extern "C" void
+qth_window_mouse_position(const QTH_WINDOW * p_window, int32_t * p_x, int32_t * p_y)
+{
+    const QPoint p = p_window->p_widget->mapFromGlobal(QCursor::pos());
+
+    *p_x = p.x();
+    *p_y = p.y();
+}
+
+extern "C" void
+qth_window_to_screen(const QTH_WINDOW * p_window, int32_t * p_x, int32_t * p_y)
+{
+    const QPoint p = p_window->p_widget->mapToGlobal(QPoint(*p_x, *p_y));
+
+    *p_x = p.x();
+    *p_y = p.y();
+}
+
+extern "C" void
+qth_window_screen_rect(const QTH_WINDOW * p_window, QTH_RECT * p_rect)
+{
+    const QPoint tl = p_window->p_widget->mapToGlobal(QPoint(0, 0));
+
+    p_rect->left = tl.x();
+    p_rect->top = tl.y();
+    p_rect->right = tl.x() + p_window->p_widget->width();
+    p_rect->bottom = tl.y() + p_window->p_widget->height();
+}
+
+extern "C" void
+qth_window_scroll_contents(QTH_WINDOW * p_window, int32_t dx, int32_t dy)
+{
+    p_window->p_widget->scroll(dx, dy);
+}
+
+extern "C" void
+qth_window_set_timer(QTH_WINDOW * p_window, int id, int32_t ms)
+{
+    qth_window_kill_timer(p_window, id);
+
+    QTimer * p_timer = new QTimer(p_window->p_widget);
+
+    QObject::connect(p_timer, &QTimer::timeout, p_timer, [p_window, id]()
+    {
+        QTH_EVENT event;
+
+        if(nullptr == p_window->proc)
+            return;
+        memset(&event, 0, sizeof(event));
+        event.type = QTH_EVENT_TIMER;
+        event.u.timer.id = id;
+        (*p_window->proc)(p_window, &event, p_window->client);
+    });
+
+    p_timer->start(ms);
+    p_window->timers[id] = p_timer;
+}
+
+extern "C" void
+qth_window_kill_timer(QTH_WINDOW * p_window, int id)
+{
+    auto it = p_window->timers.find(id);
+
+    if(it != p_window->timers.end())
+    {
+        delete it->second;
+        p_window->timers.erase(it);
+    }
+}
+
+extern "C" int32_t
+qth_metric(int which)
+{
+    app();
+
+    switch(which)
+    {
+    case QTH_METRIC_SCROLLBAR_WIDTH:
+    case QTH_METRIC_SCROLLBAR_HEIGHT:   return(app()->style()->pixelMetric(QStyle::PM_ScrollBarExtent));
+    case QTH_METRIC_DRAG_X:
+    case QTH_METRIC_DRAG_Y:             return(QApplication::startDragDistance());
+    case QTH_METRIC_DOUBLECLICK_X:
+    case QTH_METRIC_DOUBLECLICK_Y:      return(4);
+    case QTH_METRIC_DOUBLECLICK_MS:     return(QApplication::doubleClickInterval());
+    default:                            return(0);
+    }
+}
+
+extern "C" void
+qth_window_set_marker(QTH_WINDOW * p_window, int slot, const QTH_RECT * p_rect, int visible)
+{
+    HostWidget * p_widget = p_window->p_host;
+
+    if((nullptr == p_widget) || (slot < 0) || (slot >= QTH_N_MARKERS))
+        return;
+
+    p_widget->update(p_widget->marker[slot]); /* where it was */
+    p_widget->marker[slot] = rect_from(*p_rect);
+    p_widget->marker_visible[slot] = (0 != visible);
+    p_widget->update(p_widget->marker[slot]);
+}
+
+extern "C" void
+qth_window_set_state(QTH_WINDOW * p_window, int state)
+{
+    switch(state)
+    {
+    case QTH_STATE_MINIMIZED: p_window->p_widget->showMinimized(); break;
+    case QTH_STATE_MAXIMIZED: p_window->p_widget->showMaximized(); break;
+    default:                  p_window->p_widget->showNormal(); break;
+    }
 }
 
 extern "C" void

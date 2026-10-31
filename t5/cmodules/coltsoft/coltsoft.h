@@ -877,7 +877,33 @@ typedef int HOST_WND; /* really wimp_w but don't tell everyone */
 #define HOST_WND_XTFMT PTR_XTFMT
 #define HOST_WND_NONE ((HOST_WND) NULL)
 #elif LINUX
-typedef struct HOST_WND_LINUX * HOST_WND; /* opaque native window handle */
+typedef struct QTH_WINDOW * HOST_WND; /* opaque native window handle, see ob_skel/linux/qt_host.h */
+typedef HOST_WND HWND; /* much of the window code shared with Windows is written in terms of HWND */
+
+/* the Windows-style pairs and rectangles that the shared window code is written in terms of */
+typedef struct POINT { S32 x, y; } POINT, * PPOINT;
+typedef struct RECT { S32 left, top, right, bottom; } RECT, * PRECT;
+
+/* Windows virtual key codes: the host layer turns Qt keys into these, so that the key
+ * conversion in keys.c is shared with Windows */
+#define VK_BACK     0x08
+#define VK_TAB      0x09
+#define VK_RETURN   0x0D
+#define VK_SHIFT    0x10
+#define VK_CONTROL  0x11
+#define VK_ESCAPE   0x1B
+#define VK_PRIOR    0x21 /* page up */
+#define VK_NEXT     0x22 /* page down */
+#define VK_END      0x23
+#define VK_HOME     0x24
+#define VK_LEFT     0x25
+#define VK_UP       0x26
+#define VK_RIGHT    0x27
+#define VK_DOWN     0x28
+#define VK_INSERT   0x2D
+#define VK_DELETE   0x2E
+#define VK_F1       0x70
+#define VK_F15      0x7E
 #define HOST_WND_XTFMT PTR_XTFMT
 #define HOST_WND_NONE ((HOST_WND) NULL)
 #endif

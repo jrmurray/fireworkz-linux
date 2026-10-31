@@ -2569,7 +2569,7 @@ typedef enum POINTER_SHAPE
     POINTER_DRAG_ROW_UP = 12,       /* symbol with arrow pointing up */
     POINTER_DRAG_ROW_DOWN = 13,     /* symbol with arrow pointing down */
 
-#if WINDOWS
+#if WINDOWS || LINUX
     POINTER_SPLIT_ALL = 14,
     POINTER_SPLIT_LEFTRIGHT = 15,
     POINTER_SPLIT_UPDOWN = 16,
@@ -3392,7 +3392,7 @@ host_acquire_global_clipboard(
 
 #endif /* USE_GLOBAL_CLIPBOARD */
 
-#if WINDOWS
+#if WINDOWS || LINUX
 
 #define TYPE5_PROPERTY_WORD TEXT("TYPE5WORD")
 
@@ -3444,6 +3444,10 @@ host_get_pixel_size(
     _HwndRef_opt_ HWND hwnd /* NULL for screen */,
     _OutRef_opt_  P_GDI_COORD p_size_cx,
     _OutRef_opt_  P_GDI_COORD p_size_cy);
+
+#endif /* WINDOWS || LINUX */
+
+#if WINDOWS
 
 /* Windows specific code for handling the instance information */
 
@@ -10033,10 +10037,10 @@ enum WIN_MAIN_ID
 {
     WIN_BACK = 0,
     WIN_TOOLBAR,
-#if WINDOWS || defined(RISCOS_SLE_ICON)
+#if WINDOWS || LINUX || defined(RISCOS_SLE_ICON)
     WIN_SLE,
 #endif
-#if WINDOWS
+#if WINDOWS || LINUX
     WIN_UPPER_STATUS_LINE,
     WIN_LOWER_STATUS_LINE,
 #endif
@@ -10068,7 +10072,7 @@ typedef enum EDGE_ID
     WIN_RULER_VERT_SPLIT = 6,
     WIN_RULER_VERT = 7,
 
-#if WINDOWS
+#if WINDOWS || LINUX
 /* this has to maintain scroll controls too */
     WIN_HSCROLL_SPLIT_HORZ = 8,
     WIN_HSCROLL = 9,
@@ -10158,11 +10162,8 @@ struct PANE
 
 #if RISCOS
     PANE_LASTOPEN lastopen;
-#elif WINDOWS
+#elif WINDOWS || LINUX
     RECT rect;                      /* bounding rectangle of the pane */
-    GDI_POINT extent;               /* current pixel extent of pane */
-#elif LINUX
-    GDI_RECT rect;                  /* bounding rectangle of the pane */
     GDI_POINT extent;               /* current pixel extent of pane */
 #endif
 };
@@ -10228,7 +10229,7 @@ struct VIEW
     GDI_BOX scaled_backextent;      /* scaled backwindow extent */
 #endif
 
-#if WINDOWS
+#if WINDOWS || LINUX
     struct VIEW_PANE_POSN
     {
         POINT start;                /* top left of pane area */
@@ -11551,6 +11552,10 @@ typedef struct MSG_FROM_WINDOWS
     LPARAM  lParam;
 }
 MSG_FROM_WINDOWS, * P_MSG_FROM_WINDOWS;
+
+#endif
+
+#if WINDOWS || LINUX
 
 typedef struct MSG_FRAME_WINDOW
 {

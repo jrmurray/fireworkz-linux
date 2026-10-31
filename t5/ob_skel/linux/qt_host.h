@@ -156,6 +156,9 @@ enum
     QTH_EVENT_RESIZE,    /* resize: client area is now size.width x size.height */
     QTH_EVENT_SCROLL,    /* scroll: a scroll bar moved to value */
     QTH_EVENT_FOCUS,     /* focus: gained or lost */
+    QTH_EVENT_TIMER,     /* timer: a timer set with qth_window_set_timer fired */
+    QTH_EVENT_LEAVE,     /* leave: the pointer has left the window */
+    QTH_EVENT_WHEEL,     /* wheel: delta is in 1/120ths of a notch, positive away from the user (up, or left) */
     QTH_EVENT_CLOSE      /* close: the user asked to close the window; call qth_window_destroy to agree */
 };
 
@@ -180,6 +183,8 @@ typedef struct QTH_EVENT
         struct { int32_t width, height; } resize;
         struct { int vertical; int32_t value; } scroll;
         struct { int gained; } focus;
+        struct { int id; } timer;
+        struct { int32_t x, y; int32_t delta_x, delta_y; int modifiers; } wheel;
     } u;
 }
 QTH_EVENT;
@@ -189,7 +194,9 @@ typedef void (* QTH_EVENT_PROC)(QTH_WINDOW * p_window, const QTH_EVENT * p_event
 enum
 {
     QTH_WINDOW_DOCUMENT = 1, /* top level, with a title bar and frame */
-    QTH_WINDOW_PANE          /* a child that fills part of its parent: rulers, borders, the work area */
+    QTH_WINDOW_PANE,         /* a child that fills part of its parent: rulers, borders, the work area */
+    QTH_WINDOW_HSCROLL,      /* a horizontal scroll bar child; sends QTH_EVENT_SCROLL */
+    QTH_WINDOW_VSCROLL       /* a vertical scroll bar child */
 };
 
 typedef struct QTH_WINDOW_DESC
@@ -204,6 +211,7 @@ typedef struct QTH_WINDOW_DESC
 QTH_WINDOW_DESC;
 
 QTH_WINDOW * qth_window_create(const QTH_WINDOW_DESC * p_desc);
+void * qth_window_get_client(const QTH_WINDOW * p_window); /* what was given as client at creation */
 void qth_window_destroy(QTH_WINDOW * p_window);
 
 void qth_window_show(QTH_WINDOW * p_window, int visible);
@@ -215,9 +223,51 @@ void qth_window_get_bounds(const QTH_WINDOW * p_window, QTH_RECT * p_bounds);
 void qth_window_set_extent(QTH_WINDOW * p_window, int32_t width, int32_t height);
 void qth_window_scroll_to(QTH_WINDOW * p_window, int32_t x, int32_t y);
 
+/* Scroll bar windows (QTH_WINDOW_HSCROLL / VSCROLL): the range is min..max inclusive, page is
+ * the size of the thumb in the same units, and the value is where the thumb is. Moving the
+ * thumb sends QTH_EVENT_SCROLL; setting it from here does not. */
+void qth_window_set_scroll_range(QTH_WINDOW * p_window, int32_t min, int32_t max, int32_t page);
+void qth_window_set_scroll_value(QTH_WINDOW * p_window, int32_t value);
+
+int32_t qth_window_get_scroll_value(const QTH_WINDOW * p_window);
+
+/* Where the pointer is, in the window's client coordinates (which may be outside it), and screen conversions */
+void qth_window_mouse_position(const QTH_WINDOW * p_window, int32_t * p_x, int32_t * p_y);
+void qth_window_to_screen(const QTH_WINDOW * p_window, int32_t * p_x, int32_t * p_y);
+void qth_window_screen_rect(const QTH_WINDOW * p_window, QTH_RECT * p_rect);
+
+/* Move what is shown by (dx, dy) pixels and invalidate what is uncovered */
+void qth_window_scroll_contents(QTH_WINDOW * p_window, int32_t dx, int32_t dy);
+
+/* A repeating timer: sends QTH_EVENT_TIMER with this id every ms until killed */
+void qth_window_set_timer(QTH_WINDOW * p_window, int id, int32_t ms);
+void qth_window_kill_timer(QTH_WINDOW * p_window, int id);
+
+/* Things the Windows host asks the system about */
+enum
+{
+    QTH_METRIC_SCROLLBAR_WIDTH = 1, /* of a vertical scroll bar */
+    QTH_METRIC_SCROLLBAR_HEIGHT,    /* of a horizontal scroll bar */
+    QTH_METRIC_DRAG_X,              /* movement before a press becomes a drag */
+    QTH_METRIC_DRAG_Y,
+    QTH_METRIC_DOUBLECLICK_X,       /* movement allowed between the clicks of a double click */
+    QTH_METRIC_DOUBLECLICK_Y,
+    QTH_METRIC_DOUBLECLICK_MS
+};
+
+int32_t qth_metric(int which);
+
 /* Ask for a paint event over the rectangle (NULL for all); update_now delivers it before returning. */
 void qth_window_invalidate(QTH_WINDOW * p_window, const QTH_RECT * p_rect_or_null);
 void qth_window_update_now(QTH_WINDOW * p_window);
+
+/* Up to QTH_N_MARKERS inverted rectangles drawn over the window after its own painting, for
+ * things like the line shown while dragging a split. Not in the window's own coordinates until painted. */
+#define QTH_N_MARKERS 4
+void qth_window_set_marker(QTH_WINDOW * p_window, int slot, const QTH_RECT * p_rect, int visible);
+
+enum { QTH_STATE_NORMAL = 0, QTH_STATE_MINIMIZED, QTH_STATE_MAXIMIZED };
+void qth_window_set_state(QTH_WINDOW * p_window, int state);
 
 void qth_window_set_caret(QTH_WINDOW * p_window, const QTH_RECT * p_rect, int visible);
 void qth_window_set_focus(QTH_WINDOW * p_window);
@@ -230,6 +280,9 @@ enum { QTH_CURSOR_ARROW = 0, QTH_CURSOR_IBEAM, QTH_CURSOR_CROSS, QTH_CURSOR_HAND
 void qth_window_set_cursor(QTH_WINDOW * p_window, int cursor);
 
 void qth_beep(void);
+
+/* QTH_MOD_xxx for the modifier keys held down now */
+int qth_keyboard_modifiers(void);
 
 /* Runs the event loop until qth_app_quit(). Returns the exit code. */
 int  qth_app_run(void);

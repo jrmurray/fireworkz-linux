@@ -298,6 +298,12 @@ qth_window_create(const QTH_WINDOW_DESC * p_desc)
     return(p_window);
 }
 
+void *
+qth_window_get_client(const QTH_WINDOW * p_window)
+{
+    return(p_window->desc.client);
+}
+
 void
 qth_window_destroy(QTH_WINDOW * p_window)
 {
@@ -347,6 +353,83 @@ qth_window_scroll_to(QTH_WINDOW * p_window, int32_t x, int32_t y)
 }
 
 void
+qth_window_set_scroll_range(QTH_WINDOW * p_window, int32_t min, int32_t max, int32_t page)
+{
+    p_window->state.range_min = min;
+    p_window->state.range_max = max;
+    p_window->state.range_page = page;
+}
+
+void
+qth_window_set_scroll_value(QTH_WINDOW * p_window, int32_t value)
+{
+    p_window->state.scroll_value = value;
+}
+
+int32_t
+qth_window_get_scroll_value(const QTH_WINDOW * p_window)
+{
+    return(p_window->state.scroll_value);
+}
+
+void
+qth_window_mouse_position(const QTH_WINDOW * p_window, int32_t * p_x, int32_t * p_y)
+{
+    *p_x = p_window->state.mouse_x;
+    *p_y = p_window->state.mouse_y;
+}
+
+void
+qth_window_to_screen(const QTH_WINDOW * p_window, int32_t * p_x, int32_t * p_y)
+{
+    *p_x += p_window->state.bounds.left;
+    *p_y += p_window->state.bounds.top;
+}
+
+void
+qth_window_screen_rect(const QTH_WINDOW * p_window, QTH_RECT * p_rect)
+{
+    *p_rect = p_window->state.bounds;
+}
+
+void
+qth_window_scroll_contents(QTH_WINDOW * p_window, int32_t dx, int32_t dy)
+{
+    p_window->state.contents_dx += dx;
+    p_window->state.contents_dy += dy;
+}
+
+void
+qth_window_set_timer(QTH_WINDOW * p_window, int id, int32_t ms)
+{
+    p_window->state.timer_id = id;
+    p_window->state.timer_ms = ms;
+}
+
+void
+qth_window_kill_timer(QTH_WINDOW * p_window, int id)
+{
+    if(p_window->state.timer_id == id)
+        p_window->state.timer_id = 0;
+}
+
+int32_t
+qth_metric(int which)
+{
+    switch(which)
+    {
+    case QTH_METRIC_SCROLLBAR_WIDTH:
+    case QTH_METRIC_SCROLLBAR_HEIGHT:   return(16);
+    case QTH_METRIC_DRAG_X:
+    case QTH_METRIC_DRAG_Y:             return(4);
+    case QTH_METRIC_DOUBLECLICK_X:
+    case QTH_METRIC_DOUBLECLICK_Y:      return(4);
+    case QTH_METRIC_DOUBLECLICK_MS:     return(500);
+    default:                            return(0);
+    }
+}
+
+void
 qth_window_invalidate(QTH_WINDOW * p_window, const QTH_RECT * p_rect_or_null)
 {
     (void) p_rect_or_null;
@@ -378,6 +461,22 @@ qth_window_set_caret(QTH_WINDOW * p_window, const QTH_RECT * p_rect, int visible
 }
 
 void
+qth_window_set_marker(QTH_WINDOW * p_window, int slot, const QTH_RECT * p_rect, int visible)
+{
+    if((slot >= 0) && (slot < QTH_N_MARKERS))
+    {
+        p_window->state.marker[slot] = *p_rect;
+        p_window->state.marker_visible[slot] = visible;
+    }
+}
+
+void
+qth_window_set_state(QTH_WINDOW * p_window, int state)
+{
+    p_window->state.state = state;
+}
+
+void
 qth_window_set_focus(QTH_WINDOW * p_window)
 {
     QTH_EVENT event;
@@ -399,6 +498,20 @@ void
 qth_window_set_cursor(QTH_WINDOW * p_window, int cursor)
 {
     p_window->state.cursor = cursor;
+}
+
+static int g_modifiers;
+
+int
+qth_keyboard_modifiers(void)
+{
+    return(g_modifiers);
+}
+
+void
+qth_null_set_modifiers(int modifiers)
+{
+    g_modifiers = modifiers;
 }
 
 static unsigned int n_beeps;

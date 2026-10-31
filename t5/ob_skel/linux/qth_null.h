@@ -38,12 +38,23 @@ typedef struct QTH_NULL_WINDOW_STATE
     int cursor;
     int mouse_captured;
     unsigned int n_invalidates;
+    int32_t range_min, range_max, range_page, scroll_value;
+    int32_t contents_dx, contents_dy;
+    int32_t mouse_x, mouse_y; /* what qth_window_mouse_position reports; set by the test */
+    int timer_id;
+    int state;
+    int marker_visible[QTH_N_MARKERS];
+    QTH_RECT marker[QTH_N_MARKERS];
+    int32_t timer_ms;
 }
 QTH_NULL_WINDOW_STATE;
 
 void qth_null_window_state(const QTH_WINDOW * p_window, QTH_NULL_WINDOW_STATE * p_state);
 
 unsigned int qth_null_n_beeps(void);
+
+/* what qth_keyboard_modifiers() reports */
+void qth_null_set_modifiers(int modifiers);
 
 int qth_null_n_windows(void); /* created and not yet destroyed */
 
