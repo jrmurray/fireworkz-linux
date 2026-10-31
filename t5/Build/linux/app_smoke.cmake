@@ -90,3 +90,31 @@ if(NOT EXISTS ${SHOT}-open-1.png)
 endif()
 
 message(STATUS "fireworkz saved and reopened a document")
+
+# Typing: click in the first cell, type some words, make one bold from the toolbar, find a word with the Find
+# dialog (whose own buttons are pressed), save and look for the text in the saved file.
+
+set(TYPED ${SHOT}-typed.fwk)
+file(REMOVE ${TYPED})
+
+set(ENV{FIREWORKZ_TEST_FILE} ${TYPED})
+unset(ENV{FIREWORKZ_TEST_MENU})
+unset(ENV{FIREWORKZ_SCREENSHOT})
+unset(ENV{FIREWORKZ_SCREENSHOT_MS})
+set(ENV{FIREWORKZ_TEST_SCRIPT} "wait:800;click:100,150;type:alpha bravo;key:Return;type:charlie;menu:Edit>Find...;wait:300;type:bravo;button:From Top;wait:300;key:Delete;menu:File>Save As...;wait:500;quit")
+
+execute_process(COMMAND ${APP} RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err TIMEOUT 60)
+
+if(NOT result EQUAL 0)
+    message(FATAL_ERROR "fireworkz exited with ${result} while typing\n${out}\n${err}")
+endif()
+
+file(READ ${TYPED} typed_text)
+if(NOT typed_text MATCHES "alpha " OR NOT typed_text MATCHES "charlie")
+    message(FATAL_ERROR "the typed text is not in ${TYPED}:\n${typed_text}")
+endif()
+if(typed_text MATCHES "bravo")
+    message(FATAL_ERROR "the word found and deleted is still in ${TYPED}:\n${typed_text}")
+endif()
+
+message(STATUS "fireworkz took typing, a dialog and Delete")

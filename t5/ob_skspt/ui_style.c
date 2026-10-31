@@ -15,6 +15,10 @@
 
 #include "ob_skspt/ui_styin.h"
 
+#if LINUX
+#include "ob_skel/linux/qt_host.h"
+#endif
+
 #if RISCOS
 #include "ob_dlg/xp_dlgr.h"
 
@@ -1298,7 +1302,7 @@ get_colour_picker_parent_window_handle(P_MSG_UISTYLE_COLOUR_PICKER p_msg_uistyle
 T5_MSG_PROTO(extern, t5_msg_uistyle_colour_picker, P_MSG_UISTYLE_COLOUR_PICKER p_msg_uistyle_colour_picker)
 {
     RGB rgb;
-    BOOL res;
+    BOOL res = FALSE;
 
     UNREFERENCED_PARAMETER_DocuRef_(p_docu);
     UNREFERENCED_PARAMETER_InVal_(t5_message);
@@ -1319,6 +1323,11 @@ T5_MSG_PROTO(extern, t5_msg_uistyle_colour_picker, P_MSG_UISTYLE_COLOUR_PICKER p
 #if WINDOWS
     /* wop up Windows' colour selector */
     res = windows_colour_picker(get_colour_picker_parent_window_handle(p_msg_uistyle_colour_picker), &rgb);
+#elif LINUX
+    /* the desktop's colour chooser */
+    res = qth_colour_dialog(NULL, &rgb.r, &rgb.g, &rgb.b);
+    if(res)
+        rgb.transparent = 0;
 #elif RISCOS
     /* wop up RISC OS's colour selector */
     res = riscos_colour_picker(COLOUR_PICKER_NORMAL, get_colour_picker_parent_window_handle(p_msg_uistyle_colour_picker), &rgb, TRUE /*allow_transparent*/, "Colour");

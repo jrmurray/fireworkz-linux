@@ -201,6 +201,23 @@ Milestone 4 - DONE (first light): the application runs
       Fixed on the way: of_save.c indexed one before an arglist when all its arguments were empty
       (harmless on 32-bit, a crash on 64-bit).
 
+    Input, tested with a script (FIREWORKZ_TEST_SCRIPT, see test_script_start() in qth_qt.cpp):
+      "wait:800;click:100,150;type:hello;key:Return;menu:Edit>Find...;button:From Top;shot:out;quit"
+      sends Qt mouse and key events to the document window, or to the modal dialog if there is one.
+      Seen to work offscreen: typing into cells, Return, Home, arrows, shift+arrows selecting,
+      replacing a selection, Delete, double click selecting a word, toolbar buttons (Bold on and off,
+      the status line help text), menu items, the Find dialog (typing, From Top), the Paper dialog
+      (spin arrows, Apply and the value kept), Choices, the Box dialog (palette swatches, line style
+      pictures, the Colour... chooser), Save As and Open. app_smoke does a typing run too.
+      Not tried: dragging out a selection, the mouse wheel, scroll bars by mouse, resizing panes,
+      right clicks and pop-up menus, keyboard menu accelerators and shortcuts (Ctrl+...), drag and
+      drop, a real window manager (focus, activation, repeat keys), the KDE look of the dialogs.
+      Bugs this found: host_keys_in_buffer() had no Linux branch and returned garbage, so some keys
+      stayed in the cache unsent; the Colour... button only had Windows and RISC OS code.
+      Compiler warnings still to look at: u.f64 used uninitialised in fl_123.c and fl_xls_loadb.c
+      (Lotus and Excel number import, probably a byte-order branch not done for Linux), and
+      sle_ss.c:958 uses hwnd uninitialised.
+
     What does not work yet (each is marked TODO where it lives):
       picture controls: drawn (QTH_DLG_BLANK canvases, painted by li_dlg.c from the resource bitmaps,
                                     colour swatches and other user controls through the redraw context)

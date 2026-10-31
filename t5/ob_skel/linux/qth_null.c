@@ -96,6 +96,12 @@ qth_font_text_width(const QTH_FONT * p_font, const uint8_t * p_latin1, uint32_t 
 }
 
 
+int qth_colour_dialog(QTH_WINDOW * p_parent, uint8_t * p_r, uint8_t * p_g, uint8_t * p_b)
+{
+    (void) p_parent; (void) p_r; (void) p_g; (void) p_b;
+    return(0);
+}
+
 /* ---- File choosers: nobody chooses ---- */
 
 char * qth_file_dialog(QTH_WINDOW * p_parent, int save, const char * p_title, const char * p_dir, const char * p_name,

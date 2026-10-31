@@ -436,6 +436,9 @@ int  qth_dlg_list_get_sel(QTH_DIALOG * p_dlg, int id);            /* -1 for none
 char * qth_file_dialog(QTH_WINDOW * p_parent, int save, const char * p_title, const char * p_dir, const char * p_name,
                        const char * const * p_texts, const char * const * p_wildcards, int n_filters, int * p_filter, int multi);
 
+/* The desktop's colour chooser, starting from *p_r,*p_g,*p_b (0..255). Returns non-zero, with the new colour, if one was chosen. */
+int qth_colour_dialog(QTH_WINDOW * p_parent, uint8_t * p_r, uint8_t * p_g, uint8_t * p_b);
+
 /* Deliver the events that are waiting and return non-zero if there were any. If there are none, wait
  * for one for up to wait_ms milliseconds (0 is not at all, -1 is as long as it takes). */
 int qth_process_events(int wait_ms);

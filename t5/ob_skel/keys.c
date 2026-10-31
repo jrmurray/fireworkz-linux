@@ -342,6 +342,8 @@ host_keys_in_buffer(void)
         return(1);
 
     return(0);
+#elif LINUX
+    return(0); /* events arrive one at a time, so each key is passed on as it comes */
 #endif
 }
 

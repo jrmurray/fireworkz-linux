@@ -12,6 +12,7 @@
 #include <QAbstractEventDispatcher>
 #include <QAbstractButton>
 #include <QCheckBox>
+#include <QColorDialog>
 #include <QComboBox>
 #include <QDialog>
 #include <QDir>
@@ -45,6 +46,7 @@
 #include <QEnterEvent>
 #include <QMouseEvent>
 #include <QPaintEvent>
+#include <QPointer>
 #include <QPainter>
 #include <QResizeEvent>
 #include <QScrollBar>
@@ -64,6 +66,9 @@
 static int modifiers_of(Qt::KeyboardModifiers modifiers);
 
 static int g_screenshot_taken;
+static int g_test_modifiers; /* the modifiers of the key a test script is sending: the toolkit does not track those */
+
+static void test_script_start(QApplication * p_app, const QByteArray & script);
 
 /* ---- Application ---------------------------------------------------------- */
 
@@ -78,6 +83,15 @@ app(void)
     if(nullptr == p_app)
     {
         p_app = new QApplication(argc, argv);
+
+        /* For tests: FIREWORKZ_TEST_SCRIPT="wait:500;click:100,200;type:hello;key:Return;shot:out;quit" does what
+         * a person at the mouse and keyboard would; see test_script_start() */
+        {
+        const QByteArray script = qgetenv("FIREWORKZ_TEST_SCRIPT");
+
+        if(!script.isEmpty())
+            test_script_start(p_app, script);
+        }
 
         /* For testing and bug reports: FIREWORKZ_SCREENSHOT=base saves each top level window as
          * base-N.png after FIREWORKZ_SCREENSHOT_MS (default 1500), then quits */
@@ -160,6 +174,293 @@ app(void)
     return(p_app);
 }
 
+
+/* ---- Scripted input for tests ---------------------------------------------------------- */
+
+/* Steps are separated by ; and run 300 ms apart (so the program has time to react), in the window that
+ * has the input: a modal dialog if there is one, else the first document window. Positions are in that
+ * window's own pixels.
+ *
+ *   wait:ms             do nothing for a while longer
+ *   click:x,y           left click; click:x,y,r right click; click:x,y,d double click
+ *   drag:x0,y0,x1,y1    press, move and release the left button
+ *   button:text         press the button with that text (the hot key & ignored)
+ *   type:text           type the text into the widget with the keyboard focus
+ *   key:Return          one key: Return Tab Escape Backspace Delete Up Down Left Right Home End PageUp PageDown F1-F12,
+ *                       or a letter; with ctrl+ shift+ alt+ in front
+ *   menu:Edit>Find...   choose a menu item
+ *   shot:name           save name-N.png for each visible window
+ *   quit                leave the program
+ */
+
+static QWidget *
+test_target_window(void)
+{
+    if(nullptr != QApplication::activeModalWidget())
+        return(QApplication::activeModalWidget());
+
+    for(QWidget * p_widget : QApplication::topLevelWidgets())
+        if(qobject_cast<QMainWindow *>(p_widget) && p_widget->isVisible())
+            return(p_widget);
+
+    return(nullptr);
+}
+
+static void
+test_send_mouse(QWidget * p_window, QPoint pos, Qt::MouseButton button, bool dbl)
+{
+    QWidget * p_child = p_window->childAt(pos);
+    QWidget * p_target = (nullptr != p_child) ? p_child : p_window;
+    const QPoint local = p_target->mapFrom(p_window, pos);
+    const QPoint global = p_window->mapToGlobal(pos);
+
+    QMouseEvent move(QEvent::MouseMove, local, global, Qt::NoButton, Qt::NoButton, Qt::NoModifier);
+    QMouseEvent press(QEvent::MouseButtonPress, local, global, button, button, Qt::NoModifier);
+    QMouseEvent release(QEvent::MouseButtonRelease, local, global, button, Qt::NoButton, Qt::NoModifier);
+    QMouseEvent doubleclick(QEvent::MouseButtonDblClick, local, global, button, button, Qt::NoModifier);
+
+    QApplication::sendEvent(p_target, &move);
+    QApplication::sendEvent(p_target, &press);
+    QApplication::sendEvent(p_target, &release);
+    if(dbl)
+    {
+        QApplication::sendEvent(p_target, &doubleclick);
+        QApplication::sendEvent(p_target, &release);
+    }
+}
+
+static void
+test_send_key(QWidget * p_window, int key, Qt::KeyboardModifiers modifiers, const QString & text)
+{
+    static QPointer<QWidget> last_focus; /* when a dialog ends, nothing hands the focus back while no window manager is activating windows */
+    QWidget * p_focus = QApplication::focusWidget();
+    const bool in_document = (nullptr != p_focus) && (nullptr == qobject_cast<QMainWindow *>(p_focus)) && (nullptr != qobject_cast<QMainWindow *>(p_focus->window()));
+
+    if(in_document)
+        last_focus = p_focus; /* a document's own widget, not a dialog's */
+    else if((nullptr == QApplication::activeModalWidget()) && !last_focus.isNull() && last_focus->isVisible())
+    {
+        p_focus = last_focus;
+        p_focus->setFocus();
+    }
+    else if(nullptr == p_focus)
+        p_focus = p_window;
+
+    if(getenv("FIREWORKZ_TEST_VERBOSE")) fprintf(stderr, "key %d to %s %p visible=%d\n", key, p_focus->metaObject()->className(), (void *) p_focus, (int) p_focus->isVisible());
+    QKeyEvent press(QEvent::KeyPress, key, modifiers, text);
+    QKeyEvent release(QEvent::KeyRelease, key, modifiers, text);
+
+    g_test_modifiers = modifiers_of(modifiers);
+    QApplication::sendEvent(p_focus, &press);
+    QApplication::sendEvent(p_focus, &release);
+    g_test_modifiers = 0;
+}
+
+static bool
+test_menu_choose(const QString & spec)
+{
+    const QStringList path = spec.split(QLatin1Char('>'));
+
+    for(QWidget * p_widget : QApplication::topLevelWidgets())
+    {
+        QMainWindow * p_main = qobject_cast<QMainWindow *>(p_widget);
+        QMenuBar * p_bar = (nullptr != p_main) ? p_main->menuBar() : nullptr;
+        QList<QAction *> actions;
+        QAction * p_found = nullptr;
+
+        if(nullptr == p_bar)
+            continue;
+
+        actions = p_bar->actions();
+
+        for(const QString & name : path)
+        {
+            p_found = nullptr;
+            for(QAction * p_action : actions)
+            {
+                QString text = p_action->text();
+                text.remove(QLatin1Char('&'));
+                text = text.section(QLatin1Char('\t'), 0, 0);
+                if(text == name)
+                {
+                    p_found = p_action;
+                    break;
+                }
+            }
+            if(nullptr == p_found)
+                break;
+            if(nullptr != p_found->menu())
+            {
+                emit p_found->menu()->aboutToShow();
+                actions = p_found->menu()->actions();
+            }
+        }
+
+        if((nullptr != p_found) && (nullptr == p_found->menu()))
+        {
+            if(!p_found->isEnabled())
+                fprintf(stderr, "test script: menu item \"%s\" is disabled\n", qPrintable(spec));
+            p_found->trigger();
+            return(true);
+        }
+    }
+
+    fprintf(stderr, "test script: no menu item \"%s\"\n", qPrintable(spec));
+    return(false);
+}
+
+static void
+test_script_step(QApplication * p_app, QStringList steps, int index)
+{
+    if(index >= steps.size())
+        return;
+
+    QTimer::singleShot(300, p_app, [p_app, steps, index]()
+    {
+        const QString step = steps[index];
+        const int colon = step.indexOf(QLatin1Char(':'));
+        const QString verb = (colon >= 0) ? step.left(colon) : step;
+        const QString arg = (colon >= 0) ? step.mid(colon + 1) : QString();
+        QWidget * p_window = test_target_window();
+        bool run_next = true;
+
+        if(verb == QLatin1String("quit"))
+        {
+            g_screenshot_taken = 1;
+            QApplication::exit(0);
+            return;
+        }
+        else if(verb == QLatin1String("wait"))
+        {
+            QTimer::singleShot(arg.toInt(), p_app, [p_app, steps, index]() { test_script_step(p_app, steps, index + 1); });
+            return;
+        }
+        else if(verb == QLatin1String("shot"))
+        {
+            int n = 0;
+            for(QWidget * p_widget : QApplication::topLevelWidgets())
+                if(p_widget->isVisible() && !qobject_cast<QMenu *>(p_widget))
+                    p_widget->grab().save(arg + QStringLiteral("-") + QString::number(n++) + QStringLiteral(".png"));
+        }
+        else if(verb == QLatin1String("menu"))
+        {
+            /* a menu item that opens a dialog does not return until it is over, so go on from here first */
+            QTimer::singleShot(0, p_app, [p_app, steps, index]() { test_script_step(p_app, steps, index + 1); });
+            test_menu_choose(arg);
+            run_next = false;
+        }
+        else if(nullptr == p_window)
+            fprintf(stderr, "test script: no window for \"%s\"\n", qPrintable(step));
+        else if((verb == QLatin1String("click")) || (verb == QLatin1String("drag")))
+        {
+            const QStringList v = arg.split(QLatin1Char(','));
+
+            if(v.size() >= 2)
+            {
+                const QPoint pos(v[0].toInt(), v[1].toInt());
+
+                if(verb == QLatin1String("drag") && (v.size() >= 4))
+                {
+                    const QPoint end(v[2].toInt(), v[3].toInt());
+                    QWidget * p_child = p_window->childAt(pos);
+                    QWidget * p_target = (nullptr != p_child) ? p_child : p_window;
+                    QMouseEvent press(QEvent::MouseButtonPress, p_target->mapFrom(p_window, pos), p_window->mapToGlobal(pos), Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+                    QApplication::sendEvent(p_target, &press);
+                    for(int i = 1; i <= 5; ++i)
+                    {
+                        const QPoint mid = pos + (end - pos) * i / 5;
+                        QMouseEvent move(QEvent::MouseMove, p_target->mapFrom(p_window, mid), p_window->mapToGlobal(mid), Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+                        QApplication::sendEvent(p_target, &move);
+                    }
+                    QMouseEvent release(QEvent::MouseButtonRelease, p_target->mapFrom(p_window, end), p_window->mapToGlobal(end), Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+                    QApplication::sendEvent(p_target, &release);
+                }
+                else
+                {
+                    const QString how = (v.size() >= 3) ? v[2] : QString();
+                    test_send_mouse(p_window, pos, (how == QLatin1String("r")) ? Qt::RightButton : Qt::LeftButton, how == QLatin1String("d"));
+                }
+            }
+        }
+        else if(verb == QLatin1String("button"))
+        {
+            QAbstractButton * p_found = nullptr;
+
+            for(QAbstractButton * p_button : p_window->findChildren<QAbstractButton *>())
+            {
+                QString text = p_button->text();
+                text.remove(QLatin1Char('&'));
+                if(p_button->isVisible() && (text == arg))
+                {
+                    p_found = p_button;
+                    break;
+                }
+            }
+
+            if(nullptr == p_found)
+                fprintf(stderr, "test script: no button \"%s\"\n", qPrintable(arg));
+            else
+            {
+                /* the dialog may end here, so go on from a fresh event */
+                QTimer::singleShot(0, p_app, [p_app, steps, index]() { test_script_step(p_app, steps, index + 1); });
+                p_found->click();
+                run_next = false;
+            }
+        }
+        else if(verb == QLatin1String("type"))
+        {
+            for(const QChar ch : arg)
+            {
+                const int key = ch.isLetter() ? (Qt::Key_A + (ch.toUpper().unicode() - 'A')) : ch.unicode();
+                test_send_key(p_window, key, ch.isUpper() ? Qt::ShiftModifier : Qt::NoModifier, QString(ch));
+            }
+        }
+        else if(verb == QLatin1String("key"))
+        {
+            Qt::KeyboardModifiers modifiers;
+            QString name = arg;
+            static const struct { const char * name; int key; } keys[] =
+            {
+                { "Return", Qt::Key_Return }, { "Tab", Qt::Key_Tab }, { "Escape", Qt::Key_Escape }, { "Backspace", Qt::Key_Backspace },
+                { "Delete", Qt::Key_Delete }, { "Up", Qt::Key_Up }, { "Down", Qt::Key_Down }, { "Left", Qt::Key_Left }, { "Right", Qt::Key_Right },
+                { "Home", Qt::Key_Home }, { "End", Qt::Key_End }, { "PageUp", Qt::Key_PageUp }, { "PageDown", Qt::Key_PageDown },
+                { "Space", Qt::Key_Space }
+            };
+            int key = 0;
+
+            for(;;)
+            {
+                if(name.startsWith(QLatin1String("ctrl+")))       { modifiers |= Qt::ControlModifier; name = name.mid(5); }
+                else if(name.startsWith(QLatin1String("shift+"))) { modifiers |= Qt::ShiftModifier;   name = name.mid(6); }
+                else if(name.startsWith(QLatin1String("alt+")))   { modifiers |= Qt::AltModifier;     name = name.mid(4); }
+                else break;
+            }
+
+            for(const auto & k : keys)
+                if(name == QLatin1String(k.name))
+                    key = k.key;
+            if((0 == key) && (name.size() >= 2) && (name[0] == QLatin1Char('F')))
+                key = Qt::Key_F1 + name.mid(1).toInt() - 1;
+            if((0 == key) && (name.size() == 1))
+                key = Qt::Key_A + (name[0].toUpper().unicode() - 'A');
+
+            test_send_key(p_window, key, modifiers, (key == Qt::Key_Space) ? QStringLiteral(" ") : QString());
+        }
+        else
+            fprintf(stderr, "test script: unknown step \"%s\"\n", qPrintable(step));
+
+        if(run_next)
+            test_script_step(p_app, steps, index + 1);
+    });
+}
+
+static void
+test_script_start(QApplication * p_app, const QByteArray & script)
+{
+    /* the first step waits for the program to have started and put up its window */
+    test_script_step(p_app, QString::fromLocal8Bit(script).split(QLatin1Char(';'), Qt::SkipEmptyParts), 0);
+}
+
 extern "C" int
 qth_app_run(void)
 {
@@ -203,7 +504,7 @@ qth_quit_requested(void)
 extern "C" int
 qth_keyboard_modifiers(void)
 {
-    return(modifiers_of(QGuiApplication::keyboardModifiers()));
+    return(modifiers_of(QGuiApplication::keyboardModifiers()) | g_test_modifiers);
 }
 
 extern "C" void
@@ -2098,6 +2399,37 @@ qth_file_dialog(QTH_WINDOW * p_parent, int save, const char * p_title, const cha
     memcpy(p_result, names.constData(), (size_t) names.size());
     p_result[names.size()] = '\0';
     return(p_result);
+}
+
+extern "C" int
+qth_colour_dialog(QTH_WINDOW * p_parent, uint8_t * p_r, uint8_t * p_g, uint8_t * p_b)
+{
+    QWidget * p_parent_widget = (nullptr != p_parent) ? ((nullptr != p_parent->p_main) ? static_cast<QWidget *>(p_parent->p_main) : p_parent->p_widget) : nullptr;
+    QColor colour;
+
+    /* For tests: FIREWORKZ_TEST_COLOUR=r,g,b chooses that colour without showing anything */
+    const QByteArray test_colour = qgetenv("FIREWORKZ_TEST_COLOUR");
+
+    if(!test_colour.isEmpty())
+    {
+        const QList<QByteArray> v = test_colour.split(',');
+
+        if(v.size() != 3)
+            return(0);
+        colour = QColor(v[0].toInt(), v[1].toInt(), v[2].toInt());
+    }
+    else
+    {
+        colour = QColorDialog::getColor(QColor(*p_r, *p_g, *p_b), p_parent_widget);
+
+        if(!colour.isValid())
+            return(0);
+    }
+
+    *p_r = (uint8_t) colour.red();
+    *p_g = (uint8_t) colour.green();
+    *p_b = (uint8_t) colour.blue();
+    return(1);
 }
 
 /* end of qth_qt.cpp */
