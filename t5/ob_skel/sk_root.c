@@ -785,7 +785,7 @@ T5_CMD_PROTO(static, object_skel_cmd)
     case T5_MESSAGE_CMD_OFFSET(T5_CMD_PRINT_QUALITY):
         return(t5_cmd_print_quality(p_docu, t5_message, p_t5_cmd));
 
-#if WINDOWS
+#if WINDOWS || LINUX
     case T5_MESSAGE_CMD_OFFSET(T5_CMD_PRINT_SETUP):
         return(t5_cmd_print_setup(p_docu, t5_message, p_t5_cmd));
 #endif

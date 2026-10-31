@@ -230,6 +230,17 @@ Milestone 4 - DONE (first light): the application runs
       other objects' selections (only cells' Copy/Cut publish), a "clipboard changed" refresh of the
       Paste menu while the menu is already open, and a primary selection (middle click) paste.
 
+    Printing: done (first cut)
+      ob_skel/linux/ho_print.c lays the pages out as windows/ho_print.c does (scale, margins, two up,
+      collated copies) onto a QPrinter's painter, through qth_print_* in qt_host.h. Print Setup is
+      Qt's QPrintDialog, Print... is the program's own dialog, the Paper dialog's Read Printer button
+      reads the chosen printer. FIREWORKZ_PRINT_PDF=file sends the output to a PDF whatever printers
+      there are: app_smoke does this and, with pdftotext, checks the words arrived as text.
+      Seen: a one page A4 document, with real (searchable) text. Not tried: several pages, two up,
+      landscape, copies, a real printer or the CUPS queue, scaling, charts and pictures on paper,
+      the progress shown during a long print, cancelling a print (there is no abort button yet),
+      print preview, draft printing (T5_MSG_DRAFT_PRINT is still a stub).
+
     What does not work yet (each is marked TODO where it lives):
       picture controls: drawn (QTH_DLG_BLANK canvases, painted by li_dlg.c from the resource bitmaps,
                                     colour swatches and other user controls through the redraw context)
@@ -237,7 +248,7 @@ Milestone 4 - DONE (first light): the application runs
       help from dialogs             dialog_windows_help() does nothing
       key shortcuts shown in menus  informational only: no QShortcut is bound (the skeleton maps keys)
       tooltips, the lower status line, the tool tip hover look
-      Save As / Open / Print        windows_save_as(), file open, printing, print preview
+      print preview
       Draw files                    drawings and charts are blank (host_paint_drawfile)
       the clipboard, drag and drop, help
       row borders and rulers on the default template; italic under/overhang in text widths

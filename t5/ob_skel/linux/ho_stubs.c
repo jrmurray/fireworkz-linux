@@ -28,41 +28,7 @@ T5_CMD_PROTO(extern, t5_cmd_help)
     return(STATUS_OK);
 }
 
-/* ---- printing: TODO QPrinter, QPrintDialog and a QPainter on the printer ---------------- */
-
-extern void
-host_printer_name_query(
-    _OutRef_    P_UI_TEXT p_ui_text)
-{
-    p_ui_text->type = UI_TEXT_TYPE_NONE;
-}
-
-_Check_return_
-extern STATUS
-host_read_printer_paper_details(
-    P_PAPER p_paper)
-{
-    /* A4 with half-inch margins, and say that the printer could not be read */
-    p_paper->x_size = (PIXIT) ((210 * PIXITS_PER_INCH) / 25.4);
-    p_paper->y_size = (PIXIT) ((297 * PIXITS_PER_INCH) / 25.4);
-    p_paper->lm = p_paper->rm = p_paper->tm = p_paper->bm = PIXITS_PER_INCH / 2;
-    p_paper->print_area_x = p_paper->x_size - (p_paper->lm + p_paper->rm);
-    p_paper->print_area_y = p_paper->y_size - (p_paper->tm + p_paper->bm);
-
-    return(create_error(ERR_PRINT_PAPER_DETAILS));
-}
-
-_Check_return_
-extern STATUS
-host_print_document(
-    _DocuRef_   P_DOCU p_docu,
-    P_PRINT_CTRL p_print_ctrl)
-{
-    UNREFERENCED_PARAMETER_DocuRef_(p_docu);
-    UNREFERENCED_PARAMETER(p_print_ctrl);
-
-    return(create_error(ERR_PRINT_UNKNOWN));
-}
+/* ---- draft printing: TODO as the printing in ho_print.c but by sending text lines ------ */
 
 T5_MSG_PROTO(extern, t5_msg_draft_print, P_PRINT_CTRL p_print_ctrl)
 {

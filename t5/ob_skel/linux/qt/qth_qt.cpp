@@ -47,7 +47,12 @@
 #include <QMenuBar>
 #include <QEnterEvent>
 #include <QMouseEvent>
+#include <QPageLayout>
+#include <QPageSize>
 #include <QPaintEvent>
+#include <QPrintDialog>
+#include <QPrinter>
+#include <QPrinterInfo>
 #include <QPointer>
 #include <QPainter>
 #include <QResizeEvent>
@@ -2507,6 +2512,167 @@ qth_clipboard_has_data(void)
     const QMimeData * p_mime = QApplication::clipboard()->mimeData();
 
     return((nullptr != p_mime) && (p_mime->hasFormat(QLatin1String(own_mime)) || p_mime->hasText()));
+}
+
+/* ---- Printing ----------------------------------------------------------------------------- */
+
+static QPrinter *
+printer(void)
+{
+    static QPrinter * p_printer = nullptr;
+
+    if(nullptr == p_printer)
+        p_printer = new QPrinter(QPrinter::HighResolution);
+
+    return(p_printer);
+}
+
+static struct PRINT_STATE
+{
+    QPainter * p_painter = nullptr;
+    QTH_PAINTER qth_painter = { nullptr };
+    bool any_page = false;
+}
+print_state;
+
+static QPrinter *
+printer_for_output(void)
+{
+    QPrinter * p_printer = printer();
+    const QByteArray pdf = qgetenv("FIREWORKZ_PRINT_PDF");
+
+    if(!pdf.isEmpty())
+    {   /* for tests and bug reports: print to this file whatever printers there are */
+        p_printer->setOutputFormat(QPrinter::PdfFormat);
+        p_printer->setOutputFileName(QFile::decodeName(pdf));
+    }
+
+    return(p_printer);
+}
+
+extern "C" void
+qth_printer_info(char * p_name, int name_n, QTH_PRINTER_INFO * p_info)
+{
+    QPrinter * p_printer = printer_for_output();
+    const QPageLayout layout = p_printer->pageLayout();
+    const QRectF full = layout.fullRect(QPageLayout::Point);
+    const QRectF paint = layout.paintRect(QPageLayout::Point);
+    const QMarginsF margins = layout.margins(QPageLayout::Point);
+    const QByteArray name = (p_printer->outputFormat() == QPrinter::PdfFormat) ? QByteArray("PDF file") : p_printer->printerName().toLocal8Bit();
+
+    if((nullptr != p_name) && (name_n > 0))
+    {
+        const int n = qMin((int) name.size(), name_n - 1);
+        memcpy(p_name, name.constData(), (size_t) n);
+        p_name[n] = '\0';
+    }
+
+    /* points to pixits: 20 to the point */
+    p_info->paper_width = (int32_t) qRound(full.width() * 20);
+    p_info->paper_height = (int32_t) qRound(full.height() * 20);
+    p_info->margin_left = (int32_t) qRound(margins.left() * 20);
+    p_info->margin_top = (int32_t) qRound(margins.top() * 20);
+    p_info->margin_right = (int32_t) qRound(margins.right() * 20);
+    p_info->margin_bottom = (int32_t) qRound(margins.bottom() * 20);
+    p_info->print_width = (int32_t) qRound(paint.width() * 20);
+    p_info->print_height = (int32_t) qRound(paint.height() * 20);
+    p_info->valid = p_printer->isValid();
+}
+
+extern "C" int
+qth_printer_setup_dialog(QTH_WINDOW * p_parent)
+{
+    QWidget * p_parent_widget = (nullptr != p_parent) ? ((nullptr != p_parent->p_main) ? static_cast<QWidget *>(p_parent->p_main) : p_parent->p_widget) : nullptr;
+    QPrintDialog dialog(printer(), p_parent_widget);
+
+    /* the program asks for copies and pages in its own print dialog, so this is just for the printer and its properties */
+    dialog.setOption(QAbstractPrintDialog::PrintPageRange, false);
+    dialog.setOption(QAbstractPrintDialog::PrintCollateCopies, false);
+    dialog.setOption(QAbstractPrintDialog::PrintSelection, false);
+    dialog.setWindowTitle(QStringLiteral("Printer"));
+
+    return(dialog.exec() == QDialog::Accepted);
+}
+
+extern "C" int
+qth_print_copies_by_printer(void)
+{
+    return(printer()->supportsMultipleCopies());
+}
+
+extern "C" int
+qth_print_begin(const char * p_doc_name, int landscape, int copies, int collate)
+{
+    QPrinter * p_printer = printer_for_output();
+
+    if(!p_printer->isValid())
+        return(0);
+
+    p_printer->setDocName(text_of(p_doc_name));
+    p_printer->setPageOrientation(landscape ? QPageLayout::Landscape : QPageLayout::Portrait);
+    p_printer->setCopyCount(qMax(1, copies));
+    p_printer->setCollateCopies(0 != collate);
+
+    print_state.p_painter = new QPainter();
+    if(!print_state.p_painter->begin(p_printer))
+    {
+        delete print_state.p_painter;
+        print_state.p_painter = nullptr;
+        return(0);
+    }
+
+    print_state.qth_painter.p_painter = print_state.p_painter;
+    print_state.any_page = false;
+    return(1);
+}
+
+extern "C" void
+qth_print_geometry(QTH_PRINT_GEOMETRY * p_geometry)
+{
+    QPrinter * p_printer = printer();
+    const QRect page = p_printer->pageLayout().paintRectPixels(p_printer->resolution());
+    const QRect full = p_printer->pageLayout().fullRectPixels(p_printer->resolution());
+
+    p_geometry->dpi_x = p_geometry->dpi_y = p_printer->resolution();
+    p_geometry->page_width = page.width();
+    p_geometry->page_height = page.height();
+    p_geometry->phys_width = full.width();
+    p_geometry->phys_height = full.height();
+    p_geometry->offset_x = page.left() - full.left();
+    p_geometry->offset_y = page.top() - full.top();
+}
+
+extern "C" QTH_PAINTER *
+qth_print_page_painter(void)
+{
+    print_state.any_page = true;
+    return((nullptr != print_state.p_painter) ? &print_state.qth_painter : nullptr);
+}
+
+extern "C" int
+qth_print_next_page(void)
+{
+    return((nullptr != print_state.p_painter) && printer()->newPage());
+}
+
+extern "C" int
+qth_print_end(int abort)
+{
+    int ok = 1;
+
+    if(nullptr == print_state.p_painter)
+        return(0);
+
+    if(abort)
+        printer()->abort();
+
+    ok = print_state.p_painter->end() && !abort;
+
+    delete print_state.p_painter;
+    print_state.p_painter = nullptr;
+    print_state.qth_painter.p_painter = nullptr;
+
+    return(ok);
 }
 
 /* end of qth_qt.cpp */

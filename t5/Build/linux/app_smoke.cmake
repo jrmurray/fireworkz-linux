@@ -141,3 +141,38 @@ if(NOT clipped_text MATCHES "abxyzab")
 endif()
 
 message(STATUS "fireworkz copied and pasted")
+
+# Printing: choose Print, press its Print button, with the output going to a PDF file instead of a printer
+# (FIREWORKZ_PRINT_PDF); the file must be a PDF and, if pdftotext is to hand, hold the typed words.
+
+set(PRINTED ${SHOT}-printed.pdf)
+file(REMOVE ${PRINTED})
+
+set(ENV{FIREWORKZ_PRINT_PDF} ${PRINTED})
+set(ENV{FIREWORKZ_TEST_SCRIPT} "wait:800;click:100,150;type:zebra printing test;menu:File>Print...;wait:500;button:Print;wait:1500;quit")
+
+execute_process(COMMAND ${APP} RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err TIMEOUT 60)
+unset(ENV{FIREWORKZ_PRINT_PDF})
+
+if(NOT result EQUAL 0)
+    message(FATAL_ERROR "fireworkz exited with ${result} printing\n${out}\n${err}")
+endif()
+
+if(NOT EXISTS ${PRINTED})
+    message(FATAL_ERROR "printing did not write ${PRINTED}\n${out}\n${err}")
+endif()
+
+file(READ ${PRINTED} pdf_head LIMIT 8)
+if(NOT pdf_head MATCHES "^%PDF")
+    message(FATAL_ERROR "${PRINTED} is not a PDF")
+endif()
+
+find_program(PDFTOTEXT pdftotext)
+if(PDFTOTEXT)
+    execute_process(COMMAND ${PDFTOTEXT} ${PRINTED} - OUTPUT_VARIABLE pdf_text)
+    if(NOT pdf_text MATCHES "zebra printing test")
+        message(FATAL_ERROR "the printed text is not in ${PRINTED}: ${pdf_text}")
+    endif()
+endif()
+
+message(STATUS "fireworkz printed to a PDF")

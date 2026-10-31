@@ -454,6 +454,46 @@ int qth_clipboard_get_text(void ** pp_data, size_t * p_n);
 /* Non-zero if there is anything on the clipboard that could be pasted */
 int qth_clipboard_has_data(void);
 
+/* ---- Printing ----------------------------------------------------------------------- */
+
+/* One printer setup is kept for the program: which printer, its paper and so on, as the user left it in the
+ * setup dialog. Sizes here are in pixits (twips, 1/1440 inch); the geometry for painting is in device pixels. */
+
+typedef struct QTH_PRINTER_INFO
+{
+    int32_t paper_width, paper_height;                  /* the whole sheet */
+    int32_t margin_left, margin_top, margin_right, margin_bottom;  /* what the printer cannot print on */
+    int32_t print_width, print_height;                  /* what it can */
+    int valid;                                          /* non-zero if there is a real printer or output file */
+}
+QTH_PRINTER_INFO;
+
+void qth_printer_info(char * p_name, int name_n, QTH_PRINTER_INFO * p_info);
+
+/* The printer chooser and its properties. Returns non-zero if the user pressed OK. */
+int qth_printer_setup_dialog(QTH_WINDOW * p_parent);
+
+/* The PRINT dialog of the desktop: copies, page range and so on are asked by the program itself, so this is only for
+ * choosing where the output goes */
+
+typedef struct QTH_PRINT_GEOMETRY
+{
+    int32_t dpi_x, dpi_y;
+    int32_t page_width, page_height;       /* the part that can be printed, in device pixels */
+    int32_t phys_width, phys_height;       /* the whole sheet */
+    int32_t offset_x, offset_y;            /* where the printable part starts on the sheet */
+}
+QTH_PRINT_GEOMETRY;
+
+/* Start a document. Returns non-zero if the printer (or the PDF file named in FIREWORKZ_PRINT_PDF, if that is set) was opened.
+ * Copies are made by the printer if it can, else the caller must print the pages again: see qth_print_copies_by_printer(). */
+int qth_print_begin(const char * p_doc_name, int landscape, int copies, int collate);
+int qth_print_copies_by_printer(void);
+void qth_print_geometry(QTH_PRINT_GEOMETRY * p_geometry);   /* of the page being printed: it depends on the orientation */
+QTH_PAINTER * qth_print_page_painter(void);                 /* for the current page */
+int qth_print_next_page(void);                              /* finish the page and start another; non-zero if it worked */
+int qth_print_end(int abort);                               /* non-zero if it all worked */
+
 /* Deliver the events that are waiting and return non-zero if there were any. If there are none, wait
  * for one for up to wait_ms milliseconds (0 is not at all, -1 is as long as it takes). */
 int qth_process_events(int wait_ms);

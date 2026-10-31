@@ -102,6 +102,21 @@ int qth_colour_dialog(QTH_WINDOW * p_parent, uint8_t * p_r, uint8_t * p_g, uint8
     return(0);
 }
 
+/* ---- Printing: no printer ---- */
+
+void qth_printer_info(char * p_name, int name_n, QTH_PRINTER_INFO * p_info)
+{
+    if(name_n > 0) p_name[0] = 0;
+    memset(p_info, 0, sizeof(*p_info));
+}
+int qth_printer_setup_dialog(QTH_WINDOW * p_parent) { (void) p_parent; return(0); }
+int qth_print_begin(const char * p_doc_name, int landscape, int copies, int collate) { (void) p_doc_name; (void) landscape; (void) copies; (void) collate; return(0); }
+int qth_print_copies_by_printer(void) { return(0); }
+void qth_print_geometry(QTH_PRINT_GEOMETRY * p_geometry) { memset(p_geometry, 0, sizeof(*p_geometry)); }
+QTH_PAINTER * qth_print_page_painter(void) { return(NULL); }
+int qth_print_next_page(void) { return(0); }
+int qth_print_end(int abort) { (void) abort; return(0); }
+
 /* ---- The clipboard: kept in a block here ---- */
 
 static void * clipboard_own;
