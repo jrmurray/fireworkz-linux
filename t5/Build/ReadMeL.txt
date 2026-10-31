@@ -166,11 +166,21 @@ Milestone 4 - DONE (first light): the application runs
     Resources: cmodules/resource.c loads messages and bitmaps; ob_dlg/li_dlg.c measures text
     in the dialog font.
 
+    Menus, toolbar and status line: done (first cut)
+      ho_menu.c      builds each window's QMenuBar (and popups) from the skeleton's menu trees, with
+                     an item's MENU_ENTRY as its client; items are enabled when a menu is about to be
+                     shown, as host_onInitMenu does on Windows; choosing an item runs its macro command
+      ob_toolb/li_toolb.c   the toolbar and status line windows: placing them, mouse handling over the
+                     buttons (shared with Windows' wi_toolb.c), creating and disposing them
+      ob_toolb.c     paints the toolbar from the icon strip in the resources, and the status line
+      The default Choices (which say which tools the toolbar has) are staged from the RISC OS set
+      into build/Resources/Choices as ChoiceNN.txt.
+
     What does not work yet (each is marked TODO where it lives):
-      menus and the toolbar         no menu bar; the toolbar and status line are not shown
-                                    (ho_stubs.c ho_menu_*, ob_toolb stubs)
       dialogs                       the dialog engine's Qt side (li_dlg.c) has only measuring,
-                                    so any command that opens a dialog does nothing
+                                    so any menu item or button that opens a dialog does nothing
+      key shortcuts shown in menus  informational only: no QShortcut is bound (the skeleton maps keys)
+      tooltips, the lower status line, the tool tip hover look
       Save As / Open / Print        windows_save_as(), file open, printing, print preview
       Draw files                    drawings and charts are blank (host_paint_drawfile)
       the clipboard, drag and drop, help

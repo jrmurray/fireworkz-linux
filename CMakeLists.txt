@@ -100,6 +100,13 @@ add_custom_target(fireworkz_messages ALL DEPENDS ${FIREWORKZ_MESSAGE_FILES})
 # Windows finds Config.txt without regard to case, Linux does not, so give it its name here
 configure_file(${T5}/firewrkz/Resources/Windows/UK/config.txt ${FIREWORKZ_RESOURCES_DIR}/Config.txt COPYONLY)
 
+# The default Choices (which include the toolbar's tools) come from the RISC OS set, which has no .txt on its files
+file(GLOB FIREWORKZ_CHOICE_FILES ${T5}/firewrkz/Resources/RISC_OS/UK/Choices/Choice*)
+foreach(choice IN LISTS FIREWORKZ_CHOICE_FILES)
+    get_filename_component(choice_name ${choice} NAME)
+    configure_file(${choice} ${FIREWORKZ_RESOURCES_DIR}/Choices/${choice_name}.txt COPYONLY)
+endforeach()
+
 # The templates are stored with RISC OS file type suffixes (Sheet,c1d). The program looks for *.fwt
 file(GLOB FIREWORKZ_TEMPLATE_FILES ${T5}/Resources/UK/Templates/*,c1d)
 foreach(template IN LISTS FIREWORKZ_TEMPLATE_FILES)

@@ -144,6 +144,10 @@ void qth_image_size(const QTH_IMAGE * p_image, int32_t * p_width, int32_t * p_he
 void qth_image_destroy(QTH_IMAGE * p_image);
 void qth_paint_image(QTH_PAINTER * p_painter, const QTH_IMAGE * p_image, const QTH_RECT * p_dest);
 
+/* Part of an image (a button's icon out of a strip of them) into a rectangle; transparent, if not NULL, is
+ * a colour whose pixels are left out, and opacity is 0 (invisible) to 255 (solid) */
+void qth_paint_image_part(QTH_PAINTER * p_painter, const QTH_IMAGE * p_image, const QTH_RECT * p_src, const QTH_RECT * p_dest, const QTH_RGB * p_transparent, int opacity);
+
 /* The same, with the pixels of one colour left transparent (the way the Windows build paints markers) */
 void qth_paint_image_keyed(QTH_PAINTER * p_painter, const QTH_IMAGE * p_image, const QTH_RECT * p_dest, QTH_RGB transparent);
 
@@ -294,6 +298,37 @@ void qth_beep(void);
 
 /* QTH_MOD_xxx for the modifier keys held down now */
 int qth_keyboard_modifiers(void);
+
+/* ---- Menus ------------------------------------------------------------------------ */
+
+/* A menu bar, popup or submenu. Items are addressed by their position, separators included, as
+ * in the Windows API that the shared code is written for. Texts are Latin-1; & marks the mnemonic. */
+
+typedef struct QTH_MENU QTH_MENU;
+
+enum
+{
+    QTH_MENU_ACTIVATE = 1,   /* an item was chosen: client is the item's */
+    QTH_MENU_ABOUT_TO_SHOW   /* a menu is about to be shown: client is the menu's, so enabling can be brought up to date */
+};
+
+/* menu is the one that is about to be shown, or that the chosen item is in */
+typedef void (* QTH_MENU_PROC)(QTH_WINDOW * p_window, int kind, void * client, QTH_MENU * p_menu);
+
+/* Give the window a menu bar (replacing any), or make a popup menu for it */
+QTH_MENU * qth_window_create_menu_bar(QTH_WINDOW * p_window, QTH_MENU_PROC proc);
+QTH_MENU * qth_menu_create_popup(QTH_WINDOW * p_window, QTH_MENU_PROC proc, void * client);
+
+/* shortcut_text is shown beside the item and may be NULL; it is not itself a keyboard shortcut */
+void qth_menu_add_item(QTH_MENU * p_menu, const char * p_text, const char * p_shortcut_text, void * client);
+void qth_menu_add_separator(QTH_MENU * p_menu);
+QTH_MENU * qth_menu_add_submenu(QTH_MENU * p_menu, const char * p_text, void * client);
+
+void qth_menu_set_item_enabled(QTH_MENU * p_menu, int index, int enabled);
+QTH_MENU * qth_menu_get_submenu(QTH_MENU * p_menu, int index); /* NULL if the item has none */
+
+/* Show a popup menu at the pointer and return when it has been dealt with */
+void qth_menu_popup(QTH_MENU * p_menu);
 
 /* Deliver the events that are waiting and return non-zero if there were any. If there are none, wait
  * for one for up to wait_ms milliseconds (0 is not at all, -1 is as long as it takes). */

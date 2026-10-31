@@ -309,6 +309,14 @@ qth_paint_image_keyed(QTH_PAINTER * p_painter, const QTH_IMAGE * p_image, const 
     painter_logf(p_painter, "image-keyed %d,%d,%d,%d #%02x%02x%02x", RECT_ARGS(p_dest), RGB_ARGS(transparent));
 }
 
+void
+qth_paint_image_part(QTH_PAINTER * p_painter, const QTH_IMAGE * p_image, const QTH_RECT * p_src, const QTH_RECT * p_dest, const QTH_RGB * p_transparent, int opacity)
+{
+    (void) p_image;
+    (void) p_transparent;
+    painter_logf(p_painter, "image-part %d,%d,%d,%d to %d,%d,%d,%d opacity %d", RECT_ARGS(p_src), RECT_ARGS(p_dest), opacity);
+}
+
 struct QTH_WINDOW
 {
     QTH_WINDOW_DESC desc;
@@ -609,4 +617,150 @@ int
 qth_null_n_windows(void)
 {
     return(n_windows);
+}
+
+/* ---- Menus: kept as a tree so that a test can look at it and choose items ------------------ */
+
+#define NULL_MENU_MAX_ITEMS 64
+
+struct QTH_MENU
+{
+    QTH_WINDOW * p_window;
+    QTH_MENU_PROC proc;
+    char text[NULL_MENU_MAX_ITEMS][64];
+    char shortcut[NULL_MENU_MAX_ITEMS][32];
+    int enabled[NULL_MENU_MAX_ITEMS];
+    void * client[NULL_MENU_MAX_ITEMS];
+    QTH_MENU * p_sub[NULL_MENU_MAX_ITEMS];
+    int n_items;
+};
+
+static QTH_MENU *
+null_menu_new(QTH_WINDOW * p_window, QTH_MENU_PROC proc)
+{
+    QTH_MENU * p_menu = calloc(1, sizeof(*p_menu));
+
+    if(NULL != p_menu)
+    {
+        p_menu->p_window = p_window;
+        p_menu->proc = proc;
+    }
+
+    return(p_menu);
+}
+
+static QTH_MENU * null_menu_bar;
+
+QTH_MENU *
+qth_window_create_menu_bar(QTH_WINDOW * p_window, QTH_MENU_PROC proc)
+{
+    return(null_menu_bar = null_menu_new(p_window, proc));
+}
+
+QTH_MENU *
+qth_menu_create_popup(QTH_WINDOW * p_window, QTH_MENU_PROC proc, void * client)
+{
+    (void) client;
+    return(null_menu_new(p_window, proc));
+}
+
+static int
+null_menu_add(QTH_MENU * p_menu, const char * p_text, const char * p_shortcut, void * client)
+{
+    int i = p_menu->n_items;
+
+    if(i >= NULL_MENU_MAX_ITEMS)
+        return(-1);
+
+    snprintf(p_menu->text[i], sizeof(p_menu->text[i]), "%s", (NULL != p_text) ? p_text : "");
+    snprintf(p_menu->shortcut[i], sizeof(p_menu->shortcut[i]), "%s", (NULL != p_shortcut) ? p_shortcut : "");
+    p_menu->enabled[i] = 1;
+    p_menu->client[i] = client;
+    p_menu->p_sub[i] = NULL;
+
+    return(p_menu->n_items++);
+}
+
+void
+qth_menu_add_item(QTH_MENU * p_menu, const char * p_text, const char * p_shortcut_text, void * client)
+{
+    (void) null_menu_add(p_menu, p_text, p_shortcut_text, client);
+}
+
+void
+qth_menu_add_separator(QTH_MENU * p_menu)
+{
+    (void) null_menu_add(p_menu, NULL, NULL, NULL);
+}
+
+QTH_MENU *
+qth_menu_add_submenu(QTH_MENU * p_menu, const char * p_text, void * client)
+{
+    int i = null_menu_add(p_menu, p_text, NULL, client);
+
+    if(i < 0)
+        return(NULL);
+
+    return(p_menu->p_sub[i] = null_menu_new(p_menu->p_window, p_menu->proc));
+}
+
+void
+qth_menu_set_item_enabled(QTH_MENU * p_menu, int index, int enabled)
+{
+    if((index >= 0) && (index < p_menu->n_items))
+        p_menu->enabled[index] = enabled;
+}
+
+QTH_MENU *
+qth_menu_get_submenu(QTH_MENU * p_menu, int index)
+{
+    return(((index >= 0) && (index < p_menu->n_items)) ? p_menu->p_sub[index] : NULL);
+}
+
+void
+qth_menu_popup(QTH_MENU * p_menu)
+{
+    (void) p_menu;
+}
+
+/* test hooks */
+
+QTH_MENU *
+qth_null_menu_bar(void)
+{
+    return(null_menu_bar);
+}
+
+int
+qth_null_menu_n_items(const QTH_MENU * p_menu)
+{
+    return(p_menu->n_items);
+}
+
+const char *
+qth_null_menu_item_text(const QTH_MENU * p_menu, int index)
+{
+    return(p_menu->text[index]);
+}
+
+int
+qth_null_menu_item_enabled(const QTH_MENU * p_menu, int index)
+{
+    return(p_menu->enabled[index]);
+}
+
+void
+qth_null_menu_choose(QTH_MENU * p_menu, int index)
+{
+    if((index >= 0) && (index < p_menu->n_items) && (NULL != p_menu->proc))
+        (*p_menu->proc)(p_menu->p_window, QTH_MENU_ACTIVATE, p_menu->client[index], p_menu);
+}
+
+void
+qth_null_menu_open(QTH_MENU * p_parent, int index)
+{
+    QTH_MENU * p_sub = qth_menu_get_submenu(p_parent, index);
+
+    if((NULL != p_sub) && (NULL != p_parent->proc))
+        (*p_parent->proc)(p_parent->p_window, QTH_MENU_ABOUT_TO_SHOW, p_parent->client[index], p_sub);
 }

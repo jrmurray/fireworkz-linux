@@ -19,7 +19,11 @@
 #include <QFontMetricsF>
 #include <QGuiApplication>
 #include <QImage>
+#include <QAction>
 #include <QKeyEvent>
+#include <QMainWindow>
+#include <QMenu>
+#include <QMenuBar>
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
@@ -33,6 +37,7 @@
 #include <QWidget>
 
 #include <map>
+#include <vector>
 
 static int modifiers_of(Qt::KeyboardModifiers modifiers);
 
@@ -450,6 +455,32 @@ qth_paint_image(QTH_PAINTER * p_painter, const QTH_IMAGE * p_image, const QTH_RE
 }
 
 extern "C" void
+qth_paint_image_part(QTH_PAINTER * p_painter, const QTH_IMAGE * p_image, const QTH_RECT * p_src, const QTH_RECT * p_dest, const QTH_RGB * p_transparent, int opacity)
+{
+    QPainter & painter = *p_painter->p_painter;
+    QImage image = p_image->image.convertToFormat(QImage::Format_ARGB32);
+
+    if(nullptr != p_transparent)
+    {
+        const QRgb key = qRgb(p_transparent->r, p_transparent->g, p_transparent->b);
+
+        for(int y = 0; y < image.height(); ++y)
+        {
+            QRgb * p_line = reinterpret_cast<QRgb *>(image.scanLine(y));
+
+            for(int x = 0; x < image.width(); ++x)
+                if(qRgb(qRed(p_line[x]), qGreen(p_line[x]), qBlue(p_line[x])) == key)
+                    p_line[x] = 0;
+        }
+    }
+
+    painter.save();
+    painter.setOpacity(opacity / 255.0);
+    painter.drawImage(rect_of(p_dest), image, rect_of(p_src));
+    painter.restore();
+}
+
+extern "C" void
 qth_paint_image_keyed(QTH_PAINTER * p_painter, const QTH_IMAGE * p_image, const QTH_RECT * p_dest, QTH_RGB transparent)
 {
     QImage image = p_image->image.convertToFormat(QImage::Format_ARGB32);
@@ -635,8 +666,13 @@ protected:
     }
 };
 
+struct QTH_MENU;
+
 struct QTH_WINDOW
 {
+    QMainWindow * p_main;     /* the frame of a document window: it has the menu bar, and p_widget is its client */
+    QTH_MENU * p_menu_bar;
+    int requested_client_height;
     QWidget * p_widget;       /* the HostWidget for panes and documents, the QScrollBar for scroll bars */
     HostWidget * p_host;      /* NULL for scroll bars */
     QScrollBar * p_scroll;    /* NULL unless a scroll bar */
@@ -653,6 +689,14 @@ rect_from(const QTH_RECT & r)
     return(QRect(r.left, r.top, r.right - r.left, r.bottom - r.top));
 }
 
+/* what is shown, titled, minimised and so on: the frame for a document, else the widget */
+
+static inline QWidget *
+top_of(const QTH_WINDOW * p_window)
+{
+    return((nullptr != p_window->p_main) ? static_cast<QWidget *>(p_window->p_main) : p_window->p_widget);
+}
+
 extern "C" QTH_WINDOW *
 qth_window_create(const QTH_WINDOW_DESC * p_desc)
 {
@@ -665,6 +709,8 @@ qth_window_create(const QTH_WINDOW_DESC * p_desc)
     p_window->client = p_desc->client;
     p_window->p_host = nullptr;
     p_window->p_scroll = nullptr;
+    p_window->p_main = nullptr;
+    p_window->p_menu_bar = nullptr;
 
     if((QTH_WINDOW_HSCROLL == p_desc->kind) || (QTH_WINDOW_VSCROLL == p_desc->kind))
     {
@@ -689,14 +735,24 @@ qth_window_create(const QTH_WINDOW_DESC * p_desc)
     }
     else
     {
-        p_window->p_host = new HostWidget(p_parent, p_window, p_desc->proc, p_desc->client);
-        p_window->p_widget = p_window->p_host;
-
         if(QTH_WINDOW_DOCUMENT == p_desc->kind)
-            p_window->p_widget->setWindowFlag(Qt::Window, true);
+        {
+            p_window->p_main = new QMainWindow();
+            p_window->p_host = new HostWidget(nullptr, p_window, p_desc->proc, p_desc->client);
+            p_window->p_main->setCentralWidget(p_window->p_host); /* the frame owns it now */
+        }
+        else
+            p_window->p_host = new HostWidget(p_parent, p_window, p_desc->proc, p_desc->client);
+
+        p_window->p_widget = p_window->p_host;
     }
 
-    p_window->p_widget->setGeometry(rect_from(p_desc->bounds));
+    p_window->requested_client_height = p_desc->bounds.bottom - p_desc->bounds.top;
+
+    if(nullptr != p_window->p_main)
+        p_window->p_main->setGeometry(rect_from(p_desc->bounds)); /* until there is a menu bar, the client is all of it */
+    else
+        p_window->p_widget->setGeometry(rect_from(p_desc->bounds));
 
     qth_window_set_title(p_window, p_desc->p_title_latin1);
 
@@ -719,33 +775,46 @@ qth_window_destroy(QTH_WINDOW * p_window)
     p_window->proc = nullptr; /* no more events for the handler */
     if(nullptr != p_window->p_host)
         p_window->p_host->proc = nullptr;
-    p_window->p_widget->hide();
-    p_window->p_widget->deleteLater();
+    top_of(p_window)->hide();
+    top_of(p_window)->deleteLater();
     delete p_window;
 }
 
 extern "C" void
 qth_window_show(QTH_WINDOW * p_window, int visible)
 {
-    p_window->p_widget->setVisible(0 != visible);
+    top_of(p_window)->setVisible(0 != visible);
 }
 
 extern "C" void
 qth_window_set_title(QTH_WINDOW * p_window, const char * p_title_latin1)
 {
-    p_window->p_widget->setWindowTitle(QString::fromLatin1((nullptr != p_title_latin1) ? p_title_latin1 : ""));
+    top_of(p_window)->setWindowTitle(QString::fromLatin1((nullptr != p_title_latin1) ? p_title_latin1 : ""));
 }
 
 extern "C" void
 qth_window_set_bounds(QTH_WINDOW * p_window, const QTH_RECT * p_bounds)
 {
-    p_window->p_widget->setGeometry(rect_from(*p_bounds));
+    if(nullptr != p_window->p_main)
+    {
+        /* the bounds are of the client: the frame is as much bigger as the menu bar and so on make it */
+        const int extra_h = p_window->p_main->height() - p_window->p_widget->height();
+        const int extra_w = p_window->p_main->width() - p_window->p_widget->width();
+
+        p_window->p_main->setGeometry(p_bounds->left, p_bounds->top, (p_bounds->right - p_bounds->left) + extra_w, (p_bounds->bottom - p_bounds->top) + extra_h);
+    }
+    else
+        p_window->p_widget->setGeometry(rect_from(*p_bounds));
 }
 
 extern "C" void
 qth_window_get_bounds(const QTH_WINDOW * p_window, QTH_RECT * p_bounds)
 {
-    const QRect g = p_window->p_widget->geometry();
+    /* for a document: where the frame is, with the size of the client */
+    QRect g = p_window->p_widget->geometry();
+
+    if(nullptr != p_window->p_main)
+        g = QRect(p_window->p_main->pos(), p_window->p_widget->size());
 
     p_bounds->left = g.left();
     p_bounds->top = g.top();
@@ -933,9 +1002,9 @@ qth_window_set_state(QTH_WINDOW * p_window, int state)
 {
     switch(state)
     {
-    case QTH_STATE_MINIMIZED: p_window->p_widget->showMinimized(); break;
-    case QTH_STATE_MAXIMIZED: p_window->p_widget->showMaximized(); break;
-    default:                  p_window->p_widget->showNormal(); break;
+    case QTH_STATE_MINIMIZED: top_of(p_window)->showMinimized(); break;
+    case QTH_STATE_MAXIMIZED: top_of(p_window)->showMaximized(); break;
+    default:                  top_of(p_window)->showNormal(); break;
     }
 }
 
@@ -985,6 +1054,131 @@ qth_qt_window_pixel(QTH_WINDOW * p_window, int32_t x, int32_t y, uint32_t * p_ar
     *p_argb = image.pixel(x, y);
 
     return(1);
+}
+
+/* ---- Menus ---------------------------------------------------------------------------- */
+
+struct QTH_MENU
+{
+    QTH_WINDOW * p_window;
+    QTH_MENU_PROC proc;
+    QMenu * p_menu;                    /* null for the menu bar */
+    QMenuBar * p_bar;                  /* null for a menu */
+    std::vector<QAction *> actions;
+    std::vector<QTH_MENU *> subs;      /* parallel to actions: the submenu of an item, or null */
+};
+
+static QString
+text_of(const char * p_latin1)
+{
+    return(QString::fromLatin1((nullptr != p_latin1) ? p_latin1 : ""));
+}
+
+static QTH_MENU *
+menu_new(QTH_WINDOW * p_window, QTH_MENU_PROC proc, QMenu * p_menu, QMenuBar * p_bar, void * client_about_to_show)
+{
+    QTH_MENU * p_qth_menu = new QTH_MENU();
+
+    p_qth_menu->p_window = p_window;
+    p_qth_menu->proc = proc;
+    p_qth_menu->p_menu = p_menu;
+    p_qth_menu->p_bar = p_bar;
+
+    if(nullptr != p_menu)
+        QObject::connect(p_menu, &QMenu::aboutToShow, p_menu, [p_qth_menu, client_about_to_show]()
+        {
+            if(nullptr != p_qth_menu->proc)
+                (*p_qth_menu->proc)(p_qth_menu->p_window, QTH_MENU_ABOUT_TO_SHOW, client_about_to_show, p_qth_menu);
+        });
+
+    return(p_qth_menu);
+}
+
+extern "C" QTH_MENU *
+qth_window_create_menu_bar(QTH_WINDOW * p_window, QTH_MENU_PROC proc)
+{
+    if(nullptr == p_window->p_main)
+        return(nullptr);
+
+    /* the client keeps its size: the frame grows by the bar's height */
+    const int client_height = p_window->p_main->isVisible() ? p_window->p_widget->height() : p_window->requested_client_height;
+
+    QMenuBar * p_bar = new QMenuBar(p_window->p_main);
+    p_window->p_main->setMenuBar(p_bar); /* the frame owns it and any old one */
+
+    p_window->p_main->resize(p_window->p_main->width(), client_height + p_bar->sizeHint().height());
+
+    p_window->p_menu_bar = menu_new(p_window, proc, nullptr, p_bar, nullptr);
+
+    return(p_window->p_menu_bar);
+}
+
+extern "C" QTH_MENU *
+qth_menu_create_popup(QTH_WINDOW * p_window, QTH_MENU_PROC proc, void * client)
+{
+    return(menu_new(p_window, proc, new QMenu(p_window->p_widget), nullptr, client));
+}
+
+extern "C" void
+qth_menu_add_item(QTH_MENU * p_menu, const char * p_text, const char * p_shortcut_text, void * client)
+{
+    QString text = text_of(p_text);
+    QAction * p_action;
+
+    if((nullptr != p_shortcut_text) && ('\0' != p_shortcut_text[0]))
+        text += QLatin1Char('\t') + text_of(p_shortcut_text); /* shown in the shortcut column */
+
+    p_action = (nullptr != p_menu->p_menu) ? p_menu->p_menu->addAction(text) : p_menu->p_bar->addAction(text);
+
+    QObject::connect(p_action, &QAction::triggered, p_action, [p_menu, client]()
+    {
+        if(nullptr != p_menu->proc)
+            (*p_menu->proc)(p_menu->p_window, QTH_MENU_ACTIVATE, client, p_menu);
+    });
+
+    p_menu->actions.push_back(p_action);
+    p_menu->subs.push_back(nullptr);
+}
+
+extern "C" void
+qth_menu_add_separator(QTH_MENU * p_menu)
+{
+    QAction * p_action = (nullptr != p_menu->p_menu) ? p_menu->p_menu->addSeparator() : p_menu->p_bar->addSeparator();
+
+    p_menu->actions.push_back(p_action);
+    p_menu->subs.push_back(nullptr);
+}
+
+extern "C" QTH_MENU *
+qth_menu_add_submenu(QTH_MENU * p_menu, const char * p_text, void * client)
+{
+    QMenu * p_sub = (nullptr != p_menu->p_menu) ? p_menu->p_menu->addMenu(text_of(p_text)) : p_menu->p_bar->addMenu(text_of(p_text));
+    QTH_MENU * p_qth_sub = menu_new(p_menu->p_window, p_menu->proc, p_sub, nullptr, client);
+
+    p_menu->actions.push_back(p_sub->menuAction());
+    p_menu->subs.push_back(p_qth_sub);
+
+    return(p_qth_sub);
+}
+
+extern "C" void
+qth_menu_set_item_enabled(QTH_MENU * p_menu, int index, int enabled)
+{
+    if((index >= 0) && ((size_t) index < p_menu->actions.size()))
+        p_menu->actions[(size_t) index]->setEnabled(0 != enabled);
+}
+
+extern "C" QTH_MENU *
+qth_menu_get_submenu(QTH_MENU * p_menu, int index)
+{
+    return(((index >= 0) && ((size_t) index < p_menu->subs.size())) ? p_menu->subs[(size_t) index] : nullptr);
+}
+
+extern "C" void
+qth_menu_popup(QTH_MENU * p_menu)
+{
+    if(nullptr != p_menu->p_menu)
+        p_menu->p_menu->exec(QCursor::pos());
 }
 
 /* end of qth_qt.cpp */

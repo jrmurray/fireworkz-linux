@@ -58,6 +58,16 @@ void qth_null_set_modifiers(int modifiers);
 
 int qth_null_n_windows(void); /* created and not yet destroyed */
 
+/* The menu bar the host layer made, as a test sees it */
+QTH_MENU * qth_null_menu_bar(void);
+int qth_null_menu_n_items(const QTH_MENU * p_menu);
+const char * qth_null_menu_item_text(const QTH_MENU * p_menu, int index);
+int qth_null_menu_item_enabled(const QTH_MENU * p_menu, int index);
+
+/* Choose an item, or open a submenu (which brings its enabling up to date), as the user would */
+void qth_null_menu_choose(QTH_MENU * p_menu, int index);
+void qth_null_menu_open(QTH_MENU * p_parent, int index);
+
 #ifdef __cplusplus
 }
 #endif

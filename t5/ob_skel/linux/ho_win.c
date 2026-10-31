@@ -682,6 +682,15 @@ li_window_event(
     const QTH_EVENT * p_event,
     void * client);
 
+extern void
+toolbar_window_event(
+    _DocuRef_   P_DOCU p_docu,
+    _ViewRef_   P_VIEW p_view,
+    _InVal_     HOST_WND hwnd,
+    _InVal_     EVENT_HANDLER event_handler,
+    _In_        const QTH_EVENT * p_event);
+
+
 /* Make the Qt window for an event handler's slot in the view and record it there, as WM_CREATE does on Windows */
 
 _Check_return_
@@ -3959,6 +3968,12 @@ li_window_event(
 
     g_hwnd_pointer = hwnd;
 
+    if((EVENT_HANDLER_TOOLBAR == event_handler) || (EVENT_HANDLER_STATUS_LINE == event_handler))
+    {
+        toolbar_window_event(p_docu, p_view, hwnd, event_handler, p_event);
+        return;
+    }
+
     switch(p_event->type)
     {
     case QTH_EVENT_PAINT:
@@ -4103,7 +4118,57 @@ li_window_event(
     }
 }
 
+/* The toolbar and status line windows, which are made by the toolbar object but belong in the view's
+ * array of main windows, and handled by it too */
+
+_Check_return_
+extern STATUS
+ho_create_main_window(
+    _DocuRef_   P_DOCU p_docu,
+    _ViewRef_   P_VIEW p_view,
+    _InVal_     EVENT_HANDLER event_handler,
+    _Out_       HOST_WND * p_slot,
+    _In_        const QTH_RECT * p_bounds)
+{
+    QTH_WINDOW_DESC desc;
+    HOST_WND hwnd;
+
+    memset(&desc, 0, sizeof(desc));
+    desc.kind = QTH_WINDOW_PANE;
+    desc.p_parent = p_view->main[WIN_BACK].hwnd;
+    desc.bounds = *p_bounds;
+    desc.proc = li_window_event;
+    desc.client = (void *) (uintptr_t) viewid_pack(p_docu, p_view, (U16) event_handler);
+
+    if(NULL == (hwnd = qth_window_create(&desc)))
+        return(create_error(ERR_TOOMANYWINDOWS));
+
+    *p_slot = hwnd;
+
+    qth_window_show(hwnd, 1);
+
+    return(STATUS_OK);
+}
+
+extern void
+ho_destroy_main_window(
+    HOST_WND * p_slot)
+{
+    if(HOST_WND_NONE != *p_slot)
+    {
+        host_clear_tracking_for_window(*p_slot);
+        qth_window_destroy(*p_slot);
+        *p_slot = HOST_WND_NONE;
+    }
+}
+
 /* ---- views ----------------------------------------------------------------------------- */
+
+extern void
+ho_attach_menu_bar(
+    _DocuRef_   P_DOCU p_docu,
+    _ViewRef_   P_VIEW p_view,
+    _InVal_     S32 menu_root_id);
 
 /* Setup the structure for the specified view port.  We are given its opening position
  * and size. Our job is to make the back window, the pane windows are attached at open time.
@@ -4122,7 +4187,6 @@ host_view_init(
     QTH_RECT bounds;
     HWND hwnd;
 
-    /* TODO: menus: ho_create_docu_menus() and the menu bar, once menus exist on Linux */
 
     /* Convert from pixits to pixels for the top left of the view. Windows lets the system pick
      * where a window opens, and so do we */
@@ -4149,6 +4213,8 @@ host_view_init(
         host_view_destroy(p_docu, p_view);
         return(create_error(ERR_TOOMANYWINDOWS));
     }
+
+    ho_attach_menu_bar(p_docu, p_view, MENU_ROOT_DOCU);
 
     return(STATUS_OK);
 }

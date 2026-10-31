@@ -18,27 +18,6 @@
 
 #include "ob_skel/linux/qt_host.h"
 
-/* ---- menus: TODO a QMenuBar built from the Fireworkz menu tables ------------------------- */
-
-_Check_return_
-extern STATUS
-ho_menu_popup(
-    _DocuRef_   P_DOCU p_docu,
-    _ViewRef_   P_VIEW p_view,
-    _InVal_     S32 menu_root)
-{
-    UNREFERENCED_PARAMETER_DocuRef_(p_docu);
-    UNREFERENCED_PARAMETER_ViewRef_(p_view);
-    UNREFERENCED_PARAMETER_InVal_(menu_root);
-
-    return(STATUS_OK);
-}
-
-extern void
-ho_menu_dispose(void)
-{
-}
-
 /* ---- help: TODO open the user guide in the desktop's browser ---------------------------- */
 
 T5_CMD_PROTO(extern, t5_cmd_help)

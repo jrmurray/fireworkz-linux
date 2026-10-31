@@ -140,7 +140,7 @@ tool_from_point(
     _ViewRef_   P_VIEW p_view,
     _InRef_     PC_PIXIT_POINT p_pixit_point);
 
-#if WINDOWS
+#if WINDOWS || LINUX
 
 T5_MSG_PROTO(extern, t5_msg_frame_windows_describe, _InoutRef_ P_MSG_FRAME_WINDOW p_msg_frame_window);
 T5_MSG_PROTO(extern, t5_msg_frame_windows_posn, _InoutRef_ P_MSG_FRAME_WINDOW p_msg_frame_window);
@@ -149,6 +149,41 @@ extern GDI_COORD status_line_height_pixels;
 
 extern GDI_COORD toolbar_height_pixels;
 
-#endif /* WINDOWS */
+#endif /* WINDOWS || LINUX */
+
+#if LINUX
+
+extern void
+li_toolbar_new(
+    _DocuRef_   P_DOCU p_docu,
+    _ViewRef_   P_VIEW p_view,
+    _InVal_     BOOL for_view_new);
+
+extern void
+li_toolbar_dispose(
+    _ViewRef_   P_VIEW p_view);
+
+_Check_return_
+extern STATUS
+li_status_line_new(
+    _DocuRef_   P_DOCU p_docu,
+    _ViewRef_   P_VIEW p_view,
+    _InRef_     PC_STYLE p_status_line_style);
+
+extern void
+li_status_line_dispose(
+    _ViewRef_   P_VIEW p_view);
+
+extern void
+li_status_line_update(
+    _DocuRef_   P_DOCU p_docu,
+    _ViewRef_   P_VIEW p_view);
+
+extern void
+li_redraw_tool(
+    _ViewRef_   P_VIEW p_view,
+    _InRef_     PC_T5_TOOLBAR_VIEW_TOOL_DESC p_t5_toolbar_view_tool_desc);
+
+#endif /* LINUX */
 
 /* end of ob_toolb.h */

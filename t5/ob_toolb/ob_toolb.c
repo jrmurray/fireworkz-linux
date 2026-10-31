@@ -15,6 +15,10 @@
 
 #include "ob_toolb/xp_toolb.h"
 
+#if LINUX
+#include "ob_skel/linux/qt_host.h"
+#endif
+
 #include "ob_toolb/ob_toolb.h"
 
 #if RISCOS
@@ -141,6 +145,8 @@ static PIXIT status_line_font_height_pixits;
 #elif WINDOWS
 static GDI_COORD status_line_font_height_pixels;
 
+       GDI_COORD status_line_height_pixels = 0; /* ideal value for open, don't reset to zero */
+#elif LINUX
        GDI_COORD status_line_height_pixels = 0; /* ideal value for open, don't reset to zero */
 #endif
 
@@ -1551,7 +1557,8 @@ do_paint_tool(
 
 #elif LINUX
 
-/* TODO: paint the tool's bitmap and themed button states once resource bitmaps exist on Linux */
+/* A button: a flat face that is raised when the pointer is over it and sunken when it is pressed or
+ * on, with its icon from the strip of icons in the resources (white-grey 192 is transparent there) */
 
 static void
 do_paint_tool(
@@ -1560,17 +1567,137 @@ do_paint_tool(
     _InRef_     PC_T5_TOOLBAR_VIEW_TOOL_DESC p_t5_toolbar_view_tool_desc,
     _InRef_     PC_REDRAW_CONTEXT p_redraw_context)
 {
-    const RGB face = RGB_INIT(0xE0, 0xE0, 0xE0);
-    const RGB edge = RGB_INIT(0x80, 0x80, 0x80);
+    PIXIT_RECT tool_rect = p_t5_toolbar_view_tool_desc->pixit_rect;
+    const P_T5_TOOLBAR_DOCU_TOOL_DESC p_t5_toolbar_docu_tool_desc = array_ptr(&p_docu->h_toolbar, T5_TOOLBAR_DOCU_TOOL_DESC, p_t5_toolbar_view_tool_desc->docu_tool_index);
+    const PC_T5_TOOLBAR_TOOL_DESC p_t5_toolbar_tool_desc = p_t5_toolbar_docu_tool_desc->p_t5_toolbar_tool_desc;
+    const BOOL enabled = tool_enabled_query(p_t5_toolbar_docu_tool_desc);
+    QTH_PAINTER * const p_painter = (QTH_PAINTER *) p_redraw_context->linux_ctx.painter;
+    static const QTH_RGB face = { 0xEE, 0xEE, 0xEE }, light = { 0xFF, 0xFF, 0xFF }, shadow = { 0x80, 0x80, 0x80 }, key = { 192, 192, 192 };
+    UINT resource_id = p_t5_toolbar_tool_desc->resource_id;
+    BOOL sunken = FALSE, raised = FALSE;
+    GDI_RECT gdi_rect;
+    QTH_RECT rect;
 
-    UNREFERENCED_PARAMETER_DocuRef_(p_docu);
     UNREFERENCED_PARAMETER_ViewRef_(p_view);
 
-    host_paint_rectangle_filled(p_redraw_context, &p_t5_toolbar_view_tool_desc->pixit_rect, &face);
-    host_paint_rectangle_outline(p_redraw_context, &p_t5_toolbar_view_tool_desc->pixit_rect, &edge);
+    if(!status_done(gdi_rect_limited_from_pixit_rect_and_context(&gdi_rect, &tool_rect, p_redraw_context)))
+        return;
+
+    rect.left = gdi_rect.tl.x; rect.top = gdi_rect.tl.y; rect.right = gdi_rect.br.x; rect.bottom = gdi_rect.br.y;
+
+    if(T5_TOOLBAR_TOOL_TYPE_STATE == ENUM_UNPACK(T5_TOOLBAR_TOOL_TYPE, p_t5_toolbar_tool_desc->bits.type))
+    {
+        switch(p_t5_toolbar_docu_tool_desc->state.state)
+        {
+        default:
+        case FALSE: /* button is up */
+            break;
+
+        case TRUE: /* button is down */
+            if(p_t5_toolbar_tool_desc->resource_id_on)
+                resource_id = p_t5_toolbar_tool_desc->resource_id_on;
+            sunken = TRUE;
+            break;
+
+        case INDETERMINATE:
+            sunken = TRUE;
+            break;
+        }
+    }
+
+    if(enabled)
+    {
+        if(2 == p_t5_toolbar_view_tool_desc->button_down)
+            sunken = TRUE;
+        else if(1 == p_t5_toolbar_view_tool_desc->button_down)
+            raised = !sunken;
+    }
+
+    qth_paint_fill_rect(p_painter, &rect, face);
+
+    if(sunken || raised)
+    {
+        const QTH_RECT top = { rect.left, rect.top, rect.right, rect.top + 1 };
+        const QTH_RECT left = { rect.left, rect.top, rect.left + 1, rect.bottom };
+        const QTH_RECT bottom = { rect.left, rect.bottom - 1, rect.right, rect.bottom };
+        const QTH_RECT right = { rect.right - 1, rect.top, rect.right, rect.bottom };
+
+        qth_paint_fill_rect(p_painter, &top, sunken ? shadow : light);
+        qth_paint_fill_rect(p_painter, &left, sunken ? shadow : light);
+        qth_paint_fill_rect(p_painter, &bottom, sunken ? light : shadow);
+        qth_paint_fill_rect(p_painter, &right, sunken ? light : shadow);
+    }
+
+    if(resource_id)
+    {
+        RESOURCE_BITMAP_ID resource_bitmap_id;
+        RESOURCE_BITMAP_HANDLE resource_bitmap_handle;
+        GDI_SIZE bm_grid_size, bm_size;
+        UINT index;
+
+        resource_bitmap_id.object_id = p_t5_toolbar_tool_desc->resource_object_id;
+        resource_bitmap_id.bitmap_id = resource_id;
+
+        if(resource_bitmap_find_new(&resource_bitmap_id, &resource_bitmap_handle, &bm_grid_size, &index))
+        {
+            resource_bitmap_gdi_size_query(resource_bitmap_handle, &bm_size);
+
+            if(0 == bm_grid_size.cx)
+                bm_grid_size.cx = bm_size.cy; /* icons are as wide as the strip is tall unless said otherwise */
+            if(0 == bm_grid_size.cy)
+                bm_grid_size.cy = bm_size.cy;
+
+            {
+            const QTH_RECT src = { (int) index * bm_grid_size.cx, 0, ((int) index + 1) * bm_grid_size.cx, bm_grid_size.cy };
+            const int dx = sunken ? 1 : 0; /* a pressed button's icon moves down and right a pixel */
+            const int x = rect.left + (((rect.right - rect.left) - bm_grid_size.cx) / 2) + dx;
+            const int y = rect.top + (((rect.bottom - rect.top) - bm_grid_size.cy) / 2) + dx;
+            const QTH_RECT dest = { x, y, x + bm_grid_size.cx, y + bm_grid_size.cy };
+
+            qth_paint_image_part(p_painter, (const QTH_IMAGE *) resource_bitmap_handle.i, &src, &dest, &key, enabled ? 255 : 90);
+            } /*block*/
+
+            resource_bitmap_lose(&resource_bitmap_handle);
+        }
+    }
+    /* else ... user controls are separate windows */
+}
+#endif /* OS */
+
+#if LINUX
+
+static const RGB toolbar_rgb = RGB_INIT(0xEE, 0xEE, 0xEE);
+
+/* fill the separator to the right of this tool (if present) with the toolbar's colour and a line down its middle */
+
+static void
+do_paint_separator(
+    _InRef_     PC_T5_TOOLBAR_VIEW_TOOL_DESC p_t5_toolbar_view_tool_desc,
+    _InRef_     PC_REDRAW_CONTEXT p_redraw_context)
+{
+    static const QTH_RGB line = { 0xB0, 0xB0, 0xB0 };
+    PIXIT_RECT rhs_extra_rect = p_t5_toolbar_view_tool_desc->pixit_rect;
+    GDI_RECT gdi_rect;
+    QTH_PAINTER * const p_painter = (QTH_PAINTER *) p_redraw_context->linux_ctx.painter;
+
+    rhs_extra_rect.tl.x = rhs_extra_rect.br.x;
+    rhs_extra_rect.br.x += p_t5_toolbar_view_tool_desc->rhs_extra_div_20 * 20;
+
+    if(!status_done(gdi_rect_limited_from_pixit_rect_and_context(&gdi_rect, &rhs_extra_rect, p_redraw_context)))
+        return;
+
+    {
+    const QTH_RECT rect = { gdi_rect.tl.x, gdi_rect.tl.y, gdi_rect.br.x, gdi_rect.br.y };
+    const QTH_RGB face = { toolbar_rgb.r, toolbar_rgb.g, toolbar_rgb.b };
+    const int x = (rect.left + rect.right) / 2;
+    const QTH_RECT middle = { x, rect.top + 2, x + 1, rect.bottom - 2 };
+
+    qth_paint_fill_rect(p_painter, &rect, face);
+    qth_paint_fill_rect(p_painter, &middle, line);
+    } /*block*/
 }
 
-#endif /* OS */
+#endif /* LINUX */
 
 static void
 paint_tool(
@@ -1594,7 +1721,7 @@ paint_tool(
         do_paint_tool(p_docu, p_view, p_t5_toolbar_view_tool_desc, p_redraw_context);
     }
 
-#if WINDOWS
+#if WINDOWS || LINUX
     if(0 != p_t5_toolbar_view_tool_desc->rhs_extra_div_20)
         do_paint_separator(p_t5_toolbar_view_tool_desc, p_redraw_context);
 #endif
@@ -1642,6 +1769,9 @@ redraw_tool(
             InvalidateRect(p_view->main[WIN_TOOLBAR].hwnd, &rect, TRUE);
     }
 
+#elif LINUX
+    UNREFERENCED_PARAMETER_DocuRef_(p_docu);
+    li_redraw_tool(p_view, p_t5_toolbar_view_tool_desc);
 #endif /* OS */
 
 }
@@ -2460,15 +2590,12 @@ status_line_view_update(
 
 #elif LINUX
 
-/* TODO: invalidate the status line window once the host views exist on Linux */
-
 static void
 status_line_view_update(
     _DocuRef_   P_DOCU p_docu,
     _ViewRef_   P_VIEW p_view)
 {
-    UNREFERENCED_PARAMETER_DocuRef_(p_docu);
-    UNREFERENCED_PARAMETER_ViewRef_(p_view);
+    li_status_line_update(p_docu, p_view);
 }
 
 #endif /* OS */
@@ -2523,6 +2650,8 @@ status_line_view_dispose(
         DestroyWindow(p_view->main[WIN_LOWER_STATUS_LINE].hwnd);
         p_view->main[WIN_LOWER_STATUS_LINE].hwnd = NULL;
     }
+#elif LINUX
+    li_status_line_dispose(p_view);
 #endif /* OS */
 }
 
@@ -2667,6 +2796,8 @@ status_line_view_new(
                            p_view->main[WIN_BACK].hwnd, NULL, GetInstanceHandle(), &packed_viewid)));
         } /*block*/
     }
+#elif LINUX
+    status_return(li_status_line_new(p_docu, p_view, p_status_line_style));
 #endif /* OS */
 
     return(STATUS_OK);
@@ -2775,6 +2906,8 @@ toolbar_view_dispose(
         DestroyWindow(p_view->main[WIN_TOOLBAR].hwnd);
         p_view->main[WIN_TOOLBAR].hwnd = NULL;
     }
+#elif LINUX
+    li_toolbar_dispose(p_view);
 #endif
 }
 
@@ -2921,7 +3054,7 @@ toolbar_view_new(
 
 #if RISCOS
     toolbar_height_riscos = 0;
-#elif WINDOWS
+#elif WINDOWS || LINUX
     toolbar_height_pixels = 0;
 #endif
 
@@ -3062,7 +3195,7 @@ toolbar_view_new(
     /* remember ideal height to open with */
 #if RISCOS
     toolbar_height_riscos = cur_point.y / PIXITS_PER_RISCOS;
-#elif WINDOWS
+#elif WINDOWS || LINUX
     { /* convert to dpi-dependent pixels */ /* DPI-aware */
     GDI_SIZE PixelsPerInch;
     host_get_pixel_size(NULL /*screen*/, NULL /*cx*/, &PixelsPerInch.cy); /* Get current pixel size for the screen e.g. 96 or 120 */
@@ -3119,6 +3252,8 @@ toolbar_view_new(
     {
         InvalidateRect(p_view->main[WIN_TOOLBAR].hwnd, NULL, TRUE);
     }
+#elif LINUX
+    li_toolbar_new(p_docu, p_view, for_view_new);
 #endif
     } /*block*/
 
@@ -3761,13 +3896,13 @@ OBJECT_PROTO(extern, object_toolbar)
     case T5_MSG_TOOLBAR_TOOL_NOBBLE:
         return(msg_toolbar_tool_nobble(p_docu, t5_message, (PC_T5_TOOLBAR_TOOL_NOBBLE) p_data));
 
-#if WINDOWS
+#if WINDOWS || LINUX
     case T5_MSG_FRAME_WINDOWS_DESCRIBE:
         return(t5_msg_frame_windows_describe(p_docu, t5_message, (P_MSG_FRAME_WINDOW) p_data));
 
     case T5_MSG_FRAME_WINDOWS_POSN:
         return(t5_msg_frame_windows_posn(p_docu, t5_message, (P_MSG_FRAME_WINDOW) p_data));
-#endif /* WINDOWS */
+#endif /* WINDOWS || LINUX */
 
 #if RISCOS
     case T5_MSG_BACK_WINDOW_EVENT:
@@ -3793,5 +3928,231 @@ OBJECT_PROTO(extern, object_toolbar)
         return(STATUS_OK);
     }
 }
+
+#if LINUX
+
+/* ---- Painting the toolbar and status line windows (Linux) --------------------------------- */
+
+extern void
+paint_toolbar_linux(
+    _DocuRef_   P_DOCU p_docu,
+    _ViewRef_   P_VIEW p_view,
+    _InoutRef_  QTH_PAINTER * p_painter,
+    _In_        const QTH_RECT * p_exposed,
+    _InVal_     HOST_WND hwnd)
+{
+    REDRAW_CONTEXT_CACHE redraw_context_cache;
+    REDRAW_CONTEXT redraw_context;
+    const P_REDRAW_CONTEXT p_redraw_context = &redraw_context;
+    const ARRAY_INDEX view_rows = array_elements(&p_view->toolbar.h_toolbar_view_row_desc);
+    ARRAY_INDEX view_row_idx = view_rows;
+    PIXIT_RECT clip_pixit_rect;
+    PIXIT_RECT bg_rect;
+    PIXIT_RECT clip_rect;
+    BOOL first_time = TRUE;
+
+    zero_struct_ptr_fn(p_redraw_context);
+
+    zero_struct_fn(redraw_context_cache);
+    p_redraw_context->p_redraw_context_cache = &redraw_context_cache;
+
+    p_redraw_context->p_docu = p_docu;
+    p_redraw_context->p_view = p_view;
+
+    p_redraw_context->linux_ctx.painter = p_painter;
+    p_redraw_context->linux_ctx.paint_rect.tl.x = p_exposed->left;
+    p_redraw_context->linux_ctx.paint_rect.tl.y = p_exposed->top;
+    p_redraw_context->linux_ctx.paint_rect.br.x = p_exposed->right;
+    p_redraw_context->linux_ctx.paint_rect.br.y = p_exposed->bottom;
+    p_redraw_context->linux_ctx.host_machine_clip_rect = p_redraw_context->linux_ctx.paint_rect;
+
+    p_redraw_context->display_mode = p_view->display_mode;
+
+    p_redraw_context->border_width.x = p_redraw_context->border_width.y = p_docu->page_def.grid_size;
+
+    host_redraw_context_set_host_xform(p_redraw_context, &p_view->host_xform[XFORM_TOOLBAR]);
+
+    host_redraw_context_fillin(p_redraw_context);
+
+    host_paint_start(p_redraw_context);
+
+    {
+    GDI_RECT gdi_rect;
+    QTH_RECT bounds;
+
+    qth_window_get_bounds(hwnd, &bounds);
+
+    gdi_rect.tl.x = 0;
+    gdi_rect.tl.y = 0;
+    gdi_rect.br.x = bounds.right - bounds.left;
+    gdi_rect.br.y = bounds.bottom - bounds.top;
+    pixit_rect_from_window_rect(&bg_rect, &gdi_rect, &p_redraw_context->host_xform);
+    } /*block*/
+
+    {
+    GDI_RECT gdi_rect = p_redraw_context->linux_ctx.paint_rect;
+
+    pixit_rect_from_window_rect(&clip_pixit_rect, &gdi_rect, &p_redraw_context->host_xform);
+    } /*block*/
+
+    bg_rect.br.y = T5_TOOLBAR_TM;
+
+    while(--view_row_idx >= 0) /* going down rows ... */
+    {
+        const PC_T5_TOOLBAR_VIEW_ROW_DESC p_t5_toolbar_view_row_desc = array_ptrc(&p_view->toolbar.h_toolbar_view_row_desc, T5_TOOLBAR_VIEW_ROW_DESC, view_row_idx);
+
+        if(0 == p_t5_toolbar_view_row_desc->height)
+            continue;
+
+        if(first_time)
+            first_time = FALSE;
+        else
+            bg_rect.br.y += T5_TOOLBAR_ROW_SEP_V;
+
+        /* erase rows of pixels above controls */
+        if(intersect_pixit_rect(&clip_rect, &bg_rect, &clip_pixit_rect))
+            host_paint_rectangle_filled(p_redraw_context, &clip_rect, &toolbar_rgb);
+
+        /* step down to row of controls */
+        bg_rect.tl.y = bg_rect.br.y;
+        bg_rect.br.y = bg_rect.tl.y + p_t5_toolbar_view_row_desc->height;
+
+        { /* erase space to the left of controls in this row */
+        const P_T5_TOOLBAR_VIEW_TOOL_DESC p_t5_toolbar_view_tool_desc = array_ptr(&p_t5_toolbar_view_row_desc->h_toolbar_view_tool_desc, T5_TOOLBAR_VIEW_TOOL_DESC, 0);
+        PIXIT_RECT test_rect = bg_rect;
+
+        test_rect.br.x = p_t5_toolbar_view_tool_desc->pixit_rect.tl.x;
+
+        if((test_rect.tl.x < test_rect.br.x) && intersect_pixit_rect(&clip_rect, &test_rect, &clip_pixit_rect))
+            host_paint_rectangle_filled(p_redraw_context, &clip_rect, &toolbar_rgb);
+        } /*block*/
+
+        { /* left-to-right please */
+        const ARRAY_INDEX row_tools = array_elements(&p_t5_toolbar_view_row_desc->h_toolbar_view_tool_desc);
+        ARRAY_INDEX row_tool_idx;
+        P_T5_TOOLBAR_VIEW_TOOL_DESC p_t5_toolbar_view_tool_desc = array_range(&p_t5_toolbar_view_row_desc->h_toolbar_view_tool_desc, T5_TOOLBAR_VIEW_TOOL_DESC, 0, row_tools);
+
+        for(row_tool_idx = 0; row_tool_idx < row_tools; ++row_tool_idx, ++p_t5_toolbar_view_tool_desc)
+        {
+            paint_tool(p_docu, p_view, p_t5_toolbar_view_tool_desc, &redraw_context, &clip_pixit_rect);
+        }
+        } /*block*/
+
+        { /* erase space to the right of controls in this row */
+        const ARRAY_INDEX row_tools = array_elements(&p_t5_toolbar_view_row_desc->h_toolbar_view_tool_desc);
+        const P_T5_TOOLBAR_VIEW_TOOL_DESC p_t5_toolbar_view_tool_desc = array_ptr(&p_t5_toolbar_view_row_desc->h_toolbar_view_tool_desc, T5_TOOLBAR_VIEW_TOOL_DESC, row_tools - 1);
+        PIXIT_RECT test_rect = bg_rect;
+
+        test_rect.tl.x = p_t5_toolbar_view_tool_desc->pixit_rect.br.x;
+
+        if((test_rect.tl.x < test_rect.br.x) && intersect_pixit_rect(&clip_rect, &test_rect, &clip_pixit_rect))
+            host_paint_rectangle_filled(p_redraw_context, &clip_rect, &toolbar_rgb);
+        } /*block*/
+
+        /* step down to next row */
+        bg_rect.tl.y = bg_rect.br.y;
+    }
+
+    /* erase rows of pixels below controls, or status line if present */
+    bg_rect.br.y = bg_rect.tl.y + T5_TOOLBAR_BM;
+
+    if(intersect_pixit_rect(&clip_rect, &bg_rect, &clip_pixit_rect))
+        host_paint_rectangle_filled(p_redraw_context, &clip_rect, &toolbar_rgb);
+
+    host_paint_end(p_redraw_context);
+}
+
+extern void
+paint_status_line_linux(
+    _DocuRef_   P_DOCU p_docu,
+    _ViewRef_   P_VIEW p_view,
+    _InoutRef_  QTH_PAINTER * p_painter,
+    _In_        const QTH_RECT * p_exposed,
+    _InVal_     HOST_WND hwnd)
+{
+    REDRAW_CONTEXT_CACHE redraw_context_cache;
+    REDRAW_CONTEXT redraw_context;
+    const P_REDRAW_CONTEXT p_redraw_context = &redraw_context;
+    const BOOL upper_status_line = (hwnd == p_view->main[WIN_UPPER_STATUS_LINE].hwnd);
+    const PC_STYLE p_status_line_style = p_style_for_status_line();
+    const PC_RGB p_rgb_fill = colour_of_status_line_background(p_status_line_style);
+    QTH_RECT bounds, core_rect;
+    QTH_RGB fill;
+
+    zero_struct_ptr_fn(p_redraw_context);
+
+    zero_struct_fn(redraw_context_cache);
+    p_redraw_context->p_redraw_context_cache = &redraw_context_cache;
+
+    p_redraw_context->p_docu = p_docu;
+    p_redraw_context->p_view = p_view;
+
+    p_redraw_context->linux_ctx.painter = p_painter;
+    p_redraw_context->linux_ctx.paint_rect.tl.x = p_exposed->left;
+    p_redraw_context->linux_ctx.paint_rect.tl.y = p_exposed->top;
+    p_redraw_context->linux_ctx.paint_rect.br.x = p_exposed->right;
+    p_redraw_context->linux_ctx.paint_rect.br.y = p_exposed->bottom;
+    p_redraw_context->linux_ctx.host_machine_clip_rect = p_redraw_context->linux_ctx.paint_rect;
+
+    host_redraw_context_set_host_xform(p_redraw_context, &p_view->host_xform[XFORM_TOOLBAR]);
+
+    host_redraw_context_fillin(p_redraw_context);
+
+    host_paint_start(p_redraw_context);
+
+    qth_window_get_bounds(hwnd, &bounds);
+
+    core_rect.left = core_rect.top = 0;
+    core_rect.right = bounds.right - bounds.left;
+    core_rect.bottom = bounds.bottom - bounds.top;
+
+    if(upper_status_line)
+    {
+        static const QTH_RGB gray = { 128, 128, 128 }, ltgray = { 192, 192, 192 };
+        const QTH_RECT top_line = { core_rect.left, core_rect.top, core_rect.right, core_rect.top + 1 };
+        const QTH_RECT bottom_line = { core_rect.left, core_rect.bottom - 1, core_rect.right, core_rect.bottom };
+
+        qth_paint_fill_rect(p_painter, &top_line, gray);
+        qth_paint_fill_rect(p_painter, &bottom_line, ltgray);
+
+        core_rect.top = top_line.bottom;
+        core_rect.bottom = bottom_line.top;
+    }
+
+    fill.r = p_rgb_fill->r; fill.g = p_rgb_fill->g; fill.b = p_rgb_fill->b;
+    qth_paint_fill_rect(p_painter, &core_rect, fill);
+
+    if(!ui_text_is_blank(&p_docu->status_line_ui_text))
+    {
+        STATUS status;
+        HOST_FONT host_font_redraw = HOST_FONT_NONE;
+        PCTSTR pszString = ui_text_tstr(&p_docu->status_line_ui_text);
+        const UINT cString = tstrlen32(pszString);
+
+        if(status_ok(status = fonty_handle_from_font_spec(&p_status_line_style->font_spec, FALSE)))
+        {
+            const FONTY_HANDLE fonty_handle = (FONTY_HANDLE) status;
+            host_font_redraw = fonty_host_font_from_fonty_handle_redraw(p_redraw_context, fonty_handle, FALSE);
+        }
+
+        if(HOST_FONT_NONE != host_font_redraw)
+        {
+            QTH_FONT_METRICS metrics;
+            const QTH_RGB black = { 0, 0, 0 };
+            const int text_x = core_rect.left + (T5_TOOLBAR_LM / PIXITS_PER_PIXEL);
+
+            qth_font_metrics(host_font_redraw, &metrics);
+
+            qth_paint_set_clip(p_painter, &core_rect);
+            qth_paint_text(p_painter, host_font_redraw,
+                           text_x, core_rect.top + (((core_rect.bottom - core_rect.top) - (metrics.ascent + metrics.descent)) / 2) + metrics.ascent,
+                           (const uint8_t *) pszString, cString, black, NULL, QTH_ALIGN_LEFT);
+        }
+    }
+
+    host_paint_end(p_redraw_context);
+}
+
+#endif /* LINUX */
 
 /* end of ob_toolb.c */
