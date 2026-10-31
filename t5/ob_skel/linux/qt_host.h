@@ -136,6 +136,45 @@ void qth_paint_text(QTH_PAINTER * p_painter, const QTH_FONT * p_font, int32_t x,
 
 void qth_paint_text16(QTH_PAINTER * p_painter, const QTH_FONT * p_font, int32_t x, int32_t y, const uint16_t * p_utf16, uint32_t n, QTH_RGB foreground, const QTH_RGB * p_background, int align);
 
+/* ---- Paths and scaled text (for Draw files) -------------------------------------------- */
+
+/* Coordinates here are in device pixels as numbers with fractions, as a drawing is scaled by arbitrary amounts. */
+
+typedef struct QTH_PATH QTH_PATH;
+
+QTH_PATH * qth_path_create(void);
+void qth_path_destroy(QTH_PATH * p_path);
+void qth_path_move_to(QTH_PATH * p_path, double x, double y);
+void qth_path_line_to(QTH_PATH * p_path, double x, double y);
+void qth_path_curve_to(QTH_PATH * p_path, double x1, double y1, double x2, double y2, double x3, double y3);
+void qth_path_close(QTH_PATH * p_path);
+
+enum { QTH_JOIN_MITRE = 0, QTH_JOIN_ROUND, QTH_JOIN_BEVEL };
+enum { QTH_CAP_BUTT = 0, QTH_CAP_ROUND, QTH_CAP_SQUARE };
+
+typedef struct QTH_PATH_STYLE
+{
+    int fill;                 /* non-zero to fill with fill_rgb */
+    QTH_RGB fill_rgb;
+    int even_odd;             /* the fill rule: non-zero winding if 0 */
+    int stroke;               /* non-zero to draw the outline in line_rgb */
+    QTH_RGB line_rgb;
+    double line_width;
+    int join, cap;
+    double mitre_limit;
+    const double * p_dashes;  /* dash and gap lengths in pixels, or NULL for a solid line */
+    int n_dashes;
+    double dash_offset;
+}
+QTH_PATH_STYLE;
+
+void qth_paint_path(QTH_PAINTER * p_painter, const QTH_PATH * p_path, const QTH_PATH_STYLE * p_style);
+
+/* Latin-1 text with its baseline start at x,y, em size size_x by size_y pixels, turned and sheared by the matrix
+ * (m11 m12 / m21 m22, as in a Draw transformed text, with y down) */
+void qth_paint_text_scaled(QTH_PAINTER * p_painter, const QTH_FONT_DESC * p_desc, double size_x, double size_y, double x, double y,
+                           double m11, double m12, double m21, double m22, const uint8_t * p_latin1, uint32_t n, QTH_RGB foreground);
+
 /* ---- Images (toolbar bitmaps and the like) ---------------------------------- */
 
 typedef struct QTH_IMAGE QTH_IMAGE;

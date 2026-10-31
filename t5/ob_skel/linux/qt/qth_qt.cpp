@@ -48,6 +48,8 @@
 #include <QEnterEvent>
 #include <QMouseEvent>
 #include <QPageLayout>
+#include <QPainterPath>
+#include <QPen>
 #include <QPageSize>
 #include <QPaintEvent>
 #include <QPrintDialog>
@@ -295,7 +297,13 @@ test_menu_choose(const QString & spec)
                 }
             }
             if(nullptr == p_found)
+            {
+                QStringList have;
+                for(QAction * p_action : actions)
+                    have << p_action->text();
+                fprintf(stderr, "test script: no \"%s\" in menu path \"%s\"; there is: %s\n", qPrintable(name), qPrintable(spec), qPrintable(have.join(QLatin1String(" | "))));
                 break;
+            }
             if(nullptr != p_found->menu())
             {
                 emit p_found->menu()->aboutToShow();
@@ -884,6 +892,88 @@ qth_paint_image_keyed(QTH_PAINTER * p_painter, const QTH_IMAGE * p_image, const 
     }
 
     p_painter->p_painter->drawImage(rect_of(p_dest), image);
+}
+
+/* ---- Paths and scaled text ------------------------------------------------------------- */
+
+struct QTH_PATH
+{
+    QPainterPath path;
+};
+
+extern "C" QTH_PATH * qth_path_create(void) { return(new QTH_PATH); }
+extern "C" void qth_path_destroy(QTH_PATH * p_path) { delete p_path; }
+extern "C" void qth_path_move_to(QTH_PATH * p_path, double x, double y) { p_path->path.moveTo(x, y); }
+extern "C" void qth_path_line_to(QTH_PATH * p_path, double x, double y) { p_path->path.lineTo(x, y); }
+extern "C" void qth_path_curve_to(QTH_PATH * p_path, double x1, double y1, double x2, double y2, double x3, double y3) { p_path->path.cubicTo(x1, y1, x2, y2, x3, y3); }
+extern "C" void qth_path_close(QTH_PATH * p_path) { p_path->path.closeSubpath(); }
+
+extern "C" void
+qth_paint_path(QTH_PAINTER * p_painter, const QTH_PATH * p_path, const QTH_PATH_STYLE * p_style)
+{
+    QPainter & painter = *p_painter->p_painter;
+    QPainterPath path = p_path->path;
+
+    path.setFillRule(p_style->even_odd ? Qt::OddEvenFill : Qt::WindingFill);
+
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing, true);
+
+    if(p_style->fill)
+        painter.fillPath(path, colour_of(p_style->fill_rgb));
+
+    if(p_style->stroke)
+    {
+        QPen pen(colour_of(p_style->line_rgb));
+        const qreal width = (p_style->line_width > 0.0) ? p_style->line_width : 1.0;
+
+        pen.setWidthF(width);
+        pen.setJoinStyle((p_style->join == QTH_JOIN_ROUND) ? Qt::RoundJoin : (p_style->join == QTH_JOIN_BEVEL) ? Qt::BevelJoin : Qt::MiterJoin);
+        pen.setMiterLimit((p_style->mitre_limit > 1.0) ? p_style->mitre_limit : 10.0);
+        pen.setCapStyle((p_style->cap == QTH_CAP_ROUND) ? Qt::RoundCap : (p_style->cap == QTH_CAP_SQUARE) ? Qt::SquareCap : Qt::FlatCap);
+
+        if((nullptr != p_style->p_dashes) && (p_style->n_dashes > 0))
+        {
+            QList<qreal> pattern;
+
+            for(int i = 0; i < p_style->n_dashes; ++i)
+                pattern << (p_style->p_dashes[i] / width); /* Qt counts dashes in line widths too */
+            if(pattern.size() & 1)
+                pattern << pattern.last();
+            pen.setDashPattern(pattern);
+            pen.setDashOffset(p_style->dash_offset / width);
+        }
+
+        painter.setPen(pen);
+        painter.setBrush(Qt::NoBrush);
+        painter.drawPath(path);
+    }
+
+    painter.restore();
+}
+
+extern "C" void
+qth_paint_text_scaled(QTH_PAINTER * p_painter, const QTH_FONT_DESC * p_desc, double size_x, double size_y, double x, double y,
+                      double m11, double m12, double m21, double m22, const uint8_t * p_latin1, uint32_t n, QTH_RGB foreground)
+{
+    QPainter & painter = *p_painter->p_painter;
+    QFont font;
+
+    font.setFamily(QString::fromLatin1(p_desc->family));
+    font.setWeight(static_cast<QFont::Weight>(p_desc->weight));
+    font.setItalic(0 != p_desc->italic);
+    font.setPixelSize(qMax(1, (int) (size_y + 0.5)));
+    if((size_x > 0) && (size_y > 0) && (size_x != size_y))
+        font.setStretch((int) (100 * size_x / size_y));
+
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::TextAntialiasing, true);
+    painter.setTransform(QTransform(m11, m12, m21, m22, x, y), true); /* the text is drawn from the origin of this */
+    painter.setFont(font);
+    painter.setPen(colour_of(foreground));
+    painter.drawText(QPointF(0, 0), QString::fromLatin1(reinterpret_cast<const char *>(p_latin1), (qsizetype) n));
+    painter.restore();
 }
 
 /* ---- Windows -------------------------------------------------------------- */

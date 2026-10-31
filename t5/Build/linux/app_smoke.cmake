@@ -176,3 +176,26 @@ if(PDFTOTEXT)
 endif()
 
 message(STATUS "fireworkz printed to a PDF")
+
+# Draw files: insert the Fireworkz logo (a RISC OS Draw file, which has to be copied to a name with an extension)
+# and take a picture; the picture is much bigger than that of the empty document if the logo was drawn.
+
+set(LOGO ${SHOT}-logo.drw)
+file(COPY_FILE ${CMAKE_CURRENT_LIST_DIR}/../../Resources/logos/fzc,aff ${LOGO})
+file(REMOVE ${SHOT}-logoshot-0.png)
+
+set(ENV{FIREWORKZ_TEST_FILE} ${LOGO})
+set(ENV{FIREWORKZ_TEST_SCRIPT} "wait:800;click:60,150;menu:Edit>Insert>Picture...;wait:1500;shot:${SHOT}-logoshot;quit")
+
+execute_process(COMMAND ${APP} RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err TIMEOUT 60)
+
+if(NOT result EQUAL 0)
+    message(FATAL_ERROR "fireworkz exited with ${result} drawing a Draw file\n${out}\n${err}")
+endif()
+
+file(SIZE ${SHOT}-logoshot-0.png logo_size)
+if(logo_size LESS 30000)
+    message(FATAL_ERROR "the picture with the logo in is only ${logo_size} bytes: the Draw file was not drawn")
+endif()
+
+message(STATUS "fireworkz drew a Draw file: ${logo_size} byte picture")

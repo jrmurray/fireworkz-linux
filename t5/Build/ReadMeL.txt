@@ -241,6 +241,20 @@ Milestone 4 - DONE (first light): the application runs
       the progress shown during a long print, cancelling a print (there is no abort button yet),
       print preview, draft printing (T5_MSG_DRAFT_PRINT is still a stub).
 
+    Draw files: done (first cut)
+      ob_skel/linux/ho_draw.c paints a RISC OS Draw file with Qt paths (qth_path_*, qth_paint_path,
+      qth_paint_text_scaled): paths with fills, lines, dashes, caps, joins and even-odd or winding
+      rules; text, also transformed (turned) text, with the font list mapped to Sans, Serif and
+      Monospace by the RISC OS font name; groups and tagged objects. Draws on the screen and onto a
+      printer. Seen: the Fireworkz logo (t5/Resources/logos/fzc,aff, a real Draw file) inserted with
+      Edit>Insert>Picture, complete with its turned text, and a chart's frame, axes, labels and legend
+      on a printed page. app_smoke inserts the logo.
+      Not done: sprites, JPEGs, Windows DIBs (draw_OBJDIB), text areas, triangle line caps (drawn
+      flat), exclusive-or painting (eor_paths, used when dragging; drawn normally), and the font
+      mapping is by name only. Chart bars were not seen: the one chart tried had no data, as the
+      script's way of typing cells did not work out, so a chart with data still wants looking at.
+      Saving to a Draw file (drwprint.c's drawfile_paint_*) is separate and has not been tried.
+
     What does not work yet (each is marked TODO where it lives):
       picture controls: drawn (QTH_DLG_BLANK canvases, painted by li_dlg.c from the resource bitmaps,
                                     colour swatches and other user controls through the redraw context)
@@ -249,8 +263,7 @@ Milestone 4 - DONE (first light): the application runs
       key shortcuts shown in menus  informational only: no QShortcut is bound (the skeleton maps keys)
       tooltips, the lower status line, the tool tip hover look
       print preview
-      Draw files                    drawings and charts are blank (host_paint_drawfile)
-      the clipboard, drag and drop, help
+            the clipboard, drag and drop, help
       row borders and rulers on the default template; italic under/overhang in text widths
       key shortcuts (Ctrl+...) are menu accelerators on Windows, so wait for menus
       packaging                     .desktop file, icon, MIME types, install rules

@@ -102,6 +102,21 @@ int qth_colour_dialog(QTH_WINDOW * p_parent, uint8_t * p_r, uint8_t * p_g, uint8
     return(0);
 }
 
+/* ---- Paths: not drawn ---- */
+
+struct QTH_PATH { int dummy; };
+
+QTH_PATH * qth_path_create(void) { return((QTH_PATH *) calloc(1, sizeof(QTH_PATH))); }
+void qth_path_destroy(QTH_PATH * p_path) { free(p_path); }
+void qth_path_move_to(QTH_PATH * p_path, double x, double y) { (void) p_path; (void) x; (void) y; }
+void qth_path_line_to(QTH_PATH * p_path, double x, double y) { (void) p_path; (void) x; (void) y; }
+void qth_path_curve_to(QTH_PATH * p_path, double x1, double y1, double x2, double y2, double x3, double y3) { (void) p_path; (void) x1; (void) y1; (void) x2; (void) y2; (void) x3; (void) y3; }
+void qth_path_close(QTH_PATH * p_path) { (void) p_path; }
+void qth_paint_path(QTH_PAINTER * p_painter, const QTH_PATH * p_path, const QTH_PATH_STYLE * p_style) { (void) p_painter; (void) p_path; (void) p_style; }
+void qth_paint_text_scaled(QTH_PAINTER * p_painter, const QTH_FONT_DESC * p_desc, double size_x, double size_y, double x, double y,
+                           double m11, double m12, double m21, double m22, const uint8_t * p_latin1, uint32_t n, QTH_RGB foreground)
+{ (void) p_painter; (void) p_desc; (void) size_x; (void) size_y; (void) x; (void) y; (void) m11; (void) m12; (void) m21; (void) m22; (void) p_latin1; (void) n; (void) foreground; }
+
 /* ---- Printing: no printer ---- */
 
 void qth_printer_info(char * p_name, int name_n, QTH_PRINTER_INFO * p_info)
