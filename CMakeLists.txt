@@ -95,6 +95,19 @@ endforeach()
 
 add_custom_target(fireworkz_messages ALL DEPENDS ${FIREWORKZ_MESSAGE_FILES})
 
+# ---- Other resources the program looks for by name --------------------------------------
+#
+# Windows finds Config.txt without regard to case, Linux does not, so give it its name here
+configure_file(${T5}/firewrkz/Resources/Windows/UK/config.txt ${FIREWORKZ_RESOURCES_DIR}/Config.txt COPYONLY)
+
+# The templates are stored with RISC OS file type suffixes (Sheet,c1d). The program looks for *.fwt
+file(GLOB FIREWORKZ_TEMPLATE_FILES ${T5}/Resources/UK/Templates/*,c1d)
+foreach(template IN LISTS FIREWORKZ_TEMPLATE_FILES)
+    get_filename_component(template_name ${template} NAME)
+    string(REGEX REPLACE ",c1d$" "" template_name "${template_name}")
+    configure_file(${template} ${FIREWORKZ_RESOURCES_DIR}/Templates/${template_name}.fwt COPYONLY)
+endforeach()
+
 # ---- Bitmap resources ------------------------------------------------------------
 #
 # The Windows build lists its bitmaps in resource scripts (id BITMAP "file"). Index them,
@@ -149,7 +162,8 @@ target_link_libraries(fireworkz_host_linux PUBLIC fireworkz_core)
 # where the program looks for resources when it is not told (in the build tree: the generated
 # messages and bitmaps, the Unicode data and the language files)
 target_compile_definitions(fireworkz_host_linux PRIVATE
-    FIREWORKZ_DEFAULT_RESOURCES="${FIREWORKZ_RESOURCES_DIR}:${T5}/external/Unicode:${T5}/Resources/UK:${T5}/Resources/Neutral")
+    FIREWORKZ_DEFAULT_RESOURCES="${FIREWORKZ_RESOURCES_DIR}:${T5}/external/Unicode:${T5}/Resources/UK:${T5}/Resources/Neutral"
+    FIREWORKZ_DEFAULT_TEMPLATES="${FIREWORKZ_RESOURCES_DIR}/Templates")
 
 # Headless stand-in for the Qt layer, for tests
 add_library(fireworkz_qth_null STATIC ${T5}/ob_skel/linux/qth_null.c)
@@ -209,6 +223,7 @@ option(FIREWORKZ_BUILD_APP "Try to build the fireworkz executable (does not link
 
 if(FIREWORKZ_BUILD_APP AND TARGET fireworkz_qth_qt)
     add_executable(fireworkz ${T5}/firewrkz/firewrkz.c)
+    add_dependencies(fireworkz fireworkz_messages)
     target_link_libraries(fireworkz PRIVATE
         -Wl,--start-group fireworkz_objects fireworkz_skel fireworkz_host_linux fireworkz_core -Wl,--end-group
         fireworkz_qth_qt)

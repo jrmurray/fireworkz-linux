@@ -49,6 +49,10 @@ host_longjmp_to_event_loop(int val)
 /* Where to look for resources: messages and bitmaps generated at build time, the Unicode data,
  * and the language-independent files, or a path given in FIREWORKZ_RESOURCES */
 
+#if !defined(FIREWORKZ_DEFAULT_TEMPLATES)
+#define FIREWORKZ_DEFAULT_TEMPLATES "/usr/share/fireworkz/Templates"
+#endif
+
 #if !defined(FIREWORKZ_DEFAULT_RESOURCES)
 #define FIREWORKZ_DEFAULT_RESOURCES "/usr/share/fireworkz/Resources"
 #endif
@@ -60,6 +64,46 @@ host_initialise_file_paths(void)
     const PCTSTR resources_path = (NULL != p_env) ? p_env : TEXT(FIREWORKZ_DEFAULT_RESOURCES);
 
     status_assert(file_path_set(resources_path, FILE_PATH_RESOURCES));
+
+    /* the user's own data, such as Choices, goes in their configuration directory */
+    {
+    TCHARZ user_path[BUF_MAX_PATHSTRING];
+    const char * p_xdg = getenv("XDG_CONFIG_HOME");
+    const char * p_home = getenv("HOME");
+
+    if((NULL != p_xdg) && (CH_NULL != p_xdg[0]))
+        consume_int(snprintf(user_path, elemof32(user_path), "%s/fireworkz/", p_xdg));
+    else if(NULL != p_home)
+        consume_int(snprintf(user_path, elemof32(user_path), "%s/.config/fireworkz/", p_home));
+    else
+        user_path[0] = CH_NULL;
+
+    if(CH_NULL != user_path[0])
+        status_assert(file_path_set(user_path, FILE_PATH_USER));
+    } /*block*/
+
+    /* templates: the user's own first, then the ones that come with the program */
+    {
+    TCHARZ templates_path[BUF_MAX_PATHSTRING * 2];
+    const char * p_env_templates = getenv("FIREWORKZ_TEMPLATES");
+    const char * p_xdg_data = getenv("XDG_DATA_HOME");
+    const char * p_home = getenv("HOME");
+    TCHARZ user_templates[BUF_MAX_PATHSTRING];
+
+    if((NULL != p_xdg_data) && (CH_NULL != p_xdg_data[0]))
+        consume_int(snprintf(user_templates, elemof32(user_templates), "%s/fireworkz/" TEMPLATES_SUBDIR, p_xdg_data));
+    else if(NULL != p_home)
+        consume_int(snprintf(user_templates, elemof32(user_templates), "%s/.local/share/fireworkz/" TEMPLATES_SUBDIR, p_home));
+    else
+        user_templates[0] = CH_NULL;
+
+    consume_int(snprintf(templates_path, elemof32(templates_path), "%s%s%s",
+                         user_templates,
+                         (CH_NULL != user_templates[0]) ? FILE_PATH_SEP_TSTR : "",
+                         (NULL != p_env_templates) ? p_env_templates : TEXT(FIREWORKZ_DEFAULT_TEMPLATES)));
+
+    status_assert(file_path_set(templates_path, FILE_PATH_TEMPLATES));
+    } /*block*/
 
     file_build_paths();
 }

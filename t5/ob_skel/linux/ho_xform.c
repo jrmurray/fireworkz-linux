@@ -149,7 +149,10 @@ host_redraw_context_set_host_xform(
 {
     int32_t dpi_x, dpi_y;
 
-    qth_painter_dpi((const QTH_PAINTER *) p_redraw_context->linux_ctx.painter, &dpi_x, &dpi_y);
+    if(NULL != p_redraw_context->linux_ctx.painter)
+        qth_painter_dpi((const QTH_PAINTER *) p_redraw_context->linux_ctx.painter, &dpi_x, &dpi_y);
+    else
+        qth_screen_dpi(&dpi_x, &dpi_y); /* a context just for measuring: it is the screen's */
     p_host_xform->linux_xform.pixels_per_inch.x = dpi_x;
     p_host_xform->linux_xform.pixels_per_inch.y = dpi_y;
 

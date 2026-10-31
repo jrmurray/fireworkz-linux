@@ -36,6 +36,8 @@
 
 static int modifiers_of(Qt::KeyboardModifiers modifiers);
 
+static int g_screenshot_taken;
+
 /* ---- Application ---------------------------------------------------------- */
 
 static QApplication *
@@ -47,7 +49,30 @@ app(void)
     static QApplication * p_app = nullptr;
 
     if(nullptr == p_app)
+    {
         p_app = new QApplication(argc, argv);
+
+        /* For testing and bug reports: FIREWORKZ_SCREENSHOT=base saves each top level window as
+         * base-N.png after FIREWORKZ_SCREENSHOT_MS (default 1500), then quits */
+        const QByteArray base = qgetenv("FIREWORKZ_SCREENSHOT");
+
+        if(!base.isEmpty())
+        {
+            const int delay_ms = qEnvironmentVariableIntValue("FIREWORKZ_SCREENSHOT_MS") > 0 ? qEnvironmentVariableIntValue("FIREWORKZ_SCREENSHOT_MS") : 1500;
+
+            QTimer::singleShot(delay_ms, p_app, [base]()
+            {
+                int n = 0;
+
+                for(QWidget * p_widget : QApplication::topLevelWidgets())
+                    if(p_widget->isVisible())
+                        p_widget->grab().save(QString::fromLocal8Bit(base) + QStringLiteral("-") + QString::number(n++) + QStringLiteral(".png"));
+
+                g_screenshot_taken = 1;
+                QApplication::exit(0);
+            });
+        }
+    }
 
     return(p_app);
 }
@@ -82,7 +107,7 @@ qth_process_events(int wait_ms)
 extern "C" int
 qth_quit_requested(void)
 {
-    return(g_quit_requested);
+    return(g_quit_requested || g_screenshot_taken);
 }
 
 extern "C" int
